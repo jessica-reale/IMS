@@ -1,0 +1,11 @@
+.DS_Store
+Manifest.toml
+*.code-workspace
+*.gitkeep
+.vscode
+
+# Ignore simulations data
+data/
+
+# Ignore plots
+img/
