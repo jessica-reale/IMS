@@ -243,6 +243,9 @@ end
 Updates demand and supply in the interbank market based on the above functions.
 """
 function update_ib_demand_supply!(agent::Bank)
+    IMS.NSFR!(agent)
+    IMS.borrowing_targets!(agent, model)
+    IMS.lending_targets!(agent, model)
     IMS.tot_demand!(agent)
     IMS.tot_supply!(agent)
     IMS.on_demand!(agent)
