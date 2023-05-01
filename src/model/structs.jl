@@ -9,6 +9,8 @@ Base.@kwdef mutable struct Government <: AbstractAgent
     bills_prev::Float64 = 0.0
     bonds::Float64 = 0.0
     bonds_prev::Float64 = 0.0
+    npl::Float64 = 0.0
+    npl_prev::Float64 = 0.0
     # SFC
     networth::Float64 = 0.0
     balance_current::Float64 = 0.0
@@ -82,14 +84,16 @@ Base.@kwdef mutable struct Household <: AbstractAgent
     nominal_consumption::Float64 = 0.0
     taxes::Float64 = 0.0
     wages::Float64 = 0.0
-    wages_prev::Float64 = 0.0
     income::Float64 = 0.0
     income_prev::Float64 = 0.0
     income_exp::Float64 = 0.0
+    income_exp_prev::Float64 = 0.0
     deposits::Float64 = 0.0
     deposits_prev::Float64 = 0.0
     loans::Float64 = 0.0
     loans_prev::Float64 = 0.0
+    loans_interests::Float64 = 0.0
+    deposits_interests::Float64 = 0.0
     networth_prev::Float64 = 0.0
     # SFC
     networth::Float64 = 0.0
@@ -129,6 +133,14 @@ Base.@kwdef mutable struct Bank <: AbstractAgent
     lending_facility_prev::Float64 = 0.0
     deposit_facility::Float64 = 0.0
     deposit_facility_prev::Float64 = 0.0
+    loans_interests::Float64 = 0.0
+    deposits_interests::Float64 = 0.0
+    bills_interests::Float64 = 0.0
+    bonds_interests::Float64 = 0.0
+    hpm_interests::Float64 = 0.0
+    advances_interests::Float64 = 0.0
+    lending_facility_interests::Float64 = 0.0
+    deposit_facility_interests::Float64 = 0.0
     # NSFR
     tot_assets::Float64 = 0.0
     tot_liabilities::Float64 = 0.0
@@ -140,10 +152,20 @@ Base.@kwdef mutable struct Bank <: AbstractAgent
     actual_borr_ratio::Float64 = 0.0
     target_borr_ratio::Float64 = 0.0
     # ib 
+    tot_demand::Float64 = 0.0
     on_demand::Float64 = 0.0
     term_demand::Float64 = 0.0
+    tot_supply::Float64 = 0.0
     on_supply::Float64 = 0.0
     term_supply::Float64 = 0.0
+    ON_assets::Float64 = 0.0
+    ON_assets_prev::Float64 = 0.0
+    ON_liabs::Float64 = 0.0
+    ON_liabs_prev::Float64 = 0.0
+    Term_assets::Float64 = 0.0
+    Term_assets_prev::Float64 = 0.0
+    Term_liabs::Float64 = 0.0
+    Term_liabs_prev::Float64 = 0.0
     pmb::Float64 = 0.0
     pml::Float64 = 0.0
     # SFC
