@@ -15,6 +15,7 @@ Base.@kwdef mutable struct Parameters
     g::Int = 2000
     δ::Float64 = 0.05
     ϕ::Float64 = 0.25
+    β::Float64 = 0.5
     σ::Int = 3
     μ::Float64 = 0.25
     v::Float64 = 0.1
@@ -36,6 +37,7 @@ Base.@kwdef mutable struct Parameters
     χ::Int = 5
     χ1::Float64 = 0.0085
     λ::Float64 = 2.00687
+    gd::Float64 = 0.1
     # margin of stability - banks_NSFR
     m1::Float64 = 0.1
     m3::Float64 = 0.5
@@ -49,7 +51,7 @@ Base.@kwdef mutable struct Parameters
     iterm::Float64 = 0.024
     ion_prev::Float64 = 0.024
     iterm_prev::Float64 = 0.024
-    theta::Float64 = 0.0
+    θ::Float64 = 0.0
     LbW::Float64 = 0.0
     σib::Float64 = 0.1
     a0::Float64 = 0.1

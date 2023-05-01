@@ -23,7 +23,7 @@ function prev_vars!(agent::Bank)
     # ib
     agent.ON_assets_prev = agent.ON_assets 
     agent.ON_liabs_prev = agent.ON_liabs
-    agent.Term_asset_prev = agent.Term_assets 
+    agent.Term_assets_prev = agent.Term_assets 
     agent.Term_liabs_prev = agent.Term_liabs
     return nothing
 end
@@ -113,10 +113,10 @@ end
 Update the elements of the Net Stable Funding Ratio (NSFR).
 """
 function NSFR!(agent::Bank, model)
-    agent.assets = agent.loans_prev + agent.hpm_prev + agent.bills_prev + agent.bonds_prev + agent.ON_assets_prev + agent.Term_assets_prev + agent.deposit_facility_prev
-    agent.liabilities = agent.deposits_prev + agent.ON_liabs_prev + agent.Term_liabs_prev + agent.npl_prev + agent.lending_facility_prev
-    agent.am = (model.m5 * agent.deposits_prev + model.m6 * agent.Term_liabs_prev) / agent.liabilities
-    agent.bm = (model.m1 * (agent.loans_prev + agent.ON_assets_prev) + model.m3 * (agent.bills_prev + agent.Term_assets_prev) + model.m4 * agent.bonds_prev) / agent.assets
+    agent.tot_assets = agent.loans_prev + agent.hpm_prev + agent.bills_prev + agent.bonds_prev + agent.ON_assets_prev + agent.Term_assets_prev + agent.deposit_facility_prev
+    agent.tot_liabilities = agent.deposits_prev + agent.ON_liabs_prev + agent.Term_liabs_prev + agent.npl_prev + agent.lending_facility_prev
+    agent.am = (model.m5 * agent.deposits_prev + model.m6 * agent.Term_liabs_prev) / agent.tot_liabilities
+    agent.bm = (model.m1 * (agent.loans_prev + agent.ON_assets_prev) + model.m3 * (agent.bills_prev + agent.Term_assets_prev) + model.m4 * agent.bonds_prev) / agent.tot_assets
     agent.margin_stability = agent.am / agent.bm
     return model
 end
@@ -129,7 +129,7 @@ Update lenders' preferences for overnight interbank assets based on NSFR.
 function lending_targets!(agent::Bank, model)
     if agent.status == :surplus
         if agent.ON_assets_prev > 0.0
-            agent.actual_lend_ratio = max(0.0, min(agent.ON_assets_prev / agent.assets, 1.0))
+            agent.actual_lend_ratio = max(0.0, min(agent.ON_assets_prev / agent.tot_assets, 1.0))
             agent.target_lend_ratio = if agent.margin_stability >= 1.0
                 agent.actual_lend_ratio
             else 
@@ -151,7 +151,7 @@ Update borrowers' preferences for overnight interbank assets based on NSFR.
 function borrowing_targets!(agent::Bank, model)
     if agent.status == :deficit
         if agent.ON_liabs_prev > 0.0
-            agent.actual_borr_ratio = max(0.0, min(agent.ON_liabs_prev / agent.liabilities, 1.0))
+            agent.actual_borr_ratio = max(0.0, min(agent.ON_liabs_prev / agent.tot_liabilities, 1.0))
             agent.target_borr_ratio = if agent.margin_stability < 1.0
                 agent.actual_borr_ratio
             else 
@@ -218,9 +218,9 @@ end
 
 Banks define their supply for overnight interbank loans dependent on money market rates and NSFR-based lending preferences.
 """
-function on_supply!(agent::Bank)
+function on_supply!(agent::Bank, LbW)
     if agent.status == :surplus
-        agent.on_supply = agent.tot_supply * (model.LbW * agent.pml)
+        agent.on_supply = agent.tot_supply * (LbW * agent.pml)
     end
     return agent.on_supply
 end
@@ -242,15 +242,14 @@ end
 
 Updates demand and supply in the interbank market based on the above functions.
 """
-function update_ib_demand_supply!(agent::Bank)
-    IMS.NSFR!(agent)
+function update_ib_demand_supply!(agent::Bank, model)
     IMS.borrowing_targets!(agent, model)
     IMS.lending_targets!(agent, model)
     IMS.tot_demand!(agent)
     IMS.tot_supply!(agent)
-    IMS.on_demand!(agent)
+    IMS.on_demand!(agent, model.θ)
     IMS.term_demand!(agent)
-    IMS.on_supply!(agent)
+    IMS.on_supply!(agent, model.LbW)
     IMS.term_supply!(agent)
     return agent
 end
@@ -264,7 +263,7 @@ function ib_on!(agent::Bank, model)
     if agent.status == :deficit && !ismissing(agent.belongToBank)
         if agent.on_demand > model[agent.belongToBank].on_supply
             agent.ON_liabs = model[agent.belongToBank].on_supply
-            model[agent.belongToBank].ON_asset += agent.ON_liabs
+            model[agent.belongToBank].ON_assets += agent.ON_liabs
         elseif agent.on_demand <= model[agent.belongToBank].on_supply
             agent.ON_liabs = agent.on_demand
             model[agent.belongToBank].ON_assets += agent.ON_liabs

@@ -22,8 +22,8 @@ end
 Households make their consumption decisions. The outflow of consumption is then updated for the matching bank.
 """
 function consumption!(agent::Household, model)
-    agent.consumption = model.α1 * agent.income_exp +  model.α2 * agent.networth_prev
-    agent.nominal_consumption = agent.consumption * model[belongToFirm].prices
+    agent.consumption = model.α1 * agent.income_exp / model[agent.belongToFirm].prices +  model.α2 * agent.networth_prev / model[agent.belongToFirm].prices
+    agent.nominal_consumption = agent.consumption * model[agent.belongToFirm].prices
     
     if !ismissing(agent.belongToBank)
         model[agent.belongToBank].flow -= agent.nominal_consumption
@@ -148,8 +148,8 @@ end
 Define households' SFC actions and update their accounting.
 """
 function SFC!(agent::Household, model)
-    CViM.deposits!(agent, model)
-    CViM.networth!(agent)
-    CViM.balance!(agent)
+    IMS.deposits!(agent, model)
+    IMS.networth!(agent)
+    IMS.balance!(agent)
     return model
 end

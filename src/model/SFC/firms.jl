@@ -88,8 +88,8 @@ end
 
 Firms update their expectations on sales and inventories and produce output.
 """
-function output!(agent::Firm, ϕ, σ)
-    agent.sales_exp = agent.sales_exp_prev + ϕ * (agent.sales_prev - agent.sales_exp_prev)
+function output!(agent::Firm, β, ϕ, σ)
+    agent.sales_exp = β * agent.sales_prev + (1 - β) * agent.sales_exp_prev
     agent.invent_target =  σ * agent.sales_exp
     agent.invent_exp = agent.invent_exp_prev + ϕ * (agent.invent_target - agent.invent_exp_prev)
     agent.output = agent.sales_exp + agent.invent_exp - agent.invent_prev
@@ -111,12 +111,6 @@ function inventories!(agent::Firm, g)
     agent.sales = agent.consumption + agent.investments + g
     agent.invent += agent.output - agent.sales
     agent.Invent = agent.invent * agent.unit_costs
-
-    if agent.Invent < 0
-        println("negative INV")
-    elseif isnan(agent.Invent)
-        println("NaN INV")
-    end
 
     if agent.sales < 0
         println("negative s")
@@ -190,7 +184,7 @@ end
 Firms update their interests payments and receipts from previous period loans and deposits.
 """
 function interests_payments!(agent::Firm, model)
-    agent.loans_interests = agent.loans_prev * model[agent.belongToBank].ilf_rate_prev
+    agent.loans_interests = agent.loans_prev * model[agent.belongToBank].il_rate_prev
     model[agent.belongToBank].loans_interests += agent.loans_interests
     agent.deposits_interests = agent.deposits_prev * model[agent.belongToBank].id_rate_prev
     model[agent.belongToBank].deposits_interests += agent.deposits_interests
@@ -255,7 +249,7 @@ end
 Define firms' SFC actions and update their accounting.
 """
 function SFC!(agent::Firm, model)
-    CViM.networth!(agent)
-    CViM.capital_balance!(agent)
+    IMS.networth!(agent)
+    IMS.capital_balance!(agent)
     return model
 end

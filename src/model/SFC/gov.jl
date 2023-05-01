@@ -87,8 +87,9 @@ end
 Update the balance of the government for SFC checks.
 """
 function balance!(agent::Government, model)
-    agent.balance_current = agent.spending + model.ib * agent.bills_prev + model.iblr * agent.bonds_prev + (agent.npl - agent.npl_prev) - 
-        agent.taxes - sum(a.profits for a in allagents(model) if a isa CentralBank) - (agent.bonds - agent.bonds_prev)
+    agent.balance_current = (agent.bills - agent.bills_prev) + agent.taxes + sum(a.profits for a in allagents(model) if a isa CentralBank) +
+        (agent.bonds - agent.bonds_prev) - agent.spending - model.ib * agent.bills_prev - model.iblr * agent.bonds_prev - 
+        (agent.npl - agent.npl_prev) 
     return agent.balance_current
 end
 
@@ -99,8 +100,6 @@ Define the government's SFC actions and update its accounting.
 """
 function SFC!(agent::Government, model)
     IMS.prev_vars!(agent)
-    IMS.taxes!(agent, model)
-    IMS.spending!(agent, model)
     IMS.bonds!(agent, model)
     IMS.non_performing_loans!(agent, model)
     IMS.bills!(agent, model)

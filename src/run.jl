@@ -10,3 +10,4 @@ using IMS
 
 # simple way to explore the simulations
 model = IMS.init_model()
+step!(model, dummystep, IMS.model_step!, 1200)

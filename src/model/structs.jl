@@ -108,6 +108,7 @@ Base.@kwdef mutable struct Bank <: AbstractAgent
     hh_customers::Vector{Int} = []
     firms_customers::Vector{Int} = []
     ib_customers::Vector{Int} = []
+    flow::Float64 = 0.0
     deposits::Float64 = 0.0
     deposits_prev::Float64 = 0.0
     bills::Float64 = 0.0

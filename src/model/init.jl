@@ -113,8 +113,8 @@ function SS_initial(model)
     Lf = K + Invent + Df # from I = ΔK or b.s. matrix
     Pf = C + G + I + id * Df - W - il * Lf
     Yd = C
-    α2_SS = (c - model.α1 * Yd) / (B + Lf - Df)
-    NWh = (c - model.α1 * Yd) / α2_SS
+    α2_SS = (C - model.α1 * Yd) / (B + Lf - Df)
+    NWh = (C - model.α1 * Yd) / α2_SS
     Lh = model.γ * (C + NWh)
     Dh = NWh + Lh
     Hj = (model.μ + model.v) * Dh

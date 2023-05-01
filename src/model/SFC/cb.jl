@@ -63,7 +63,7 @@ end
 The central bank computes its profits, which are then distributed to the government.
 """
 function profits!(agent::CentralBank, model)
-    agent.profits = model.ib * agent.bills_prev + model.icb * agent.advances_prev - model.icb * agent.hpm_prev + model.icbl * agent.lending_facility_prev - 
+    agent.profits = model.ib * agent.bills_prev + model.icbt * agent.advances_prev - model.icbt * agent.hpm_prev + model.icbl * agent.lending_facility_prev - 
         model.icbd * agent.deposit_facility_prev
     return agent.profits
 end
@@ -84,7 +84,7 @@ end
 Update the central bank's current balances for SFC checks.
 """
 function current_balance!(agent::CentralBank, model)
-    agent.balance_current = model.ib * agent.bills_prev + model.icb * agent.advances_prev - model.icb * agent.hpm_prev - agent.profits + 
+    agent.balance_current = model.ib * agent.bills_prev + model.icbt * agent.advances_prev - model.icbt * agent.hpm_prev - agent.profits + 
         model.icbl * agent.lending_facility_prev - model.icbd * agent.deposit_facility_prev
     return agent.balance_current
 end
