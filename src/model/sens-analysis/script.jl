@@ -48,7 +48,13 @@ function load_data()
     # parameter names as strings
     params_strings = ["r", "a0", "a1", "a2", "a3", "δ"]
     # parameter ranges
-    params_range = ["0.9", "1.1", "1.3", "0.1", "0.5", "1.0", "0.2", "0.5", "1.0", "0.4", "0.5", "1.0", "0.05", "0.5", "1.0"]
+    params_range = [
+        "0.9", "1.1", "1.3", 
+        "0.1", "0.5", "1.0", 
+        "0.2", "0.5", "1.0", 
+        "0.4", "0.5", "1.0", 
+        "0.05", "0.5", "1.0"
+        ]
 
     df = DataFrame()
     for param in params_strings
