@@ -66,6 +66,8 @@ function scenarios_lines(df, m)
     p = scenarios_loans(df_hh; f = false)
     save("loans_hh_scenarios.pdf", p)
 
+    p = output(df_firms)
+    save("output.pdf", p)
 end
 
 function load_data()
