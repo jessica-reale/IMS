@@ -35,7 +35,7 @@ function run_model(number_of_runs::Int = 1)
     adata = [:type, :status, :ON_assets, :ON_liabs, :margin_stability, :am, :bm,
         :Term_assets, :Term_liabs, :loans, :loans_prev, :output, :pmb, :pml,
         :il_rate, :id_rate, :funding_costs, :lending_facility, :deposit_facility,
-        :on_demand, :term_demand, :on_supply, :term_supply]
+        :on_demand, :term_demand, :on_supply, :term_supply, :prices]
     # collect model variables
     mdata = [:n_hh, :n_f, :IBon, :IBterm, :ion, :iterm, :icbl, :icbd, :icbt, :θ, :LbW]
 
