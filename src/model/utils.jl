@@ -116,7 +116,11 @@ function SFC_checks_aggregate!(model, GDP; tol::Float64 = 1e-06)
     B = sum(a.bills for a in allagents(model) if a isa Government) - sum(a.bills for a in allagents(model) if a isa CentralBank || a isa Bank)
     iB = model.ib * sum(a.bills_prev for a in allagents(model) if a isa CentralBank) + sum(a.bills_interests for a in allagents(model) if a isa Bank) - 
         model.ib * sum(a.bills_prev for a in allagents(model) if a isa Government)
-    C = sum(a.consumption for a in allagents(model) if a isa Household) - sum(a.consumption for a in allagents(model) if a isa Firm)
+    Blr = sum(a.bonds for a in allagents(model) if a isa Government) - sum(a.bonds for a in allagents(model) if a isa Bank)
+    iBlr = model.iblr * sum(a.bonds_prev for a in allagents(model) if a isa Government) - 
+        sum(a.bonds_interests for a in allagents(model) if a isa Bank)
+    c = sum(a.consumption for a in allagents(model) if a isa Household) - sum(a.consumption for a in allagents(model) if a isa Firm)
+    C = sum(a.nominal_consumption for a in allagents(model) if a isa Household) - sum(a.nominal_consumption for a in allagents(model) if a isa Firm)
     W = sum(a.wages for a in allagents(model) if a isa Household) - sum(a.wages for a in allagents(model) if a isa Firm)
     H = sum(a.hpm for a in allagents(model) if a isa CentralBank) - sum(a.hpm for a in allagents(model) if a isa Bank)
     iH = sum(a.hpm_interests for a in allagents(model) if a isa Bank) - model.icbt * sum(a.hpm_prev for a in allagents(model) if a isa CentralBank)
@@ -138,7 +142,8 @@ function SFC_checks_aggregate!(model, GDP; tol::Float64 = 1e-06)
 
     if abs(Df) > tol * GDP || abs(Dh) > tol * GDP || abs(Lf) > tol * GDP || abs(Lh) > tol * GDP || abs(B) > tol * GDP || abs(iB) > tol * GDP ||  abs(C) > tol * GDP ||  
         abs(W) > tol * GDP || abs(H) > tol * GDP || abs(IB) > tol * GDP || abs(iLf) > tol * GDP || abs(Rl) > tol * GDP || abs(iRl) > tol * GDP || abs(Rd) > tol * GDP ||
-        abs(iRd) > tol * GDP || abs(iLh) > tol * GDP || abs(iDf) > tol * GDP ||  abs(iDh) > tol * GDP || abs(iH) > tol * GDP || abs(A) > tol * GDP || abs(iA) > tol * GDP
+        abs(iRd) > tol * GDP || abs(iLh) > tol * GDP || abs(iDf) > tol * GDP ||  abs(iDh) > tol * GDP || abs(iH) > tol * GDP || abs(A) > tol * GDP || abs(iA) > tol * GDP ||
+        abs(Blr) > tol * GDP || abs(iBlr) > tol * GDP || abs(c) > tol * GDP
         @warn """ 
             Stock-flow error at $(model.step) for $(tol * GDP) tolerance level - Aggregation!
             Check whether the model explodes. To do so, modify in the `model_step` function the keyword of `SFC_checks!` as 
