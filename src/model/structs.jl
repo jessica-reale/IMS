@@ -167,8 +167,8 @@ Base.@kwdef mutable struct Bank <: AbstractAgent
     Term_assets_prev::Float64 = 0.0
     Term_liabs::Float64 = 0.0
     Term_liabs_prev::Float64 = 0.0
-    pmb::Float64 = 0.0
-    pml::Float64 = 0.0
+    pmb::Float64 = 1.0
+    pml::Float64 = 1.0
     # SFC
     networth::Float64 = 0.0
     balance_current::Float64 = 0.0

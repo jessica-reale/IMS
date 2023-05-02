@@ -21,13 +21,15 @@ function model_step!(model)
     model.step += 1
 
     #begin: apply shocks
-    if model.scenario == "Corridor" && model.step == 200
+    if model.scenario == "Corridor" && model.step == 500
         model.icbd += 0.005
         model.icbl += 0.005
         model.icbt = (model.icbl + model.icbd) / 2.0
-    elseif model.scenario == "Uncertainty" && model.step == 200
+    end
+    if model.scenario == "Uncertainty" && model.step == 500
         model.PDU += 0.3
-    elseif model.scenario == "Width" && model.step == 200
+    end
+    if model.scenario == "Width" && model.step == 500
         model.icbl += 0.005
         model.icbt = (model.icbl + model.icbd) / 2.0
     end

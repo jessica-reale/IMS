@@ -4,7 +4,7 @@ Pkg.instantiate()
 
 # Start workers
 using Distributed
-addprocs()
+addprocs(5)
 
 # Set up package environment on workers
 @everywhere begin
@@ -28,7 +28,7 @@ using IMS
 end
 
 # runs the model, transforms and saves data
-function run_model(number_of_runs::Int = 1)
+function run_model(number_of_runs::Int = 50)
     scenarios = ("Baseline", "Corridor", "Uncertainty", "Width")
 
     # collect agent variables

@@ -6,7 +6,7 @@ function ib_on_scenarios(df)
     gdf = groupby(df, :scenario)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.IBon), 1600)
+        _, trend = hp_filter((subdf.ON_assets), 1600)
         lines!(trend; 
             label = "$(key.scenario)")
     end
@@ -24,7 +24,7 @@ function ib_term_scenarios(df)
     gdf = groupby(df, :scenario)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.IBterm), 1600)
+        _, trend = hp_filter((subdf.Term_assets), 1600)
         lines!(trend; 
             label = "$(key.scenario)")
     end

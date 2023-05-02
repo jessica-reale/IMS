@@ -126,7 +126,7 @@ function NSFR!(agent::Bank, model)
         agent.bm = (model.m1 * (agent.loans_prev + agent.ON_assets_prev) + model.m3 * (agent.bills_prev + agent.Term_assets_prev) + model.m4 * agent.bonds_prev) / agent.tot_assets
         agent.margin_stability = agent.am / agent.bm
         if isnan(agent.margin_stability)
-            println("$(agent.id)")
+            agent.margin_stability = 1.0
         end
     end
     return model

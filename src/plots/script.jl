@@ -14,13 +14,7 @@ include("lib.jl")
 const vars_ib = [:lending_facility, :deposit_facility, :Term_assets, :Term_liabs, :ON_assets, :ON_liabs, :am, :bm, :pmb, :pml,
     :margin_stability, :on_demand, :term_demand, :il_rate, :id_rate]
 
-function overviews_model(df)
-    p = ib_on_scenarios(df)
-    save("ib_on_scenarios.pdf", p)  
-
-    p = ib_term_scenarios(df)
-    save("ib_term_scenarios.pdf", p)     
-
+function overviews_model(df)    
     p = ib_rates_scenarios(df)
     save("ib_rates_scenarios.pdf", p)    
     
@@ -41,6 +35,12 @@ function scenarios_lines(df, m)
 
     p = bm(df1)
     save("bm.pdf", p)
+
+    p = ib_on_scenarios(df1)
+    save("ib_on_scenarios.pdf", p)  
+
+    p = ib_term_scenarios(df1)
+    save("ib_term_scenarios.pdf", p) 
 
     df2 = @pipe df |>  dropmissing(_, vars_ib) |> groupby(_, [:step, :status, :scenario]) |>
             combine(_, vars_ib .=> mean, renamecols = false)
