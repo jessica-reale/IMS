@@ -40,12 +40,16 @@ function reset_vars!(agent::Bank)
     agent.deposits = 0.0
     agent.loans_interests = 0.0
     agent.deposits_interests = 0.0
+    agent.belongToBank = missing
+    empty!(agent.ib_customers)
+    return nothing
+end
+
+function reset_after_status!(agent::Bank)
     agent.ON_assets = 0.0
     agent.Term_assets = 0.0
     agent.ON_liabs = 0.0
     agent.Term_liabs = 0.0
-    agent.belongToBank = missing
-    empty!(agent.ib_customers)
     return nothing
 end
 
@@ -115,11 +119,16 @@ end
 Update the elements of the Net Stable Funding Ratio (NSFR).
 """
 function NSFR!(agent::Bank, model)
-    agent.tot_assets = agent.loans_prev + agent.hpm_prev + agent.bills_prev + agent.bonds_prev + agent.ON_assets_prev + agent.Term_assets_prev + agent.deposit_facility_prev
-    agent.tot_liabilities = agent.deposits_prev + agent.ON_liabs_prev + agent.Term_liabs_prev + agent.npl_prev + agent.lending_facility_prev + agent.advances_prev
-    agent.am = (model.m5 * agent.deposits_prev + model.m6 * agent.Term_liabs_prev) / agent.tot_liabilities
-    agent.bm = (model.m1 * (agent.loans_prev + agent.ON_assets_prev) + model.m3 * (agent.bills_prev + agent.Term_assets_prev) + model.m4 * agent.bonds_prev) / agent.tot_assets
-    agent.margin_stability = agent.am / agent.bm
+    if agent.status != :neutral
+        agent.tot_assets = agent.loans_prev + agent.hpm_prev + agent.bills_prev + agent.bonds_prev + agent.ON_assets_prev + agent.Term_assets_prev + agent.deposit_facility_prev
+        agent.tot_liabilities = agent.deposits_prev + agent.ON_liabs_prev + agent.Term_liabs_prev + agent.npl_prev + agent.lending_facility_prev + agent.advances_prev
+        agent.am = (model.m5 * agent.deposits_prev + model.m6 * agent.Term_liabs_prev) / agent.tot_liabilities
+        agent.bm = (model.m1 * (agent.loans_prev + agent.ON_assets_prev) + model.m3 * (agent.bills_prev + agent.Term_assets_prev) + model.m4 * agent.bonds_prev) / agent.tot_assets
+        agent.margin_stability = agent.am / agent.bm
+        if isnan(agent.margin_stability)
+            println("$(agent.id)")
+        end
+    end
     return model
 end
 
@@ -137,7 +146,7 @@ function lending_targets!(agent::Bank, model)
             else 
                 rand(model.rng, Uniform(0.0, 1.0))
             end
-            agent.pml = agent.actual_lend_ratio - agent.target_lend_ratio
+            agent.pml = max(0.0, min(agent.actual_lend_ratio - agent.target_lend_ratio, 1.0))
         else
             agent.pml = 1.0
         end
@@ -159,10 +168,13 @@ function borrowing_targets!(agent::Bank, model)
             else 
                 rand(model.rng, Uniform(0.0, 1.0))
             end
-            agent.pmb = agent.actual_borr_ratio - agent.target_borr_ratio
+            agent.pmb = max(0.0 , min(agent.actual_borr_ratio - agent.target_borr_ratio, 1.0))
         else
             agent.pmb = 1.0
         end
+    end
+    if agent.pmb < 0.0
+        println("$(agent.id)")
     end
     return agent.pmb
 end
@@ -200,6 +212,9 @@ function on_demand!(agent::Bank, θ)
     if agent.status == :deficit
         agent.on_demand = agent.tot_demand * (θ * agent.pmb)
     end
+    if agent.on_demand < 0.0
+        println("Negtive ON demand")
+    end
     return agent.on_demand
 end
 
@@ -223,6 +238,9 @@ Banks define their supply for overnight interbank loans dependent on money marke
 function on_supply!(agent::Bank, LbW)
     if agent.status == :surplus
         agent.on_supply = agent.tot_supply * (LbW * agent.pml)
+    end
+    if agent.on_supply < 0.0
+        println("Negtive ON supply")
     end
     return agent.on_supply
 end
@@ -267,6 +285,9 @@ function ib_stocks!(agent::Bank, model)
         agent.Term_liabs = agent.term_demand
         model[agent.belongToBank].ON_assets += agent.ON_liabs
         model[agent.belongToBank].Term_assets += agent.Term_liabs
+    end
+    if agent.ON_liabs < 0.0 || agent.Term_liabs < 0.0
+        println("Negative IB stocks")
     end
     return model
 end

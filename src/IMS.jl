@@ -37,7 +37,6 @@ function model_step!(model)
 
     for id in ids_by_type(Bank, model)
         IMS.prev_vars!(model[id])
-        IMS.NSFR!(model[id], model)
         IMS.credit_rates!(model[id], model.χ1)
         IMS.reset_vars!(model[id])
     end
@@ -90,6 +89,8 @@ function model_step!(model)
         IMS.profits!(model[id])
         IMS.current_balance!(model[id])
         IMS.update_status!(model[id]) # updates IB status
+        IMS.NSFR!(model[id], model)
+        IMS.reset_after_status!(model[id])
     end
     
     profits = sum(a.profits for a in allagents(model) if a isa Bank || a isa Firm) / model.n_hh
