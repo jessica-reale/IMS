@@ -58,7 +58,7 @@ function scenarios_lines(df, m)
    
     df_firms = @pipe df |>  filter(:id => x -> x > mean(m[!, :n_hh]) && x <= mean(m[!, :n_hh]) + mean(m[!, :n_f]), _) |>
             groupby(_, [:step, :scenario]) |> 
-            combine(_, [:loans, :output] .=> mean, renamecols = false)
+            combine(_, [:loans, :output, :prices] .=> mean, renamecols = false)
 
     p = scenarios_loans(df_firms)
     save("loans_firms_scenarios.pdf", p)
@@ -68,6 +68,9 @@ function scenarios_lines(df, m)
 
     p = output(df_firms)
     save("output.pdf", p)
+
+    p = prices(df_firms)
+    save("prices.pdf", p)
 end
 
 function load_data()
