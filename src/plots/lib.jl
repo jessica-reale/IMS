@@ -150,6 +150,24 @@ function scenarios_loans(df; f::Bool = true)
     return fig
 end
 
+function scenarios_credit_rates(df)
+    fig = Figure(resolution = (800, 400))
+    ax = fig[1,1] = Axis(fig, title = "Credit rates", xlabel = "Steps", ylabel = "Mean")
+    gdf = groupby(df, :scenario)
+
+    for (key, subdf) in pairs(gdf)
+        _, trend = hp_filter((subdf.il_rate), 1600)
+        lines!(trend; 
+            label = "$(key.scenario)")
+    end
+    ax.xticks = 0:200:1200
+
+    fig[1, end+1] = Legend(fig, ax; 
+        orientation = :vertical, tellwidth = true)
+
+    return fig
+end
+
 function output(df)
     fig = Figure(resolution = (800, 400))
     ax = fig[1,1] = Axis(fig, title = "Firms' output", xlabel = "Steps", ylabel = "Mean")

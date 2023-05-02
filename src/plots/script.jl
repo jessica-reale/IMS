@@ -51,6 +51,15 @@ function scenarios_lines(df, m)
     p = pml(filter(:status => ==("surplus"), df2))
     save("pml.pdf", p)
 
+    df2 = @pipe df |>  dropmissing(_, vars_ib) |> groupby(_, [:step, :type, :scenario]) |>
+    combine(_, vars_ib .=> mean, renamecols = false)
+
+    p = scenarios_credit_rates(filter(:type => ==("business"), df2))
+    save("credit_rates_firms.pdf", p)
+
+    p = scenarios_credit_rates(filter(:type => ==("commercial"), df2))
+    save("credit_rates_hhs.pdf", p)
+
     # credit market
     df_hh = @pipe df |> filter(:id => x -> x >= 1 && x <= mean(m[!, :n_hh]), _) |>
             groupby(_, [:step, :scenario]) |> 
