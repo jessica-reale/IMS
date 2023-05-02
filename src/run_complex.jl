@@ -32,10 +32,10 @@ function run_model(number_of_runs::Int = 1)
     scenarios = ("Baseline", "Corridor", "Uncertainty", "Width")
 
     # collect agent variables
-    adata = [:type, :status, :ON_assets, :ON_liabs, :margin_stability, :am, :bm,
+    adata = [:type, :status, :prices, :ON_assets, :ON_liabs, :margin_stability, :am, :bm,
         :Term_assets, :Term_liabs, :loans, :loans_prev, :output, :pmb, :pml,
         :il_rate, :id_rate, :funding_costs, :lending_facility, :deposit_facility,
-        :on_demand, :term_demand, :on_supply, :term_supply, :prices]
+        :on_demand, :term_demand, :on_supply, :term_supply]
     # collect model variables
     mdata = [:n_hh, :n_f, :IBon, :IBterm, :ion, :iterm, :icbl, :icbd, :icbt, :θ, :LbW]
 
@@ -60,7 +60,7 @@ function run_model(number_of_runs::Int = 1)
         # Aggregate agent data over replicates
         adf = @pipe adf |>
             groupby(_, [:step, :id, :status]) |>
-            combine(_, adata[1:2] .=> unique, adata[3:end] .=> mean; renamecols = false)
+            combine(_, adata[1:2] .=> unique, adata[3] => sum, adata[4:end] .=> mean; renamecols = false)
         adf[!, :scenario] = fill(scenario, nrow(adf))
 
         # Write data to disk
