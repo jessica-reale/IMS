@@ -17,12 +17,10 @@ include("model/SFC/hh.jl")
 include("model/SFC/firms.jl")
 include("model/SFC/banks.jl")
 
-
 function model_step!(model)
     model.step += 1
 
     IMS.update_vars!(model)
-    IMS.reset_vars!(model)
 
     for id in ids_by_type(Bank, model)
         IMS.prev_vars!(model[id])
@@ -98,13 +96,13 @@ function model_step!(model)
     IMS.update_willingenss_ON!(model)
     for id in ids_by_type(Bank, model)
         IMS.update_ib_demand_supply!(model[id], model)
-        IMS.ib_on!(model[id], model)
-        IMS.ib_term!(model[id], model)
+        IMS.ib_stocks!(model[id], model)
         IMS.lending_facility!(model[id])
         IMS.deposit_facility!(model[id])
         IMS.funding_costs!(model[id], model.icbt, model.ion, model.iterm, model.icbl)
         IMS.SFC!(model[id], model)
     end
+    IMS.ib_stocks!(model)
     IMS.ib_rates!(model)
     # end: Interbank Market
     
@@ -140,13 +138,13 @@ function firms_matching!(model)
         #Select potential partners
         potential_partners = filter(i -> model[i] isa Bank && i != model[id].belongToBank && model[i].type == :business, collect(allids(model)))[1:model.χ]
         #Select new partner with the best interest rate among potential partners
-        new_partner = rand(model.rng, filter(i -> i in potential_partners && model[i].ilf_rate == minimum(model[a].ilf_rate for a in potential_partners), potential_partners))
+        new_partner = rand(model.rng, filter(i -> i in potential_partners && model[i].il_rate == minimum(model[a].il_rate for a in potential_partners), potential_partners))
         #Select interest rate of the new potential partner
-        inew = model[new_partner].ilf_rate
+        inew = model[new_partner].il_rate
         #Pick up old partner
         old_partner = model[id].belongToBank
         #PICK UP THE INTEREST OF THE OLD PARTNER
-        iold = model[old_partner].ilf_rate
+        iold = model[old_partner].il_rate
         #COMPARE OLD AND NEW INTERESTS
         if rand(model.rng) < (1 - exp(model.λ * (inew - iold)/inew))
             #THEN SWITCH TO A NEW PARTNER
@@ -167,13 +165,13 @@ function hhs_matching!(model)
         #Select potential partners
         potential_partners = filter(i -> model[i] isa Bank && i != model[id].belongToBank && model[i].type == :commercial, collect(allids(model)))[1:model.χ]
         #Select new partner with the best interest rate among potential partners
-        new_partner = rand(model.rng, filter(i -> i in potential_partners && model[i].ilh_rate == minimum(model[a].ilh_rate for a in potential_partners), potential_partners))
+        new_partner = rand(model.rng, filter(i -> i in potential_partners && model[i].il_rate == minimum(model[a].il_rate for a in potential_partners), potential_partners))
         #Select interest rate of the new potential partner
-        inew = model[new_partner].ilh_rate
+        inew = model[new_partner].il_rate
         #Pick up old partner
         old_partner = model[id].belongToBank
         #PICK UP THE INTEREST OF THE OLD PARTNER
-        iold = model[old_partner].ilh_rate
+        iold = model[old_partner].il_rate
         #COMPARE OLD AND NEW INTERESTS
         if rand(model.rng) < (1 - exp(model.λ * (inew - iold)/inew))
             #THEN SWITCH TO A NEW PARTNER
@@ -210,6 +208,31 @@ function ib_matching!(model)
 end
 
 """
+    ib_stocks!(model) → model.IBon, model.IBterm
+
+Updates interbank market stocks.
+"""
+function ib_stocks!(model)
+    if length([a.id for a in allagents(model) if a isa Bank && a.status == :deficit && !ismissing(a.belongToBank)]) > 0 && 
+        length([a.id for a in allagents(model) if a isa Bank && a.status == :surplus && !isempty(a.ib_customers)]) > 0
+
+        if sum(a.on_demand for a in allagents(model) if a isa Bank && a.status == :deficit) > sum(a.on_supply for a in allagents(model) if a isa Bank && a.status == :surplus)
+            model.IBon = sum(a.on_supply for a in allagents(model) if a isa Bank && a.status == :surplus)
+        elseif sum(a.on_demand for a in allagents(model) if a isa Bank && a.status == :deficit) <= sum(a.on_supply for a in allagents(model) if a isa Bank && a.status == :surplus)
+            model.IBon = sum(a.on_demand for a in allagents(model) if a isa Bank && a.status == :deficit)
+        end
+
+        if sum(a.term_demand for a in allagents(model) if a isa Bank && a.status == :deficit) > sum(a.term_supply for a in allagents(model) if a isa Bank && a.status == :surplus)
+            model.IBterm = sum(a.term_supply for a in allagents(model) if a isa Bank && a.status == :surplus)
+        elseif sum(a.term_demand for a in allagents(model) if a isa Bank && a.status == :deficit) <= sum(a.term_supply for a in allagents(model) if a isa Bank && a.status == :surplus)
+            model.IBterm = sum(a.term_demand for a in allagents(model) if a isa Bank && a.status == :deficit)
+        end
+    end
+    return model.IBon, model.IBterm
+end
+
+
+"""
     ib_rates!(model) → model
 
 Update interbank rates on overnight and term segments based on disequilibrium dynamics between demand and supply.
@@ -235,12 +258,6 @@ function ib_rates!(model)
         @warn "Interbank Term rate outside the central bank's corridor!"
     end
     return model.ion, model.iterm
-end
-
-function reset_vars!(model)
-    model.IBon = 0.0
-    model.IBterm = 0.0
-    return model
 end
 
 function update_vars!(model)
