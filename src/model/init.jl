@@ -4,23 +4,28 @@ and set initial market interactions.
 """
 
 """
-    init_model(; seed::UInt32 = UInt32(96100), properties...) → model
+    init_model(; seed::UInt32 = UInt32(96100), scenario::String = "Baseline", properties...) → model
 
 Initialise the model.    
 """
-function init_model(; seed::UInt32 = UInt32(96100),
+function init_model(; seed::UInt32 = UInt32(96100), scenario::String = "Baseline",
         properties...) 
-    model = ABM(Union{Government, CentralBank, Firm, Household, Bank};
-        properties = Parameters(; properties...), 
-        scheduler = Schedulers.Randomly(),
-        rng = Xoshiro(seed),
-        warn = false # turns off Agents.jl warning of Union types
-    )
+        if scenario in ["Baseline", "Corridor", "Uncertainty", "Width"]
+            model = ABM(Union{Government, CentralBank, Firm, Household, Bank};
+                properties = Parameters(; scenario, properties...), 
+                scheduler = Schedulers.Randomly(),
+                rng = Xoshiro(seed),
+                warn = false # turns off Agents.jl warning of Union types
+            )
 
-    init_agents!(model)
-    distribute_SS_values(model)
-    real_sector_interactions!(model)
-    credit_sector_interactions!(model)
+            init_agents!(model)
+            distribute_SS_values(model)
+            real_sector_interactions!(model)
+            credit_sector_interactions!(model)
+        else
+            error("You provided a scenario named $(scenario) that is not yet implemented. 
+                Check for typos or add the scenario")
+        end
     return model
 end
 

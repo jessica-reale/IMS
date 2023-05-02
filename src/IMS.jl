@@ -20,6 +20,19 @@ include("model/SFC/banks.jl")
 function model_step!(model)
     model.step += 1
 
+    #begin: apply shocks
+    if model.scenario == "Corridor" && model.step == 200
+        model.icbd += 0.005
+        model.icbl += 0.005
+        model.icbt = (model.icbl + model.icbd) / 2.0
+    elseif model.scenario == "Uncertainty" && model.step == 200
+        model.PDU += 0.3
+    elseif model.scenario == "Width" && model.step == 200
+        model.icbl += 0.005
+        model.icbt = (model.icbl + model.icbd) / 2.0
+    end
+    #end: apply shocks
+
     IMS.update_vars!(model)
 
     for id in ids_by_type(Bank, model)
@@ -124,8 +137,8 @@ end
 Updates money market conditions based on interest rates.
 """
 function update_willingenss_ON!(model)
-    model.θ = max(0, min(model.a0 + model.a1 * (model.icbl - model.ion_prev) + model.a2 * (model.iterm_prev - model.ion_prev) - model.a3 * (model.icbl - model.iterm_prev) - model.a4 * model.PDU, 1))
-    model.LbW = max(0, min(model.a0 + model.a1 * (model.ion_prev - model.icbd) -  model.a2 * (model.iterm_prev - model.ion_prev) - model.a3 * (model.iterm_prev - model.icbd) + model.a4 * model.PDU, 1))
+    model.θ = max(0.0, min(model.a0 + model.a1 * (model.icbl - model.ion_prev) + model.a2 * (model.iterm_prev - model.ion_prev) - model.a3 * (model.icbl - model.iterm_prev) - model.a4 * model.PDU, 1.0))
+    model.LbW = max(0.0, min(model.a0 + model.a1 * (model.ion_prev - model.icbd) -  model.a2 * (model.iterm_prev - model.ion_prev) - model.a3 * (model.iterm_prev - model.icbd) + model.a4 * model.PDU, 1.0))
     return model.θ, model.LbW
 end
 
