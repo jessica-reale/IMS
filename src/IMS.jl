@@ -50,7 +50,7 @@ function model_step!(model)
         IMS.taxes!(model[id], model.τ)
     end
 
-    #IMS.hhs_matching!(model)
+    IMS.hhs_matching!(model)
     for id in ids_by_type(Household, model)
         IMS.loans!(model[id], model)
         IMS.non_performing_loans!(model[id], model)
@@ -61,7 +61,7 @@ function model_step!(model)
         IMS.taxes!(model[id], model)
     end
     
-    #IMS.firms_matching!(model)
+    IMS.firms_matching!(model)
     spending = sum(a.spending for a in allagents(model) if a isa Government) / model.n_f
     for id in ids_by_type(Firm, model)
         IMS.consumption!(model[id], model)
@@ -119,10 +119,69 @@ function model_step!(model)
     return model
 end
 
+""" 
+    update_willingenss_ON!(model) → model.θ, model.LbW
+
+Updates money market conditions based on interest rates.
+"""
 function update_willingenss_ON!(model)
     model.θ = max(0, min(model.a0 + model.a1 * (model.icbl - model.ion_prev) + model.a2 * (model.iterm_prev - model.ion_prev) - model.a3 * (model.icbl - model.iterm_prev) - model.a4 * model.PDU, 1))
     model.LbW = max(0, min(model.a0 + model.a1 * (model.ion_prev - model.icbd) -  model.a2 * (model.iterm_prev - model.ion_prev) - model.a3 * (model.iterm_prev - model.icbd) + model.a4 * model.PDU, 1))
     return model.θ, model.LbW
+end
+
+"""
+    firms_matching!(model) → model
+Updates firms' matching in the credit market.
+"""
+function firms_matching!(model)
+    for id in ids_by_type(Firm, model)
+        #Select potential partners
+        potential_partners = filter(i -> model[i] isa Bank && i != model[id].belongToBank && model[i].type == :business, collect(allids(model)))[1:model.χ]
+        #Select new partner with the best interest rate among potential partners
+        new_partner = rand(model.rng, filter(i -> i in potential_partners && model[i].ilf_rate == minimum(model[a].ilf_rate for a in potential_partners), potential_partners))
+        #Select interest rate of the new potential partner
+        inew = model[new_partner].ilf_rate
+        #Pick up old partner
+        old_partner = model[id].belongToBank
+        #PICK UP THE INTEREST OF THE OLD PARTNER
+        iold = model[old_partner].ilf_rate
+        #COMPARE OLD AND NEW INTERESTS
+        if rand(model.rng) < (1 - exp(model.λ * (inew - iold)/inew))
+            #THEN SWITCH TO A NEW PARTNER
+            deleteat!(model[old_partner].firms_customers, findall(x -> x == id, model[old_partner].firms_customers))
+            model[id].belongToBank = new_partner
+            push!(model[new_partner].firms_customers, id)
+        end
+    end
+    return model
+end
+
+"""
+    hhs_matching!(model) → model
+Updates households' matching in the credit market.
+"""
+function hhs_matching!(model)
+    for id in ids_by_type(Household, model)
+        #Select potential partners
+        potential_partners = filter(i -> model[i] isa Bank && i != model[id].belongToBank && model[i].type == :commercial, collect(allids(model)))[1:model.χ]
+        #Select new partner with the best interest rate among potential partners
+        new_partner = rand(model.rng, filter(i -> i in potential_partners && model[i].ilh_rate == minimum(model[a].ilh_rate for a in potential_partners), potential_partners))
+        #Select interest rate of the new potential partner
+        inew = model[new_partner].ilh_rate
+        #Pick up old partner
+        old_partner = model[id].belongToBank
+        #PICK UP THE INTEREST OF THE OLD PARTNER
+        iold = model[old_partner].ilh_rate
+        #COMPARE OLD AND NEW INTERESTS
+        if rand(model.rng) < (1 - exp(model.λ * (inew - iold)/inew))
+            #THEN SWITCH TO A NEW PARTNER
+            deleteat!(model[old_partner].hh_customers, findall(x -> x == id, model[old_partner].hh_customers))
+            model[id].belongToBank = new_partner
+            push!(model[new_partner].hh_customers, id)
+        end
+    end
+    return model
 end
 
 """
