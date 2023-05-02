@@ -20,7 +20,7 @@ include("model/SFC/banks.jl")
 
 function model_step!(model)
     model.step += 1
-    
+
     IMS.update_vars!(model)
     IMS.reset_vars!(model)
 
@@ -81,7 +81,7 @@ function model_step!(model)
         IMS.update_status!(model[id]) # updates IB status
     end
     
-    profits = sum(a.profits for a in allagents(model) if a isa Bank || a isa Firm)/model.n_hh
+    profits = sum(a.profits for a in allagents(model) if a isa Bank || a isa Firm) / model.n_hh
     for id in ids_by_type(Household, model)
         IMS.income!(model[id], profits)
         IMS.SFC!(model[id], model)
