@@ -20,6 +20,7 @@ include("model/SFC/banks.jl")
 
 function model_step!(model)
     model.step += 1
+    
     IMS.update_vars!(model)
     IMS.reset_vars!(model)
 
