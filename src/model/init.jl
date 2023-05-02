@@ -205,7 +205,7 @@ function distribute_SS_values(model)
             a.advances = A
         elseif isa(a, Household)
             a.consumption = c / model.n_hh
-            a.nominal_consumption = c / model.n_hh
+            a.nominal_consumption = C / model.n_hh
             a.income = Yd / model.n_hh
             a.income_exp = a.income
             a.wages = W / model.n_hh
