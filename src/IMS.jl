@@ -21,15 +21,15 @@ function model_step!(model)
     model.step += 1
 
     #begin: apply shocks
-    if model.scenario == "Corridor" && model.step == 500
+    if model.scenario == "Corridor" && model.step == model.shock_step
         model.icbd += 0.005
         model.icbl += 0.005
         model.icbt = (model.icbl + model.icbd) / 2.0
     end
-    if model.scenario == "Uncertainty" && model.step == 500
+    if model.scenario == "Uncertainty" && model.step == model.shock_step
         model.PDU += 0.3
     end
-    if model.scenario == "Width" && model.step == 500
+    if model.scenario == "Width" && model.step == model.shock_step
         model.icbl += 0.005
         model.icbt = (model.icbl + model.icbd) / 2.0
     end
@@ -112,7 +112,8 @@ function model_step!(model)
     IMS.update_willingenss_ON!(model)
     for id in ids_by_type(Bank, model)
         IMS.update_ib_demand_supply!(model[id], model)
-        IMS.ib_stocks!(model[id], model)
+        IMS.ib_on!(model[id], model)
+        IMS.ib_term!(model[id], model)
         IMS.lending_facility!(model[id])
         IMS.deposit_facility!(model[id])
         IMS.funding_costs!(model[id], model.icbt, model.ion, model.iterm, model.icbl)
@@ -129,7 +130,7 @@ function model_step!(model)
         IMS.SFC!(model[id], model)
     end
 
-    IMS.SFC_checks!(model) # check for Stock-Flow consistency 
+    IMS.SFC_checks!(model) # check for Stock-Flow consistency
     return model
 end
 
