@@ -211,7 +211,7 @@ function ib_matching!(model)
         if model[id].status == :deficit
             #Select potential partners with the closest preferences for overnight funds
             potential_partners = filter(i -> model[i] isa Bank && model[i].status == :surplus && abs(model[i].pml - model[id].pmb) <= 1e-01, collect(allids(model)))
-            if !isempty(potential_partners) #&& rand(model.rng, Bool)
+            if !isempty(potential_partners)
                 #Select new partner
                 new_partner = rand(model.rng, filter(i -> i in potential_partners, potential_partners))
                 model[id].belongToBank = new_partner
