@@ -125,9 +125,6 @@ function NSFR!(agent::Bank, model)
         agent.am = (model.m5 * agent.deposits_prev + model.m6 * agent.Term_liabs_prev) / agent.tot_liabilities
         agent.bm = (model.m1 * (agent.loans_prev + agent.ON_assets_prev) + model.m3 * (agent.bills_prev + agent.Term_assets_prev) + model.m4 * agent.bonds_prev) / agent.tot_assets
         agent.margin_stability = agent.am / agent.bm
-        if isnan(agent.margin_stability)
-            agent.margin_stability = 0.0
-        end
     end
     return agent.margin_stability
 end
@@ -275,19 +272,37 @@ function update_ib_demand_supply!(agent::Bank, model)
 end
 
 """
-    ib_stocks!(agent::Bank, model) → model
+    ib_on!(agent::Bank, model) → model
 
-Updates interbank assets and liabilities.
+Updates overnight interbank assets and liabilities.
 """
-function ib_stocks!(agent::Bank, model)
+function ib_on!(agent::Bank, model)
     if agent.status == :deficit && !ismissing(agent.belongToBank)
-        agent.ON_liabs = agent.on_demand
-        agent.Term_liabs = agent.term_demand
-        model[agent.belongToBank].ON_assets += agent.ON_liabs
-        model[agent.belongToBank].Term_assets += agent.Term_liabs
+        if agent.on_demand > model[agent.belongToBank].on_supply
+            agent.ON_liabs = model[agent.belongToBank].on_supply
+            model[agent.belongToBank].ON_assets += agent.ON_liabs
+        elseif agent.on_demand <= model[agent.belongToBank].on_supply
+            agent.ON_liabs = agent.on_demand
+            model[agent.belongToBank].ON_assets += agent.ON_liabs
+        end
     end
-    if agent.ON_liabs < 0.0 || agent.Term_liabs < 0.0
-        println("Negative IB stocks")
+    return model
+end
+
+"""
+    ib_term!(agent::Bank, model) → model
+
+Updates term interbank assets and liabilities.
+"""
+function ib_term!(agent::Bank, model)
+    if agent.status == :deficit && !ismissing(agent.belongToBank)
+        if agent.term_demand > model[agent.belongToBank].term_supply
+            agent.Term_liabs = model[agent.belongToBank].term_supply
+            model[agent.belongToBank].Term_assets += agent.Term_liabs
+        elseif agent.term_demand <= model[agent.belongToBank].term_supply
+            agent.Term_liabs = agent.term_demand
+            model[agent.belongToBank].Term_assets += agent.Term_liabs
+        end
     end
     return model
 end
