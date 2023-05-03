@@ -51,14 +51,38 @@ function scenarios_lines(df, m)
     p = pml(filter(:status => ==("surplus"), df2))
     save("pml.pdf", p)
 
-    df2 = @pipe df |>  dropmissing(_, vars_ib) |> groupby(_, [:step, :type, :scenario]) |>
+    p = deposit_facility(filter(:status => ==("surplus"), df2))
+    save("deposit_facility.pdf", p)
+
+    p = lending_facility(filter(:status => ==("deficit"), df2))
+    save("lending_facility.pdf", p)
+
+    df3 = @pipe df |>  dropmissing(_, vars_ib) |> groupby(_, [:step, :type, :scenario]) |>
     combine(_, vars_ib .=> mean, renamecols = false)
 
-    p = scenarios_credit_rates(filter(:type => ==("business"), df2))
+    p = scenarios_credit_rates(filter(:type => ==("business"), df3))
     save("credit_rates_firms.pdf", p)
 
-    p = scenarios_credit_rates(filter(:type => ==("commercial"), df2))
+    p = scenarios_credit_rates(filter(:type => ==("commercial"), df3))
     save("credit_rates_hhs.pdf", p)
+
+    p = margin_stability(filter(:type => ==("business"), df3))
+    save("margin_stability_business.pdf", p)
+
+    p = margin_stability(filter(:type => ==("commercial"), df3))
+    save("margin_stability_commercial.pdf", p)
+
+    p = am(filter(:type => ==("commercial"), df3))
+    save("am_commercial.pdf", p)
+
+    p = bm(filter(:type => ==("commercial"), df3))
+    save("bm_commercial.pdf", p)
+
+    p = am(filter(:type => ==("business"), df3))
+    save("am_business.pdf", p)
+
+    p = bm(filter(:type => ==("business"), df3))
+    save("bm_business.pdf", p)
 
     # credit market
     df_hh = @pipe df |> filter(:id => x -> x >= 1 && x <= mean(m[!, :n_hh]), _) |>
@@ -112,4 +136,4 @@ function create_plots()
     printstyled("Plots generated."; color = :blue)
 end
 
-create_plots() 
+create_plots()
