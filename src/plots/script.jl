@@ -36,12 +36,6 @@ function scenarios_lines(df, m)
     p = bm(df1)
     save("bm.pdf", p)
 
-    p = ib_on_scenarios(df1)
-    save("ib_on_scenarios.pdf", p)  
-
-    p = ib_term_scenarios(df1)
-    save("ib_term_scenarios.pdf", p) 
-
     df2 = @pipe df |>  dropmissing(_, vars_ib) |> groupby(_, [:step, :status, :scenario]) |>
             combine(_, vars_ib .=> mean, renamecols = false)
 
@@ -50,6 +44,12 @@ function scenarios_lines(df, m)
 
     p = pml(filter(:status => ==("surplus"), df2))
     save("pml.pdf", p)
+
+    p = ib_on_scenarios(filter(:status => ==("surplus"), df2))
+    save("ib_on_scenarios.pdf", p)  
+
+    p = ib_term_scenarios(filter(:status => ==("surplus"), df2))
+    save("ib_term_scenarios.pdf", p) 
 
     df2 = @pipe df |>  dropmissing(_, vars_ib) |> groupby(_, [:step, :type, :scenario]) |>
     combine(_, vars_ib .=> mean, renamecols = false)

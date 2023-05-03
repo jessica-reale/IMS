@@ -60,7 +60,7 @@ function am(df)
     gdf = groupby(df, :scenario)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.am[50:end]), 1600)
+        _, trend = hp_filter((subdf.am), 1600)
         lines!(trend; 
             label = "$(key.scenario)")
     end
@@ -78,7 +78,7 @@ function bm(df)
     gdf = groupby(df, :scenario)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.bm[50:end]), 1600)
+        _, trend = hp_filter((subdf.bm), 1600)
         lines!(trend; 
             label = "$(key.scenario)")
     end
