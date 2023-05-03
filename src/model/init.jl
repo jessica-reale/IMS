@@ -19,12 +19,12 @@ function init_model(; seed::UInt32 = UInt32(96100), scenario::String = "Baseline
             )
 
             init_agents!(model)
+            set_model_init_params(model)
             distribute_SS_values(model)
             real_sector_interactions!(model)
             credit_sector_interactions!(model)
         else
-            error("You provided a scenario named $(scenario) that is not yet implemented. 
-                Check for typos or add the scenario")
+            error("You provided a scenario named $(scenario) that is not yet implemented. Check for typos or add the scenario")
         end
     return model
 end
@@ -193,11 +193,11 @@ Distribute SS values to aggregate sectors (Government and Central Bank) and to h
 """
 function distribute_SS_values(model)
     # take variables names and corresponding initial values
-        (N, UC, p, K, y, Invent, invent, 
-        invent_target, W, T, B, I, i, Lf, 
-        C, c, G, Yd, Df, NWh, Lh, Dh, Hj, Hk, 
-        H, Bj, Bk, Ak, Aj, A, Bcb, 
-        Pbj, Pbk, Pf, il, id) = SS_initial(model)
+    (N, UC, p, K, y, Invent, invent, 
+    invent_target, W, T, B, I, i, Lf, 
+    C, c, G, Yd, Df, NWh, Lh, Dh, Hj, Hk, 
+    H, Bj, Bk, Ak, Aj, A, Bcb, 
+    Pbj, Pbk, Pf, il, id) = SS_initial(model)
 
     for a in allagents(model)
         if isa(a, Government)
@@ -272,6 +272,15 @@ function distribute_SS_values(model)
             a.margin_stability = a.am/ a.bm
         end
     end
+    return model
+end
+
+function set_model_init_params(model)
+    model.a0 = rand(model.rng, Uniform(0.0, 1.0))
+    model.a1 = rand(model.rng, Uniform(0.0, 1.0))
+    model.a2 = rand(model.rng, Uniform(0.0, 1.0))
+    model.a3 = rand(model.rng, Uniform(0.0, 1.0))
+    model.a4 = rand(model.rng, Uniform(0.0, 1.0))
     return model
 end
 
