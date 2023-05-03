@@ -45,8 +45,6 @@ Base.@kwdef mutable struct Parameters
     m5::Float64 = 0.9
     m6::Float64 = 0.5
     # Interbank market
-    IBon::Float64 = 0.0
-    IBterm::Float64 = 0.0
     ion::Float64 = 0.024
     iterm::Float64 = 0.024
     ion_prev::Float64 = 0.024

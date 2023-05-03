@@ -118,7 +118,6 @@ function model_step!(model)
         IMS.funding_costs!(model[id], model.icbt, model.ion, model.iterm, model.icbl)
         IMS.SFC!(model[id], model)
     end
-    IMS.ib_stocks!(model)
     IMS.ib_rates!(model)
     # end: Interbank Market
     
@@ -222,31 +221,6 @@ function ib_matching!(model)
     end
     return model
 end
-
-"""
-    ib_stocks!(model) → model.IBon, model.IBterm
-
-Updates interbank market stocks.
-"""
-function ib_stocks!(model)
-    if length([a.id for a in allagents(model) if a isa Bank && a.status == :deficit && !ismissing(a.belongToBank)]) > 0 && 
-        length([a.id for a in allagents(model) if a isa Bank && a.status == :surplus && !isempty(a.ib_customers)]) > 0
-
-        if sum(a.on_demand for a in allagents(model) if a isa Bank && a.status == :deficit) > sum(a.on_supply for a in allagents(model) if a isa Bank && a.status == :surplus)
-            model.IBon = sum(a.on_supply for a in allagents(model) if a isa Bank && a.status == :surplus)
-        elseif sum(a.on_demand for a in allagents(model) if a isa Bank && a.status == :deficit) <= sum(a.on_supply for a in allagents(model) if a isa Bank && a.status == :surplus)
-            model.IBon = sum(a.on_demand for a in allagents(model) if a isa Bank && a.status == :deficit)
-        end
-
-        if sum(a.term_demand for a in allagents(model) if a isa Bank && a.status == :deficit) > sum(a.term_supply for a in allagents(model) if a isa Bank && a.status == :surplus)
-            model.IBterm = sum(a.term_supply for a in allagents(model) if a isa Bank && a.status == :surplus)
-        elseif sum(a.term_demand for a in allagents(model) if a isa Bank && a.status == :deficit) <= sum(a.term_supply for a in allagents(model) if a isa Bank && a.status == :surplus)
-            model.IBterm = sum(a.term_demand for a in allagents(model) if a isa Bank && a.status == :deficit)
-        end
-    end
-    return model.IBon, model.IBterm
-end
-
 
 """
     ib_rates!(model) → model
