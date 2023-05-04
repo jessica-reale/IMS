@@ -32,7 +32,7 @@ using IMS
 end
 
 # runs the model, transforms and saves data
-function run_model(number_of_runs::Int = 100)
+function run_model(number_of_runs::Int = 50)
     scenarios = ("Baseline", "Corridor", "Uncertainty", "Width")
     
     # collect agent variables
