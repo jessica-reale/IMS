@@ -126,6 +126,43 @@ function pml(df)
     return fig
 end
 
+function deposit_facility(df)
+    fig = Figure(resolution = (800, 400))
+    ax = fig[1,1] = Axis(fig, title = "Deposit facility", xlabel = "Steps", ylabel = "Mean")
+    gdf = groupby(df, :scenario)
+
+    for (key, subdf) in pairs(gdf)
+        _, trend = hp_filter((subdf.deposit_facility), 1600)
+        lines!(trend; 
+            label = "$(key.scenario)")
+    end
+    ax.xticks = 0:200:1200
+
+    fig[1, end+1] = Legend(fig, ax; 
+        orientation = :vertical, tellwidth = true)
+
+    return fig
+end
+
+function lending_facility(df)
+    fig = Figure(resolution = (800, 400))
+    ax = fig[1,1] = Axis(fig, title = "Lending facility", xlabel = "Steps", ylabel = "Mean")
+    gdf = groupby(df, :scenario)
+
+    for (key, subdf) in pairs(gdf)
+        _, trend = hp_filter((subdf.lending_facility), 1600)
+        lines!(trend; 
+            label = "$(key.scenario)")
+    end
+    ax.xticks = 0:200:1200
+
+    fig[1, end+1] = Legend(fig, ax; 
+        orientation = :vertical, tellwidth = true)
+
+    return fig
+end
+
+# Credit market
 function scenarios_loans(df; f::Bool = true)
     fig = Figure(resolution = (800, 400))
     ax = fig[1,1] = Axis(fig, xlabel = "Steps", ylabel = "Mean")

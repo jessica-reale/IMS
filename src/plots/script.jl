@@ -112,4 +112,4 @@ function create_plots()
     printstyled("Plots generated."; color = :blue)
 end
 
-create_plots() 
+create_plots()
