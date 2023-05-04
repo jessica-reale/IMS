@@ -9,6 +9,7 @@ Base.@kwdef mutable struct Parameters
     n_bj::Int = 20
     n_bk::Int = 20
     scenario::String = "Baseline"
+    shock_step::Int = 500
     # initial GD/GDP ratio 
     r::Float64 = 0.9
     # model general parameters
@@ -52,9 +53,10 @@ Base.@kwdef mutable struct Parameters
     θ::Float64 = 0.0
     LbW::Float64 = 0.0
     σib::Float64 = 0.1
-    a0::Float64 = 0.1
-    a1::Float64 = 0.2
-    a2::Float64 = 0.2
-    a3::Float64 = 0.2
-    a4::Float64 = 0.4
+    # params set in init.jl
+    a0::Float64 = 0.0
+    a1::Float64 = 0.0
+    a2::Float64 = 0.0
+    a3::Float64 = 0.0
+    a4::Float64 = 0.0
 end
