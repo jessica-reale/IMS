@@ -52,7 +52,7 @@ function run_model(number_of_runs::Int = 100)
         models = [IMS.init_model(; seed, scenario = scenario) for seed in seeds]
         
         adf, mdf, _ =  ensemblerun!(models, dummystep, IMS.model_step!, 1200;
-            adata, mdata, parallel = false, showprogress = true)
+            adata, mdata, parallel = true, showprogress = true)
             
         println("Collecting data for $(scenario)-scenario...")
 
