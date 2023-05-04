@@ -13,7 +13,7 @@ addprocs([("ubuntu@ec2-16-16-74-17.eu-north-1.compute.amazonaws.com", :auto)];
 @everywhere begin
     using Pkg
     Pkg.activate(".")
-    #Pkg.instantiate()
+    Pkg.instantiate()
 end
 
 # Load packages on master process
