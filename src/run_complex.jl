@@ -4,7 +4,7 @@ Pkg.instantiate()
 
 # Start workers
 using Distributed
-addprocs([("ubuntu@ec2-13-53-139-133.eu-north-1.compute.amazonaws.com", :auto)];
+addprocs([("ubuntu@ec2-16-16-171-38.eu-north-1.compute.amazonaws.com", :auto)];
    exename = "/home/ubuntu/julia-1.8.5/bin/julia",
     dir = "/home/ubuntu/projects/IMS",
     tunnel = true)
