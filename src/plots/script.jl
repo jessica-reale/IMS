@@ -12,9 +12,9 @@ using QuantEcon
 include("lib.jl")
 
 const vars_ib = [:lending_facility, :deposit_facility, :Term_assets, :Term_liabs, :ON_assets, :ON_liabs, :am, :bm, :pmb, :pml,
-    :margin_stability, :on_demand, :term_demand, :il_rate, :id_rate]
+    :margin_stability, :on_supply, :term_supply, :on_demand, :term_demand, :il_rate, :id_rate, :tot_assets, :tot_liabilities]
 
-function overviews_model(df)    
+function overviews_model(df)
     p = ib_rates_scenarios(df)
     save("ib_rates_scenarios.pdf", p)    
     
@@ -25,7 +25,19 @@ end
 function scenarios_lines(df, m)
     # ib market
     df1 = @pipe df |> dropmissing(_, vars_ib) |> groupby(_, [:step, :scenario]) |>
-            combine(_, vars_ib .=> mean, renamecols = false)
+            combine(_, vars_ib .=> mean, renamecols = false) |> filter(row -> all(x -> !(x isa Number && isnan(x)), row), _)
+
+    p = assets(df1)
+    save("total_assets.pdf", p)
+
+    p = liabilities(df1)
+    save("total_liabilities.pdf", p)
+
+    p = ib_on_scenarios(df1)
+    save("ib_on_scenarios.pdf", p)  
+
+    p = ib_term_scenarios(df1)
+    save("ib_term_scenarios.pdf", p) 
 
     p = margin_stability(df1)
     save("margin_stability.pdf", p)
@@ -36,30 +48,15 @@ function scenarios_lines(df, m)
     p = bm(df1)
     save("bm.pdf", p)
 
-    df2 = @pipe df |>  dropmissing(_, vars_ib) |> groupby(_, [:step, :status, :scenario]) |>
-            combine(_, vars_ib .=> mean, renamecols = false)
+    p = scenarios_credit_rates(df1)
+    save("credit_rates.pdf", p)
 
-    p = pmb(filter(:status => ==("deficit"), df2))
+    p = pmb(df1)
     save("pmb.pdf", p)
 
-    p = pml(filter(:status => ==("surplus"), df2))
+    p = pml(df1)
     save("pml.pdf", p)
-
-    p = ib_on_scenarios(filter(:status => ==("surplus"), df2))
-    save("ib_on_scenarios.pdf", p)  
-
-    p = ib_term_scenarios(filter(:status => ==("surplus"), df2))
-    save("ib_term_scenarios.pdf", p) 
-
-    df2 = @pipe df |>  dropmissing(_, vars_ib) |> groupby(_, [:step, :type, :scenario]) |>
-    combine(_, vars_ib .=> mean, renamecols = false)
-
-    p = scenarios_credit_rates(filter(:type => ==("business"), df2))
-    save("credit_rates_firms.pdf", p)
-
-    p = scenarios_credit_rates(filter(:type => ==("commercial"), df2))
-    save("credit_rates_hhs.pdf", p)
-
+    
     # credit market
     df_hh = @pipe df |> filter(:id => x -> x >= 1 && x <= mean(m[!, :n_hh]), _) |>
             groupby(_, [:step, :scenario]) |> 

@@ -1,4 +1,3 @@
-
 # Scenarios comparisons in the same plot
 function ib_on_scenarios(df)
     fig = Figure(resolution = (800, 400))
@@ -6,11 +5,12 @@ function ib_on_scenarios(df)
     gdf = groupby(df, :scenario)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.ON_assets), 1600)
+        _, trend = hp_filter((subdf.ON_assets), 14400)
         lines!(trend; 
             label = "$(key.scenario)")
     end
     ax.xticks = 0:200:1200
+  
 
     fig[1, end+1] = Legend(fig, ax; 
         orientation = :vertical, tellwidth = true)
@@ -24,11 +24,12 @@ function ib_term_scenarios(df)
     gdf = groupby(df, :scenario)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.Term_assets), 1600)
+        _, trend = hp_filter((subdf.Term_assets), 14400)
         lines!(trend; 
             label = "$(key.scenario)")
     end
     ax.xticks = 0:200:1200
+  
 
     fig[1, end+1] = Legend(fig, ax; 
         orientation = :vertical, tellwidth = true)
@@ -42,11 +43,11 @@ function margin_stability(df)
     gdf = groupby(df, :scenario)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.margin_stability), 1600)
+        _, trend = hp_filter((subdf.margin_stability), 14400)
         lines!(trend; 
             label = "$(key.scenario)")
     end
-    ax.xticks = 0:200:1200
+    ax.xticks =0:200:1200
 
     fig[1, end+1] = Legend(fig, ax; 
         orientation = :vertical, tellwidth = true)
@@ -60,11 +61,12 @@ function am(df)
     gdf = groupby(df, :scenario)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.am), 1600)
+        _, trend = hp_filter((subdf.am), 14400)
         lines!(trend; 
             label = "$(key.scenario)")
     end
-    ax.xticks = 0:200:1200
+    ax.xticks =0:200:1200
+  
 
     fig[1, end+1] = Legend(fig, ax; 
         orientation = :vertical, tellwidth = true)
@@ -78,11 +80,49 @@ function bm(df)
     gdf = groupby(df, :scenario)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.bm), 1600)
+        _, trend = hp_filter((subdf.bm), 14400)
         lines!(trend; 
             label = "$(key.scenario)")
     end
-    ax.xticks = 0:200:1200
+    ax.xticks =0:200:1200
+   
+
+    fig[1, end+1] = Legend(fig, ax; 
+        orientation = :vertical, tellwidth = true)
+
+    return fig
+end
+
+function assets(df)
+    fig = Figure(resolution = (800, 400))
+    ax = fig[1,1] = Axis(fig, title = "Total assets", xlabel = "Steps", ylabel = "Mean")
+    gdf = groupby(df, :scenario)
+
+    for (key, subdf) in pairs(gdf)
+        _, trend = hp_filter((subdf.tot_assets), 14400)
+        lines!(trend; 
+            label = "$(key.scenario)")
+    end
+    ax.xticks =0:200:1200
+
+    fig[1, end+1] = Legend(fig, ax; 
+        orientation = :vertical, tellwidth = true)
+
+    return fig
+end
+
+function liabilities(df)
+    fig = Figure(resolution = (800, 400))
+    ax = fig[1,1] = Axis(fig, title = "Total liabilities", xlabel = "Steps", ylabel = "Mean")
+    gdf = groupby(df, :scenario)
+
+    for (key, subdf) in pairs(gdf)
+        _, trend = hp_filter((subdf.tot_liabilities), 14400)
+        lines!(trend; 
+            label = "$(key.scenario)")
+    end
+    ax.xticks =0:200:1200
+  
 
     fig[1, end+1] = Legend(fig, ax; 
         orientation = :vertical, tellwidth = true)
@@ -96,11 +136,12 @@ function pmb(df)
     gdf = groupby(df, :scenario)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.pmb), 1600)
+        _, trend = hp_filter((subdf.pmb), 14400)
         lines!(trend; 
             label = "$(key.scenario)")
     end
-    ax.xticks = 0:200:1200
+    ax.xticks =0:200:1200
+  
 
     fig[1, end+1] = Legend(fig, ax; 
         orientation = :vertical, tellwidth = true)
@@ -114,11 +155,12 @@ function pml(df)
     gdf = groupby(df, :scenario)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.pml), 1600)
+        _, trend = hp_filter((subdf.pml), 14400)
         lines!(trend; 
             label = "$(key.scenario)")
     end
-    ax.xticks = 0:200:1200
+    ax.xticks =0:200:1200
+  
 
     fig[1, end+1] = Legend(fig, ax; 
         orientation = :vertical, tellwidth = true)
@@ -132,11 +174,11 @@ function deposit_facility(df)
     gdf = groupby(df, :scenario)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.deposit_facility), 1600)
+        _, trend = hp_filter((subdf.deposit_facility), 1)
         lines!(trend; 
             label = "$(key.scenario)")
     end
-    ax.xticks = 0:200:1200
+    ax.xticks =0:200:1200
 
     fig[1, end+1] = Legend(fig, ax; 
         orientation = :vertical, tellwidth = true)
@@ -150,11 +192,11 @@ function lending_facility(df)
     gdf = groupby(df, :scenario)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.lending_facility), 1600)
+        _, trend = hp_filter((subdf.lending_facility), 14400)
         lines!(trend; 
             label = "$(key.scenario)")
     end
-    ax.xticks = 0:200:1200
+    ax.xticks =0:200:1200
 
     fig[1, end+1] = Legend(fig, ax; 
         orientation = :vertical, tellwidth = true)
@@ -169,11 +211,11 @@ function scenarios_loans(df; f::Bool = true)
     gdf = groupby(df, :scenario)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.loans), 1600)
+        _, trend = hp_filter((subdf.loans), 14400)
         lines!(trend; 
             label = "$(key.scenario)")
     end
-    ax.xticks = 0:200:1200
+    ax.xticks =0:200:1200
 
     ax.title = if f 
         "Firms Loans"
@@ -193,11 +235,12 @@ function scenarios_credit_rates(df)
     gdf = groupby(df, :scenario)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.il_rate), 1600)
+        _, trend = hp_filter((subdf.il_rate), 14400)
         lines!(trend; 
             label = "$(key.scenario)")
     end
-    ax.xticks = 0:200:1200
+    ax.xticks =0:200:1200
+   
 
     fig[1, end+1] = Legend(fig, ax; 
         orientation = :vertical, tellwidth = true)
@@ -211,11 +254,11 @@ function output(df)
     gdf = groupby(df, :scenario)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.output), 1600)
+        _, trend = hp_filter((subdf.output), 14400)
         lines!(trend; 
             label = "$(key.scenario)")
     end
-    ax.xticks = 0:200:1200
+    ax.xticks =0:200:1200
 
     fig[1, end+1] = Legend(fig, ax; 
         orientation = :vertical, tellwidth = true)
@@ -229,11 +272,12 @@ function prices(df)
     gdf = groupby(df, :scenario)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.prices), 1600)
+        _, trend = hp_filter((subdf.prices), 14400)
         lines!(trend; 
             label = "$(key.scenario)")
     end
-    ax.xticks = 0:200:1200
+    ax.xticks =0:200:1200
+   
 
     fig[1, end+1] = Legend(fig, ax; 
         orientation = :vertical, tellwidth = true)
@@ -242,7 +286,7 @@ function prices(df)
 end
 
 function ib_rates_scenarios(df)
-    fig = Figure(resolution = (1200, 800))
+    fig = Figure(resolution = (1600, 800))
     axes = ((1,1), (2,1), (1,2), (2,2))
     gdf = @pipe df |>
         filter(r -> r.scenario in ["Baseline", "Corridor", "Uncertainty", "Width"], _) |>
@@ -250,13 +294,13 @@ function ib_rates_scenarios(df)
 
     for i in 1:length(gdf)
         ax = fig[axes[i]...] = Axis(fig, title = only(unique(gdf[i].scenario)))
-        cycle_on, trend_on = hp_filter(gdf[i].ion, 1600)
-        cycle_term, trend_term = hp_filter(gdf[i].iterm, 1600)
+        cycle_on, trend_on = hp_filter(gdf[i].ion, 14400)
+        cycle_term, trend_term = hp_filter(gdf[i].iterm, 14400)
         lines!(trend_on; 
              label = "ON rate")
         lines!(trend_term; 
              label = "Term rate")
-        lines!(gdf[i].icbt; linestyle = :dot, color = :black)     
+        lines!(gdf[i].icbt; linestyle = :dash, color = :lightgrey)     
         lines!(gdf[i].icbd;  linestyle = :dot, color = :black)
         lines!(gdf[i].icbl;  linestyle = :dot, color = :black)
         ax.xticks = 0:200:1200
@@ -270,6 +314,7 @@ function ib_rates_scenarios(df)
     linkyaxes!(fig.content...)
     ax3.yticklabelsvisible = ax4.yticklabelsvisible = false
     ax3.yticksvisible = ax4.yticksvisible = false
+    ax1.yminorticksvisible =  ax2.yminorticksvisible = true
     ax1.xticklabelsvisible = ax3.xticklabelsvisible = false
     ax1.xticksvisible = ax3.xticksvisible = false
 
@@ -284,7 +329,7 @@ function ib_rates_scenarios(df)
 end
 
 function willingness(df)
-    fig = Figure(resolution = (1200, 800))
+    fig = Figure(resolution = (1600, 800))
     axes = ((1,1), (2,1), (1,2), (2,2))
     gdf = @pipe df |>
         filter(r -> r.scenario in ["Baseline", "Corridor", "Uncertainty", "Width"], _) |>
@@ -292,8 +337,8 @@ function willingness(df)
 
     for i in 1:length(gdf)
         ax = fig[axes[i]...] = Axis(fig, title = only(unique(gdf[i].scenario)))
-        cycle_on, trend_theta = hp_filter(gdf[i].θ, 1600)
-        cycle_term, trend_LbW = hp_filter(gdf[i].iterm, 1600)
+        cycle_on, trend_theta = hp_filter(gdf[i].θ, 1)
+        cycle_term, trend_LbW = hp_filter(gdf[i].iterm, 14400)
         lines!(trend_theta; 
              label = "θ")
         lines!(trend_LbW; 
@@ -309,6 +354,7 @@ function willingness(df)
     linkyaxes!(fig.content...)
     ax3.yticklabelsvisible = ax4.yticklabelsvisible = false
     ax3.yticksvisible = ax4.yticksvisible = false
+    ax1.yminorticksvisible =  ax2.yminorticksvisible = true
     ax1.xticklabelsvisible = ax3.xticklabelsvisible = false
     ax1.xticksvisible = ax3.xticksvisible = false
 
