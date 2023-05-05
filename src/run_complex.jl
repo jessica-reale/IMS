@@ -4,16 +4,12 @@ Pkg.instantiate()
 
 # Start workers
 using Distributed
-addprocs([("ubuntu@ec2-13-53-184-16.eu-north-1.compute.amazonaws.com", :auto)];
-   exename = "/home/ubuntu/julia-1.8.5/bin/julia",
-    dir = "/home/ubuntu/projects/IMS",
-    tunnel = true)
+addprocs()    
 
 # Set up package environment on workers
 @everywhere begin
     using Pkg
     Pkg.activate(".")
-    Pkg.instantiate()
 end
 
 # Load packages on master process
@@ -34,7 +30,7 @@ end
 # runs the model, transforms and saves data
 function run_model(number_of_runs::Int = 50)
     scenarios = ("Baseline", "Corridor", "Uncertainty", "Width")
-    
+
     # collect agent variables
     adata = [:type, :status, :ON_assets, :ON_liabs, :margin_stability, :am, :bm,
         :Term_assets, :Term_liabs, :loans, :loans_prev, :output, :pmb, :pml, :tot_assets, 
