@@ -20,7 +20,6 @@ function run_sens(param::Symbol, param_range::Vector{Float64})
         :il_rate, :id_rate, :funding_costs, :lending_facility, :deposit_facility,
         :on_demand, :term_demand, :on_supply, :term_supply, :prices]
 
-    mdata = [:ibon, :ibterm]
     for x in param_range
         # Setup model properties
         properties = Dict(
@@ -29,7 +28,7 @@ function run_sens(param::Symbol, param_range::Vector{Float64})
 
         println("Running parameter scans for $(param) at $(x)...")
 
-        df, mdf = paramscan(properties, IMS.init_model;
+        df, _ = paramscan(properties, IMS.init_model;
                 adata = adata, model_step! = IMS.model_step!, n = 1200,
                 include_constants = true)
 
@@ -39,10 +38,6 @@ function run_sens(param::Symbol, param_range::Vector{Float64})
         df = @pipe df |>
             groupby(_, [param, :step, :id, :status]) |>
             combine(_, adata[1:2] .=> unique, adata[3:end] .=> mean; renamecols = false)
-    
-        mdf = @pipe df |>
-        groupby(_, [param, :step]) |>
-        combine(_, mdata .=> mean; renamecols = false)
 
         # Write data to disk
         println("Saving to disk for $(param) at $(x)...")
@@ -50,9 +45,6 @@ function run_sens(param::Symbol, param_range::Vector{Float64})
         filepath = "$datapath/df.csv"
         isfile(filepath) && rm(filepath)
         CSV.write(filepath, df)
-        filepath = "$datapath/mdf.csv"
-        isfile(filepath) && rm(filepath)
-        CSV.write(filepath, mdf)
     end
     return nothing
 end
