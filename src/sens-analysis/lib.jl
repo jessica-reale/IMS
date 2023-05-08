@@ -4,7 +4,7 @@ function on_loans(df::DataFrame, param::Symbol)
     gdf = groupby(df, param)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.ON_assets), 1600)
+        _, trend = hp_filter((subdf.ON_assets), 14400)
         lines!(trend; 
             label = "$(param) = $(key[1])")
     end
@@ -22,7 +22,7 @@ function term_loans(df::DataFrame, param::Symbol)
     gdf = groupby(df, param)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.Term_assets), 1600)
+        _, trend = hp_filter((subdf.Term_assets), 14400)
         lines!(trend; 
             label = "$(param) = $(key[1])")
         end
@@ -40,7 +40,7 @@ function credit_loans(df::DataFrame, param::Symbol; f::Bool = true)
     gdf = groupby(df, param)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.loans), 1600)
+        _, trend = hp_filter((subdf.loans), 14400)
         lines!(trend; 
             label = "$(param) = $(key[1])")
     end
@@ -64,7 +64,7 @@ function output(df::DataFrame, param::Symbol)
     gdf = groupby(df, param)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.output), 1600)
+        _, trend = hp_filter((subdf.output), 14400)
         lines!(trend; 
             label = "$(param) = $(key[1])")
     end
