@@ -287,9 +287,9 @@ end
 
 function ib_rates_scenarios(df)
     fig = Figure(resolution = (1600, 800))
-    axes = ((1,1), (2,1), (1,2), (2,2))
+    axes = ((1,1), (2,1))
     gdf = @pipe df |>
-        filter(r -> r.scenario in ["Baseline", "Corridor", "Uncertainty", "Width"], _) |>
+        filter(r -> r.scenario in ["Low", "High"], _) |>
         groupby(_, :scenario)
 
     for i in 1:length(gdf)
@@ -306,17 +306,15 @@ function ib_rates_scenarios(df)
         ax.xticks = 0:200:1200
     end
 
-    ax1 = fig.content[1]; ax3 = fig.content[3]
-    ax2 = fig.content[2]; ax4 = fig.content[4]
+    ax1 = fig.content[1]
+    ax2 = fig.content[2]
 
-    ax1.ylabel = ax2.ylabel = "Mean"
-    ax2.xlabel = ax4.xlabel = "Steps"
+    ax1.ylabel = "Mean"
+    ax1.xlabel = ax2.xlabel = "Steps"
     linkyaxes!(fig.content...)
-    ax3.yticklabelsvisible = ax4.yticklabelsvisible = false
-    ax3.yticksvisible = ax4.yticksvisible = false
-    ax1.yminorticksvisible =  ax2.yminorticksvisible = true
-    ax1.xticklabelsvisible = ax3.xticklabelsvisible = false
-    ax1.xticksvisible = ax3.xticksvisible = false
+    ax2.yticklabelsvisible = false
+    ax2.yticksvisible = false
+
 
     fig[end+1,1:2] = Legend(fig, 
         ax1; 
@@ -330,9 +328,9 @@ end
 
 function willingness(df)
     fig = Figure(resolution = (1600, 800))
-    axes = ((1,1), (2,1), (1,2), (2,2))
+    axes = ((1,1), (2,1))
     gdf = @pipe df |>
-        filter(r -> r.scenario in ["Baseline", "Corridor", "Uncertainty", "Width"], _) |>
+        filter(r -> r.scenario in ["Low", "High"], _) |>
         groupby(_, :scenario)
 
     for i in 1:length(gdf)
@@ -346,17 +344,14 @@ function willingness(df)
         ax.xticks = 0:200:1200
     end
 
-    ax1 = fig.content[1]; ax3 = fig.content[3]
-    ax2 = fig.content[2]; ax4 = fig.content[4]
+    ax1 = fig.content[1]
+    ax2 = fig.content[2]
 
-    ax1.ylabel = ax2.ylabel = "Mean"
-    ax2.xlabel = ax4.xlabel = "Steps"
+    ax1.ylabel = "Mean"
+    ax1.xlabel = ax2.xlabel = "Steps"
     linkyaxes!(fig.content...)
-    ax3.yticklabelsvisible = ax4.yticklabelsvisible = false
-    ax3.yticksvisible = ax4.yticksvisible = false
-    ax1.yminorticksvisible =  ax2.yminorticksvisible = true
-    ax1.xticklabelsvisible = ax3.xticklabelsvisible = false
-    ax1.xticksvisible = ax3.xticksvisible = false
+    ax2.yticklabelsvisible = false
+    ax2.yticksvisible = false
 
     fig[end+1,1:2] = Legend(fig, 
         ax1; 

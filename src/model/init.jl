@@ -4,15 +4,15 @@ and set initial market interactions.
 """
 
 """
-    init_model(; seed::UInt32 = UInt32(96100), scenario::String = "Baseline", properties...) → model
+    init_model(; seed::UInt32 = UInt32(96100), shock::String = "Missing", properties...) → model
 
 Initialise the model.    
 """
-function init_model(; seed::UInt32 = UInt32(96100), scenario::String = "Baseline",
+function init_model(; seed::UInt32 = UInt32(96100), shock::String = "Missing",
         properties...) 
-        if scenario in ["Baseline", "Corridor", "Uncertainty", "Width"]
+        if shock in ["Missing", "Corridor", "Width"]
             model = ABM(Union{Government, CentralBank, Firm, Household, Bank};
-                properties = Parameters(; scenario, properties...), 
+                properties = Parameters(; shock, properties...), 
                 scheduler = Schedulers.Randomly(),
                 rng = Xoshiro(seed),
                 warn = false # turns off Agents.jl warning of Union types
@@ -24,7 +24,7 @@ function init_model(; seed::UInt32 = UInt32(96100), scenario::String = "Baseline
             real_sector_interactions!(model)
             credit_sector_interactions!(model)
         else
-            error("You provided a scenario named $(scenario) that is not yet implemented. Check for typos or add the scenario")
+            error("You provided a shock named $(shock) that is not yet implemented. Check for typos or add the scenario")
         end
     return model
 end
