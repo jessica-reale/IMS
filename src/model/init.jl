@@ -125,8 +125,8 @@ function SS_initial(model)
     Hj = (model.μ + model.v) * Dh
     Hk = (model.μ + model.v) * Df
     H = Hj + Hk
-    Bj = max(0.0, Dh - Lh - model.μ * Dh)
-    Bk = max(0.0, Df - Lf - model.μ * Df)
+    Bj = max(0.0, min(Dh - Lh - model.μ * Dh, B))
+    Bk = max(0.0, min(Df - Lf - model.μ * Df, B))
     Aj = 
         if Bj == 0.0
             Hj + Lh - Dh
@@ -134,7 +134,7 @@ function SS_initial(model)
             model.v * Dh
         end
     Ak = 
-        if Bk == 0.0 
+        if Bk == 0.0
             Hk + Lf - Df
         else
             model.v * Df
@@ -251,8 +251,8 @@ function distribute_SS_values(model)
             # NSFR
             a.tot_assets = a.loans + a.hpm + a.bills
             a.tot_liabilities = a.deposits + a.advances
-            a.am = (model.m5 * a.deposits) / a.tot_liabilities
-            a.bm = (model.m1 * a.loans + model.m3 * a.bills) / a.tot_assets
+            a.am = (model.m4 * a.deposits) / a.tot_liabilities
+            a.bm = (model.m1 * a.loans + model.m2 * a.bills) / a.tot_assets
             a.margin_stability = a.am/ a.bm
         elseif isa(a, Bank) && a.type == :business
             a.deposits = Df / model.n_bk
@@ -267,8 +267,8 @@ function distribute_SS_values(model)
             # NSFR
             a.tot_assets = a.loans + a.hpm + a.bills
             a.tot_liabilities = a.deposits + a.advances
-            a.am = (model.m5 * a.deposits) / a.tot_liabilities
-            a.bm = (model.m1 * a.loans + model.m3 * a.bills) / a.tot_assets
+            a.am = (model.m4 * a.deposits) / a.tot_liabilities
+            a.bm = (model.m1 * a.loans + model.m2 * a.bills) / a.tot_assets
             a.margin_stability = a.am/ a.bm
         end
     end

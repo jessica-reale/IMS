@@ -69,7 +69,8 @@ end
 Update banks' holdings of bills (buffer variable). If bills are negative they are set to zero and banks ask for advances as buffer variable.
 """
 function bills!(agent::Bank, model) #id
-    agent.bills = max(0.0, agent.deposits + agent.npl + agent.lending_facility - agent.loans - model.μ * agent.deposits - agent.bonds - agent.deposit_facility)
+    agent.bills = max(0.0, min(agent.deposits + agent.npl + agent.lending_facility - agent.loans - model.μ * agent.deposits - agent.bonds - agent.deposit_facility, 
+        sum(a.bills for a in allagents(model) if a isa Government) / (model.n_bj + model.n_bk)))
     return agent.bills
 end
 
@@ -122,8 +123,8 @@ function NSFR!(agent::Bank, model)
     if agent.status != :neutral
         agent.tot_assets = agent.loans_prev + agent.hpm_prev + agent.bills_prev + agent.bonds_prev + agent.ON_assets_prev + agent.Term_assets_prev + agent.deposit_facility_prev
         agent.tot_liabilities = agent.deposits_prev + agent.ON_liabs_prev + agent.Term_liabs_prev + agent.npl_prev + agent.lending_facility_prev + agent.advances_prev
-        agent.am = (model.m5 * agent.deposits_prev + model.m6 * agent.Term_liabs_prev) / agent.tot_liabilities
-        agent.bm = (model.m1 * (agent.loans_prev + agent.ON_assets_prev) + model.m3 * (agent.bills_prev + agent.Term_assets_prev) + model.m4 * agent.bonds_prev) / agent.tot_assets
+        agent.am = (model.m4 * agent.deposits_prev + model.m5 * agent.Term_liabs_prev) / agent.tot_liabilities
+        agent.bm = (model.m1 * (agent.loans_prev + agent.ON_assets_prev) + model.m2 * (agent.bills_prev + agent.Term_assets_prev) + model.m3 * agent.bonds_prev) / agent.tot_assets
         agent.margin_stability = agent.am / agent.bm
     end
     return agent.margin_stability
@@ -433,7 +434,6 @@ Define banks' SFC actions and update their accounting.
 """
 function SFC!(agent::Bank, model)
     IMS.hpm!(agent, model.μ, model.v)
-    IMS.bonds!(agent)
     IMS.bills!(agent, model)
     IMS.advances!(agent, model)
     IMS.networth!(agent)
