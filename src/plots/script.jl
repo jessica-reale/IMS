@@ -16,10 +16,10 @@ const vars_ib = [:lending_facility, :deposit_facility, :Term_assets, :Term_liabs
 
 function overviews_model(df)
     p = ib_rates_scenarios(df)
-    save("ib_rates_scenarios.pdf", p)    
+    save("ib_rates_scenarios.pdf", p)
     
     p = willingness(df)
-    save("willlingness.pdf", p)    
+    save("willlingness.pdf", p)
 end
 
 function scenarios_lines(df, m)
@@ -59,6 +59,12 @@ function scenarios_lines(df, m)
     
     df2 = @pipe df |> dropmissing(_, vars_ib) |> groupby(_, [:step, :status, :scenario]) |>
             combine(_, vars_ib .=> mean, renamecols = false) |> filter(row -> all(x -> !(x isa Number && isnan(x)), row), _)
+
+    p = ib_on_rationing(filter(:status => x -> x == "deficit", df2))
+    save("ib_on_rationing.pdf", p)  
+
+    p = ib_term_rationing(filter(:status => x -> x == "deficit", df2))
+    save("ib_term_rationing.pdf", p) 
 
     p = margin_stability(filter(:status => x -> x == "deficit", df2))
     save("margin_stability_deficit.pdf", p)
@@ -109,7 +115,7 @@ function load_data()
 
     for scenario in scenarios, shock in shocks
         append!(adf, CSV.File("data/shock=$(shock)/$(scenario)/adf.csv"); promote = true)
-        append!(mdf, CSV.File("data/$(scenario)/mdf.csv"); promote = true)
+        append!(mdf, CSV.File("data/shock=$(shock)/$(scenario)/mdf.csv"); promote = true)
     end
     
     return adf, mdf
@@ -125,13 +131,13 @@ function create_plots()
             end
 
             cd(mkpath("scenarios_lines")) do 
-                scenarios_lines(filter(:shock => x -> x == "Missing", adf), filter(:shock => x -> x == "Missing", adf))
+                scenarios_lines(filter(:shock => x -> x == "Missing", adf), filter(:shock => x -> x == "Missing", mdf))
             end
         end
 
         cd(mkpath("Corridor-shock")) do
             cd(mkpath("overviews_model")) do
-                overviews_model(filter(:shock => x -> x == "Corridor", mdf))
+                overviews_model(filter(:shock => x -> x == "Missing", mdf))
             end
 
             cd(mkpath("scenarios_lines")) do 
@@ -141,7 +147,7 @@ function create_plots()
 
         cd(mkpath("Width-shock")) do
             cd(mkpath("overviews_model")) do
-                overviews_model(filter(:shock => x -> x == "Width", mdf))
+                overviews_model(filter(:shock => x -> x == "Missing", mdf))
             end
 
             cd(mkpath("scenarios_lines")) do 
