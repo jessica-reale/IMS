@@ -66,6 +66,12 @@ function scenarios_lines(df, m)
     p = ib_term_rationing(filter(:status => x -> x == "deficit", df2))
     save("ib_term_rationing.pdf", p) 
 
+    p = deposit_facility(filter(:status => x -> x == "surplus", df2))
+    save("deposit_facility.pdf", p) 
+
+    p = lending_facility(filter(:status => x -> x == "deficit", df2))
+    save("lending_facility.pdf", p) 
+
     p = margin_stability(filter(:status => x -> x == "deficit", df2))
     save("margin_stability_deficit.pdf", p)
 
@@ -137,7 +143,7 @@ function create_plots()
 
         cd(mkpath("Corridor-shock")) do
             cd(mkpath("overviews_model")) do
-                overviews_model(filter(:shock => x -> x == "Missing", mdf))
+                overviews_model(filter(:shock => x -> x == "Corridor", mdf))
             end
 
             cd(mkpath("scenarios_lines")) do 
@@ -147,7 +153,7 @@ function create_plots()
 
         cd(mkpath("Width-shock")) do
             cd(mkpath("overviews_model")) do
-                overviews_model(filter(:shock => x -> x == "Missing", mdf))
+                overviews_model(filter(:shock => x -> x == "Width", mdf))
             end
 
             cd(mkpath("scenarios_lines")) do 

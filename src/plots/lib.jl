@@ -229,7 +229,7 @@ function deposit_facility(df)
     gdf = groupby(df, :scenario)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.deposit_facility), 1)
+        _, trend = hp_filter((subdf.deposit_facility), 129600)
         lines!(trend; 
             label = "$(key.scenario) Uncertainty")
     end
