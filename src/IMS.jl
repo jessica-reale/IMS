@@ -21,15 +21,7 @@ function model_step!(model)
     model.step += 1
 
     #begin: apply shocks
-    if model.shock == "Corridor" && iszero(model.step % model.shock_incr)
-        model.icbd += 0.005
-        model.icbl += 0.005
-        model.icbt = (model.icbl + model.icbd) / 2.0
-    elseif model.shock == "Width" && iszero(model.step % model.shock_incr)
-        model.icbl += 0.005
-        model.icbd += 0.001
-        model.icbt = (model.icbl + model.icbd) / 2.0
-    end
+    IMS.shocks!(model)
     #end: apply shocks
 
     IMS.update_vars!(model)
@@ -261,7 +253,7 @@ end
 Update interbank rates on overnight and term segments based on disequilibrium dynamics between demand and supply.
 The function also checks that interest rates fall within the central bank's corridor, otherwise a warning is issued.
 """
-function ib_rates!(model)
+function ib_rates!(model; tol::Float64 = 1e-06)
     if length([a.id for a in allagents(model) if a isa Bank && a.status == :deficit && !ismissing(a.belongToBank)]) > 0 && 
         length([a.id for a in allagents(model) if a isa Bank && a.status == :surplus && !isempty(a.ib_customers)]) > 0
  
@@ -275,9 +267,9 @@ function ib_rates!(model)
     end
 
     # check corridor
-    if model.ion > model.icbl || model.ion < model.icbd
+    if model.ion - model.icbl > tol || model.icbd - model.ion > tol
         @warn "Interbank ON rate outside the central bank's corridor!"
-    elseif model.iterm > model.icbl || model.iterm < model.icbd
+    elseif model.iterm - model.icbl > tol || model.icbd - model.iterm > tol
         @warn "Interbank Term rate outside the central bank's corridor!"
     end
     return model.ion, model.iterm
@@ -286,6 +278,20 @@ end
 function update_vars!(model)
     model.ion_prev = model.ion
     model.iterm_prev = model.iterm
+    return model
+end
+
+function shocks!(model)
+    if model.shock == "Corridor" && iszero(model.step % model.shock_incr)
+        model.icbd += 0.005
+        model.icbl += 0.005
+        model.icbt = (model.icbl + model.icbd) / 2.0
+    elseif model.shock == "Width" && iszero(model.step % model.shock_incr)
+        model.icbl += 0.005
+        model.icbd += 0.001
+        model.icbt = (model.icbl + model.icbd) / 2.0
+    end
+    
     return model
 end
 

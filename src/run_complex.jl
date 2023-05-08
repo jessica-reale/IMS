@@ -31,7 +31,7 @@ end
 function run_model(number_of_runs::Int = 50)
     scenarios = ( 
         (scenario = "Low", PDU = 0.1), 
-        (scenario = "High", PDU = 0.9)
+        (scenario = "High", PDU = 0.9),
     )
 
     shocks = ("Missing", "Corridor" , "Width")
