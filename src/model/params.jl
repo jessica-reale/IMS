@@ -9,7 +9,7 @@ Base.@kwdef mutable struct Parameters
     n_bj::Int = 20
     n_bk::Int = 20
     # scenarios and shocks
-    scenario::String = "Low"
+    scenario::String = "Baseline"
     PDU::Float64 = 0.1
     shock_incr::Int = 200
     shock::String = "Missing"
@@ -52,8 +52,8 @@ Base.@kwdef mutable struct Parameters
     iterm::Float64 = 0.024
     ion_prev::Float64 = 0.024
     iterm_prev::Float64 = 0.024
-    θ::Float64 = 0.0
-    LbW::Float64 = 0.0
+    θ::Float64 = 0.5
+    LbW::Float64 = 0.5
     σib::Float64 = 0.1
     # params set in init.jl
     a0::Float64 = 0.0

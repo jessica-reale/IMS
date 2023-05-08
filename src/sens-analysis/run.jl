@@ -52,6 +52,11 @@ end
 function run()
     run_sens(:r, [0.9, 1.1, 1.3])
     run_sens(:δ, [0.05, 0.5, 1.0])
+    run_sens(:m1, [0.1, 0.5, 1.0])
+    run_sens(:m2, [0.1, 0.5, 1.0])
+    run_sens(:m3, [0.1, 0.5, 1.0])
+    run_sens(:m4, [0.1, 0.5, 1.0])
+    run_sens(:m5, [0.1, 0.5, 1.0])
 
     printstyled("Paramascan and data collection finished."; color = :blue)
     return nothing

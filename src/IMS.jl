@@ -257,10 +257,10 @@ function ib_rates!(model; tol::Float64 = 1e-06)
     if length([a.id for a in allagents(model) if a isa Bank && a.status == :deficit && !ismissing(a.belongToBank)]) > 0 && 
         length([a.id for a in allagents(model) if a isa Bank && a.status == :surplus && !isempty(a.ib_customers)]) > 0
  
-        ON = sum(a.on_demand for a in allagents(model) if a isa Bank && a.status == :deficit) - 
-            sum(a.on_supply for a in allagents(model) if a isa Bank && a.status == :surplus)
-        Term = sum(a.term_demand for a in allagents(model) if a isa Bank && a.status == :deficit) - 
-            sum(a.term_supply for a in allagents(model) if a isa Bank && a.status == :surplus)
+        ON = sum(a.on_demand for a in allagents(model) if a isa Bank && a.status == :deficit && !ismissing(a.belongToBank)) - 
+            sum(a.on_supply for a in allagents(model) if a isa Bank && a.status == :surplus && !isempty(a.ib_customers))
+        Term = sum(a.term_demand for a in allagents(model) if a isa Bank && a.status == :deficit && !ismissing(a.belongToBank)) - 
+            sum(a.term_supply for a in allagents(model) if a isa Bank && a.status == :surplus && !isempty(a.ib_customers))
 
         model.ion = model.icbd + ((model.icbl - model.icbd)/(1 + exp(-model.σib * ON)))
         model.iterm = model.icbd + ((model.icbl - model.icbd)/(1 + exp(-model.σib * Term)))
@@ -290,6 +290,8 @@ function shocks!(model)
         model.icbl += 0.005
         model.icbd += 0.001
         model.icbt = (model.icbl + model.icbd) / 2.0
+    elseif model.shock == "Uncertainty" && model.step == 200
+        model.PDU = 0.9
     end
     
     return model

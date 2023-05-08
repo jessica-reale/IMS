@@ -4,13 +4,13 @@ and set initial market interactions.
 """
 
 """
-    init_model(; seed::UInt32 = UInt32(96100), shock::String = "Missing", properties...) → model
+    init_model(; seed::UInt32 = UInt32(96100), scenario::String = "Baseline", shock::String = "Missing", properties...) → model
 
 Initialise the model.    
 """
-function init_model(; seed::UInt32 = UInt32(96100), shock::String = "Missing",
+function init_model(; seed::UInt32 = UInt32(96100), scenario::String = "Baseline", shock::String = "Missing",
         properties...) 
-        if shock in ["Missing", "Corridor", "Width"]
+        if shock in ["Missing", "Corridor", "Width"] && scenario in ["Baseline", "Maturity"]
             model = ABM(Union{Government, CentralBank, Firm, Household, Bank};
                 properties = Parameters(; shock, properties...), 
                 scheduler = Schedulers.Randomly(),
@@ -24,7 +24,7 @@ function init_model(; seed::UInt32 = UInt32(96100), shock::String = "Missing",
             real_sector_interactions!(model)
             credit_sector_interactions!(model)
         else
-            error("You provided a shock named $(shock) that is not yet implemented. Check for typos or add the scenario")
+            error("You provided a shock named $(shock) or a scenario named $(scenario) that is not yet implemented. Check for typos or add the scenario")
         end
     return model
 end

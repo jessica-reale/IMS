@@ -41,6 +41,19 @@ function reset_vars!(agent::Bank)
     agent.loans_interests = 0.0
     agent.deposits_interests = 0.0
     agent.belongToBank = missing
+    agent.on_demand = 0.0
+    agent.term_demand = 0.0
+    agent.on_supply = 0.0
+    agent.term_supply = 0.0
+    agent.pmb = 0.0
+    agent.pml = 0.0
+    agent.am = 0.0
+    agent.bm = 0.0
+    agent.tot_assets = 0.0
+    agent.tot_liabilities = 0.0
+    agent.tot_demand = 0.0
+    agent.tot_supply = 0.0
+    agent.margin_stability = 0.0
     empty!(agent.ib_customers)
     return nothing
 end
@@ -136,17 +149,17 @@ end
 Update lenders' preferences for overnight interbank assets based on NSFR.
 """
 function lending_targets!(agent::Bank, model)
-    if agent.status == :surplus
+    if agent.status == :surplus && !isempty(agent.ib_customers)
         if agent.ON_assets_prev > 0.0
             agent.actual_lend_ratio = max(0.0, min(agent.ON_assets_prev / agent.tot_assets, 1.0))
             agent.target_lend_ratio = if agent.margin_stability >= 1.0
                 agent.actual_lend_ratio
             else 
-                rand(model.rng, Uniform(0.0, 1.0))
+                rand(model.rng, Uniform(0.0, agent.actual_lend_ratio))
             end
             agent.pml = max(0.0, min(agent.actual_lend_ratio - agent.target_lend_ratio, 1.0))
         else
-            agent.pml = 1.0
+            agent.pml = 0.5
         end
     end
     return agent.pml
@@ -158,17 +171,17 @@ end
 Update borrowers' preferences for overnight interbank assets based on NSFR.
 """
 function borrowing_targets!(agent::Bank, model)
-    if agent.status == :deficit
+    if agent.status == :deficit && !ismissing(agent.belongToBank)
         if agent.ON_liabs_prev > 0.0
             agent.actual_borr_ratio = max(0.0, min(agent.ON_liabs_prev / agent.tot_liabilities, 1.0))
             agent.target_borr_ratio = if agent.margin_stability < 1.0
                 agent.actual_borr_ratio
             else 
-                rand(model.rng, Uniform(0.0, 1.0))
+                rand(model.rng, Uniform(0.0, agent.actual_borr_ratio))
             end
-            agent.pmb = max(0.0 , min(agent.actual_borr_ratio - agent.target_borr_ratio, 1.0))
+            agent.pmb = max(0.0, min(agent.actual_borr_ratio - agent.target_borr_ratio, 1.0))
         else
-            agent.pmb = 1.0
+            agent.pmb = 0.5
         end
     end
     if agent.pmb < 0.0
@@ -183,7 +196,7 @@ end
 Deficit banks define their total demand for reserves as dependent on their current outflow and `ΔH`.
 """
 function tot_demand!(agent::Bank)
-    if agent.status == :deficit    
+    if agent.status == :deficit && !ismissing(agent.belongToBank)
         agent.tot_demand = abs(agent.flow) - (agent.hpm - agent.hpm_prev)
     end
     return agent.tot_demand
@@ -195,20 +208,23 @@ end
 Surplus banks define their total demand for reserves as dependent on their current inflow and `ΔH`.
 """
 function tot_supply!(agent::Bank)
-    if agent.status == :surplus
+    if agent.status == :surplus && !isempty(agent.ib_customers)
         agent.tot_supply = agent.flow - (agent.hpm - agent.hpm_prev)
     end
     return agent.tot_supply
 end
 
 """
-    on_demand!(agent::Bank, θ) → agent.on_demand
+    on_demand!(agent::Bank, model) → agent.on_demand
 
 Banks define their demand for overnight interbank loans dependent on money market rates and NSFR-based borrowing preferences.
 """
-function on_demand!(agent::Bank, θ)
-    if agent.status == :deficit
-        agent.on_demand = agent.tot_demand * (θ * agent.pmb)
+function on_demand!(agent::Bank, model)
+    if agent.status == :deficit && !ismissing(agent.belongToBank)
+        agent.on_demand = agent.tot_demand * max(0.0, min(model.θ + agent.pmb, 1.0))
+        if model.scenario == "Baseline"
+            model[agent.belongToBank].on_supply += agent.on_demand
+        end
     end
     if agent.on_demand < 0.0
         println("Negtive ON demand")
@@ -217,13 +233,16 @@ function on_demand!(agent::Bank, θ)
 end
 
 """
-    term_demand!(agent::Bank) → agent.term_demand
+    term_demand!(agent::Bank, model) → agent.term_demand
 
 Banks define their demand for term interbank loans as a residual.
 """
-function term_demand!(agent::Bank)
-    if agent.status == :deficit
+function term_demand!(agent::Bank, model)
+    if agent.status == :deficit && !ismissing(agent.belongToBank)
         agent.term_demand = agent.tot_demand - agent.on_demand
+        if model.scenario == "Baseline"
+            model[agent.belongToBank].term_supply += agent.term_demand
+        end
     end
     return agent.term_demand
 end
@@ -234,8 +253,8 @@ end
 Banks define their supply for overnight interbank loans dependent on money market rates and NSFR-based lending preferences.
 """
 function on_supply!(agent::Bank, LbW)
-    if agent.status == :surplus
-        agent.on_supply = agent.tot_supply * (LbW * agent.pml)
+    if agent.status == :surplus && !isempty(agent.ib_customers)
+        agent.on_supply = agent.tot_supply * max(0.0, min(LbW + agent.pml, 1.0))
     end
     if agent.on_supply < 0.0
         println("Negtive ON supply")
@@ -249,7 +268,7 @@ end
 Banks define their supply for term interbank loans as a residual.
 """
 function term_supply!(agent::Bank)
-    if agent.status == :surplus
+    if agent.status == :surplus && !isempty(agent.ib_customers)
         agent.term_supply = agent.tot_supply - agent.on_supply
     end
     return agent.term_supply
@@ -264,11 +283,13 @@ function update_ib_demand_supply!(agent::Bank, model)
     IMS.borrowing_targets!(agent, model)
     IMS.lending_targets!(agent, model)
     IMS.tot_demand!(agent)
-    IMS.tot_supply!(agent)
-    IMS.on_demand!(agent, model.θ)
-    IMS.term_demand!(agent)
-    IMS.on_supply!(agent, model.LbW)
-    IMS.term_supply!(agent)
+    IMS.on_demand!(agent, model)
+    IMS.term_demand!(agent, model)
+    if model.scenario == "Maturity"
+        IMS.tot_supply!(agent)
+        IMS.on_supply!(agent, model.LbW)
+        IMS.term_supply!(agent)
+    end
     return agent
 end
 
@@ -279,10 +300,15 @@ Updates overnight interbank assets and liabilities.
 """
 function ib_on!(agent::Bank, model)
     if agent.status == :deficit && !ismissing(agent.belongToBank)
-        if agent.on_demand > model[agent.belongToBank].on_supply
-            agent.ON_liabs = model[agent.belongToBank].on_supply
-            model[agent.belongToBank].ON_assets += agent.ON_liabs
-        elseif agent.on_demand <= model[agent.belongToBank].on_supply
+        if model.scenario == "Maturity"
+            if agent.on_demand > model[agent.belongToBank].on_supply
+                agent.ON_liabs = model[agent.belongToBank].on_supply
+                model[agent.belongToBank].ON_assets += agent.ON_liabs
+            elseif agent.on_demand <= model[agent.belongToBank].on_supply
+                agent.ON_liabs = agent.on_demand
+                model[agent.belongToBank].ON_assets += agent.ON_liabs
+            end
+        else
             agent.ON_liabs = agent.on_demand
             model[agent.belongToBank].ON_assets += agent.ON_liabs
         end
@@ -297,10 +323,15 @@ Updates term interbank assets and liabilities.
 """
 function ib_term!(agent::Bank, model)
     if agent.status == :deficit && !ismissing(agent.belongToBank)
-        if agent.term_demand > model[agent.belongToBank].term_supply
-            agent.Term_liabs = model[agent.belongToBank].term_supply
-            model[agent.belongToBank].Term_assets += agent.Term_liabs
-        elseif agent.term_demand <= model[agent.belongToBank].term_supply
+        if model.scenario == "Maturity"
+            if agent.term_demand > model[agent.belongToBank].term_supply
+                agent.Term_liabs = model[agent.belongToBank].term_supply
+                model[agent.belongToBank].Term_assets += agent.Term_liabs
+            elseif agent.term_demand <= model[agent.belongToBank].term_supply
+                agent.Term_liabs = agent.term_demand
+                model[agent.belongToBank].Term_assets += agent.Term_liabs
+            end
+        else
             agent.Term_liabs = agent.term_demand
             model[agent.belongToBank].Term_assets += agent.Term_liabs
         end
