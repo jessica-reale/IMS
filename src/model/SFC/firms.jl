@@ -129,15 +129,23 @@ function inventories!(agent::Firm)
     return agent.invent, agent.Invent
 end
 
+"""
+    rationing!(agent::Firm, model) → model
+
+Ration consumers if firms' sales exceed output and previous real inventories. The function also updates the corresponding flows for
+the matched banks.
+"""
 function rationing!(agent::Firm, model)
     if agent.sales > agent.output + agent.invent_prev
         diff = agent.sales - agent.output - agent.invent_prev
         agent.sales -= diff
         agent.consumption -= diff
-        agent.nominal_consumption -= diff * agent.prices 
+        agent.nominal_consumption -= diff * agent.prices
+        model[agent.belongToBank].flow -= diff * agent.prices
         for id in agent.customers 
             model[id].consumption -= diff / length(agent.customers)
             model[id].nominal_consumption -= (diff * agent.prices) / length(agent.customers)
+            model[model[id].belongToBank].flow -= (diff * agent.prices) / length(agent.customers)
         end
     end
     return model
