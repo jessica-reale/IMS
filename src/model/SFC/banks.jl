@@ -133,60 +133,55 @@ end
 Update the elements of the Net Stable Funding Ratio (NSFR).
 """
 function NSFR!(agent::Bank, model)
-    if agent.status != :neutral
-        agent.tot_assets = agent.loans_prev + agent.hpm_prev + agent.bills_prev + agent.bonds_prev + agent.ON_assets_prev + agent.Term_assets_prev + agent.deposit_facility_prev
-        agent.tot_liabilities = agent.deposits_prev + agent.ON_liabs_prev + agent.Term_liabs_prev + agent.npl_prev + agent.lending_facility_prev + agent.advances_prev
-        agent.am = (model.m4 * agent.deposits_prev + model.m5 * agent.Term_liabs_prev) / agent.tot_liabilities
-        agent.bm = (model.m1 * (agent.loans_prev + agent.ON_assets_prev) + model.m2 * (agent.bills_prev + agent.Term_assets_prev) + model.m3 * agent.bonds_prev) / agent.tot_assets
+    agent.status == :neutral && return
+
+    agent.tot_assets = agent.loans_prev + agent.hpm_prev + agent.bills_prev + agent.bonds_prev + agent.ON_assets_prev + agent.Term_assets_prev + agent.deposit_facility_prev
+    agent.tot_liabilities = agent.deposits_prev + agent.ON_liabs_prev + agent.Term_liabs_prev + agent.npl_prev + agent.lending_facility_prev + agent.advances_prev
+    agent.am = (model.m4 * agent.deposits_prev + model.m5 * agent.Term_liabs_prev) / agent.tot_liabilities
+    agent.bm = (model.m1 * (agent.loans_prev + agent.ON_assets_prev) + model.m2 * (agent.bills_prev + agent.Term_assets_prev) + model.m3 * agent.bonds_prev) / agent.tot_assets
+    if model.scenario == "Maturity"
         agent.margin_stability = agent.am / agent.bm
+    else
+        agent.margin_stability = agent.tot_liabilities / agent.tot_assets 
     end
-    return agent.margin_stability
+    return model
 end
 
 """
-    lending_targets!(agent::Bank, model) → agent.pml
+    lending_targets!(agent::Bank, rng) → agent.pml
 
 Update lenders' preferences for overnight interbank assets based on NSFR.
 """
-function lending_targets!(agent::Bank, model)
-    if agent.status == :surplus && !isempty(agent.ib_customers)
-        if agent.ON_assets_prev > 0.0
-            agent.actual_lend_ratio = max(0.0, min(agent.ON_assets_prev / agent.tot_assets, 1.0))
-            agent.target_lend_ratio = if agent.margin_stability >= 1.0
-                agent.actual_lend_ratio
-            else 
-                rand(model.rng, Uniform(0.0, agent.actual_lend_ratio))
-            end
-            agent.pml = max(0.0, min(agent.actual_lend_ratio - agent.target_lend_ratio, 1.0))
-        else
-            agent.pml = 0.5
+function lending_targets!(agent::Bank, rng)
+    agent.status != :surplus && return
+
+    agent.actual_lend_ratio = 1 - agent.bm
+    agent.target_lend_ratio = 
+        if agent.margin_stability >= 1.0
+            agent.actual_lend_ratio
+        else 
+            rand(rng, Uniform(0.0, agent.actual_lend_ratio))
         end
-    end
+    agent.pml = agent.actual_lend_ratio - agent.target_lend_ratio
     return agent.pml
 end
 
 """
-    borrowing_targets!(agent::Bank, model) → agent.pmb
+    borrowing_targets!(agent::Bank, rng) → agent.pmb
 
 Update borrowers' preferences for overnight interbank assets based on NSFR.
 """
-function borrowing_targets!(agent::Bank, model)
-    if agent.status == :deficit && !ismissing(agent.belongToBank)
-        if agent.ON_liabs_prev > 0.0
-            agent.actual_borr_ratio = max(0.0, min(agent.ON_liabs_prev / agent.tot_liabilities, 1.0))
-            agent.target_borr_ratio = if agent.margin_stability < 1.0
-                agent.actual_borr_ratio
-            else 
-                rand(model.rng, Uniform(0.0, agent.actual_borr_ratio))
-            end
-            agent.pmb = max(0.0, min(agent.actual_borr_ratio - agent.target_borr_ratio, 1.0))
-        else
-            agent.pmb = 0.5
+function borrowing_targets!(agent::Bank, rng)
+    agent.status != :deficit && return
+
+    agent.actual_borr_ratio = 1 - agent.am
+    agent.target_borr_ratio = 
+        if agent.margin_stability < 1.0
+            agent.actual_borr_ratio
+        else 
+            rand(rng, Uniform(0.0, agent.actual_borr_ratio))
         end
-    end
-    if agent.pmb < 0.0
-        println("$(agent.id)")
-    end
+    agent.pmb = agent.actual_borr_ratio - agent.target_borr_ratio
     return agent.pmb
 end
 
@@ -196,9 +191,9 @@ end
 Deficit banks define their total demand for reserves as dependent on their current outflow and `ΔH`.
 """
 function tot_demand!(agent::Bank)
-    if agent.status == :deficit && !ismissing(agent.belongToBank)
-        agent.tot_demand = abs(agent.flow) - (agent.hpm - agent.hpm_prev)
-    end
+    agent.status != :deficit && return
+    
+    agent.tot_demand = abs(agent.flow) - (agent.hpm - agent.hpm_prev)
     return agent.tot_demand
 end
 
@@ -208,9 +203,9 @@ end
 Surplus banks define their total demand for reserves as dependent on their current inflow and `ΔH`.
 """
 function tot_supply!(agent::Bank)
-    if agent.status == :surplus && !isempty(agent.ib_customers)
-        agent.tot_supply = agent.flow - (agent.hpm - agent.hpm_prev)
-    end
+    agent.status != :surplus && return
+    
+    agent.tot_supply = agent.flow - (agent.hpm - agent.hpm_prev)
     return agent.tot_supply
 end
 
@@ -221,13 +216,10 @@ Banks define their demand for overnight interbank loans dependent on money marke
 """
 function on_demand!(agent::Bank, model)
     if agent.status == :deficit && !ismissing(agent.belongToBank)
-        agent.on_demand = agent.tot_demand * max(0.0, min(model.θ + agent.pmb, 1.0))
-        if model.scenario == "Baseline"
+        agent.on_demand = agent.tot_demand * (model.θ * agent.pmb)
+        if model.scenario == "Baseline" 
             model[agent.belongToBank].on_supply += agent.on_demand
         end
-    end
-    if agent.on_demand < 0.0
-        println("Negtive ON demand")
     end
     return agent.on_demand
 end
@@ -240,7 +232,7 @@ Banks define their demand for term interbank loans as a residual.
 function term_demand!(agent::Bank, model)
     if agent.status == :deficit && !ismissing(agent.belongToBank)
         agent.term_demand = agent.tot_demand - agent.on_demand
-        if model.scenario == "Baseline"
+        if model.scenario == "Baseline" 
             model[agent.belongToBank].term_supply += agent.term_demand
         end
     end
@@ -254,10 +246,7 @@ Banks define their supply for overnight interbank loans dependent on money marke
 """
 function on_supply!(agent::Bank, LbW)
     if agent.status == :surplus && !isempty(agent.ib_customers)
-        agent.on_supply = agent.tot_supply * max(0.0, min(LbW + agent.pml, 1.0))
-    end
-    if agent.on_supply < 0.0
-        println("Negtive ON supply")
+        agent.on_supply = agent.tot_supply * (LbW * agent.pml)
     end
     return agent.on_supply
 end
@@ -280,13 +269,13 @@ end
 Updates demand and supply in the interbank market based on the above functions.
 """
 function update_ib_demand_supply!(agent::Bank, model)
-    IMS.borrowing_targets!(agent, model)
-    IMS.lending_targets!(agent, model)
+    IMS.borrowing_targets!(agent, model.rng)
+    IMS.lending_targets!(agent, model.rng)
     IMS.tot_demand!(agent)
     IMS.on_demand!(agent, model)
     IMS.term_demand!(agent, model)
+    IMS.tot_supply!(agent)
     if model.scenario == "Maturity"
-        IMS.tot_supply!(agent)
         IMS.on_supply!(agent, model.LbW)
         IMS.term_supply!(agent)
     end
