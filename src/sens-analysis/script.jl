@@ -46,21 +46,26 @@ end
 
 function load_data()
     # parameter names as strings
-    params_strings = ["r", "δ"]
+    params_strings = ["r", "δ", "m1", "m2", "m3", "m4", "m5"]
     # parameter ranges
-    params_range = [
-        "0.9", "1.1", "1.3",
-        "0.05", "0.5", "1.0"
-        ]
+    params_range = (
+        ("0.9", "1.1", "1.3"),
+        ("0.05", "0.5", "1.0"),
+        ("0.1", "0.5", "1.0")
+    )
 
     df = DataFrame()
     for param in params_strings
         if param == "r"
-            for val in params_range[1:3]
+            for val in params_range[1]
+                append!(df, CSV.File("data/sensitivity_analysis/$(param)/$(val)/df.csv"); cols = :union)
+            end
+        elseif param == "δ"
+            for val in params_range[2]
                 append!(df, CSV.File("data/sensitivity_analysis/$(param)/$(val)/df.csv"); cols = :union)
             end
         else
-            for val in params_range[4:end]
+            for val in params_range[3]
                 append!(df, CSV.File("data/sensitivity_analysis/$(param)/$(val)/df.csv"); cols = :union)
             end
         end
@@ -77,7 +82,7 @@ function create_sens_plots()
     df, mdf = load_data()
 
     # parameter names as symbols
-    param_symbols = [:r, :δ]
+    param_symbols = [:r, :δ, :m1, :m2, :m3, :m4, :m5]
 
     cd(mkpath("img/pdf/sens-analysis")) do
         for param in param_symbols
