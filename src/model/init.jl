@@ -10,7 +10,7 @@ Initialise the model.
 """
 function init_model(; seed::UInt32 = UInt32(96100), scenario::String = "Baseline", shock::String = "Missing",
         properties...) 
-        if shock in ["Missing", "Corridor", "Width"] && scenario in ["Baseline", "Maturity"]
+        if shock in ["Missing", "Corridor", "Width", "Uncertainty"] && scenario in ["Baseline", "Maturity"]
             model = ABM(Union{Government, CentralBank, Firm, Household, Bank};
                 properties = Parameters(; shock, scenario, properties...), 
                 scheduler = Schedulers.Randomly(),
