@@ -103,12 +103,21 @@ function output!(agent::Firm, β, ϕ, σ)
 end
 
 """
-    inventories!(agent::Firm, g) → agent.sales, agent.Invent
+    sales!(agent::Firm) → agent.sales
 
-Firms compute their real sales and update their inventory holdings.
+Firms compute their real sales.
 """
-function inventories!(agent::Firm, g)
+function sales!(agent::Firm, g)
     agent.sales = agent.consumption + agent.investments + g
+    return agent.sales 
+end
+
+"""
+    inventories!(agent::Firm, g) → agent.invent, agent.Invent
+
+Firms compute update their inventory holdings.
+"""
+function inventories!(agent::Firm)
     agent.invent += agent.output - agent.sales
     agent.Invent = agent.invent * agent.unit_costs
 
@@ -117,7 +126,29 @@ function inventories!(agent::Firm, g)
     elseif isnan(agent.sales)
         println("NaN s")
     end
-    return agent.sales, agent.Invent
+    return agent.invent, agent.Invent
+end
+
+"""
+    rationing!(agent::Firm, model) → model
+
+Ration consumers if firms' sales exceed output and previous real inventories. The function also updates the corresponding flows for
+the matched banks.
+"""
+function rationing!(agent::Firm, model)
+    if agent.sales > agent.output + agent.invent_prev
+        diff = agent.sales - agent.output - agent.invent_prev
+        agent.sales -= diff
+        agent.consumption -= diff
+        agent.nominal_consumption -= diff * agent.prices
+        model[agent.belongToBank].flow -= diff * agent.prices
+        for id in agent.customers 
+            model[id].consumption -= diff / length(agent.customers)
+            model[id].nominal_consumption -= (diff * agent.prices) / length(agent.customers)
+            model[model[id].belongToBank].flow -= (diff * agent.prices) / length(agent.customers)
+        end
+    end
+    return model
 end
 
 """

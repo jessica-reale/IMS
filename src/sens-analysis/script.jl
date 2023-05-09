@@ -11,17 +11,17 @@ using QuantEcon
 include("lib.jl")
 
 function interbank(df::DataFrame, param::Symbol)
-    vars = [:ON_assets, :Term_assets]
+    vars = [:pmb, :pml]
 
     # take only bank agents
-    df = @pipe df |> dropmissing(_, vars) |> groupby(_, [:step, param]) |> 
-        combine(_, vars .=> mean, renamecols = false)
+    df = @pipe df |> dropmissing(_, vars) |> groupby(_, [:step, :status, param]) |> 
+        combine(_, vars .=> mean, renamecols = false) |> filter(row -> all(x -> !(x isa Number && isnan(x)), row), _)
     
-    p = on_loans(df, param)
-    save("on_loans_sens.pdf", p)
+    p = pmb(filter(:status => x -> x == "deficit", df), param)
+    save("pmb.pdf", p)
 
-    p = term_loans(df, param)
-    save("term_loans_sens.pdf", p)
+    p = pml(filter(:status => x -> x == "surplus", df), param)
+    save("pml.pdf", p)
 
 end
 
@@ -68,7 +68,7 @@ function load_data()
 
     # take model variables from Baseline scenario
     mdf = DataFrame()
-    append!(mdf, CSV.File("data/Baseline/mdf.csv"))
+    append!(mdf, CSV.File("data/shock=Missing/Low/mdf.csv"))
 
     return df, mdf
 end

@@ -8,12 +8,15 @@ Base.@kwdef mutable struct Parameters
     n_hh::Int = 1000
     n_bj::Int = 20
     n_bk::Int = 20
+    # scenarios and shocks
     scenario::String = "Baseline"
-    shock_step::Int = 500
+    PDU::Float64 = 0.1
+    shock_incr::Int = 200
+    shock::String = "Missing"
     # initial GD/GDP ratio 
     r::Float64 = 0.9
     # model general parameters
-    g::Int = 2000
+    g::Float64 = 8750.0
     δ::Float64 = 0.05
     ϕ::Float64 = 0.25
     β::Float64 = 0.5
@@ -21,7 +24,6 @@ Base.@kwdef mutable struct Parameters
     μ::Float64 = 0.25
     v::Float64 = 0.1
     ω::Float64 = 0.2 # can be changed
-    PDU::Float64 = 0.1
     l::Float64 = 0.03
     pr::Float64 = 1.0
     τ::Float64 = 0.18
@@ -41,17 +43,17 @@ Base.@kwdef mutable struct Parameters
     gd::Float64 = 0.1
     # margin of stability - banks_NSFR
     m1::Float64 = 0.1
-    m3::Float64 = 0.5
-    m4::Float64 = 0.05
-    m5::Float64 = 0.9
-    m6::Float64 = 0.5
+    m2::Float64 = 0.5
+    m3::Float64 = 0.05
+    m4::Float64 = 0.9
+    m5::Float64 = 0.5
     # Interbank market
     ion::Float64 = 0.024
     iterm::Float64 = 0.024
     ion_prev::Float64 = 0.024
     iterm_prev::Float64 = 0.024
-    θ::Float64 = 0.0
-    LbW::Float64 = 0.0
+    θ::Float64 = 0.5
+    LbW::Float64 = 0.5
     σib::Float64 = 0.1
     # params set in init.jl
     a0::Float64 = 0.0

@@ -16,10 +16,10 @@ const vars_ib = [:lending_facility, :deposit_facility, :Term_assets, :Term_liabs
 
 function overviews_model(df)
     p = ib_rates_scenarios(df)
-    save("ib_rates_scenarios.pdf", p)    
+    save("ib_rates_scenarios.pdf", p)
     
     p = willingness(df)
-    save("willlingness.pdf", p)    
+    save("willlingness.pdf", p)
 end
 
 function scenarios_lines(df, m)
@@ -57,6 +57,39 @@ function scenarios_lines(df, m)
     p = pml(df1)
     save("pml.pdf", p)
     
+    df2 = @pipe df |> dropmissing(_, vars_ib) |> groupby(_, [:step, :status, :scenario]) |>
+            combine(_, vars_ib .=> mean, renamecols = false) |> filter(row -> all(x -> !(x isa Number && isnan(x)), row), _)
+
+    p = ib_on_rationing(filter(:status => x -> x == "deficit", df2))
+    save("ib_on_rationing.pdf", p)  
+
+    p = ib_term_rationing(filter(:status => x -> x == "deficit", df2))
+    save("ib_term_rationing.pdf", p) 
+
+    p = deposit_facility(filter(:status => x -> x == "surplus", df2))
+    save("deposit_facility.pdf", p) 
+
+    p = lending_facility(filter(:status => x -> x == "deficit", df2))
+    save("lending_facility.pdf", p) 
+
+    p = margin_stability(filter(:status => x -> x == "deficit", df2))
+    save("margin_stability_deficit.pdf", p)
+
+    p = am(filter(:status => x -> x == "deficit", df2))
+    save("am_deficit.pdf", p)
+
+    p = bm(filter(:status => x -> x == "deficit", df2))
+    save("bm_deficit.pdf", p)
+
+    p = margin_stability(filter(:status => x -> x == "surplus", df2))
+    save("margin_stability_surplus.pdf", p)
+
+    p = am(filter(:status => x -> x == "surplus", df2))
+    save("am_surplus.pdf", p)
+
+    p = bm(filter(:status => x -> x == "surplus", df2))
+    save("bm_surplus.pdf", p)
+
     # credit market
     df_hh = @pipe df |> filter(:id => x -> x >= 1 && x <= mean(m[!, :n_hh]), _) |>
             groupby(_, [:step, :scenario]) |> 
@@ -80,14 +113,15 @@ function scenarios_lines(df, m)
 end
 
 function load_data()
-    scenarios = ["Baseline", "Corridor", "Uncertainty", "Width"]
+    scenarios = ["Low", "High"]
+    shocks = ["Missing", "Corridor", "Width"]
 
     adf = DataFrame()
     mdf = DataFrame()
 
-    for scenario in scenarios
-        append!(adf, CSV.File("data/$(scenario)/adf.csv"); promote = true)
-        append!(mdf, CSV.File("data/$(scenario)/mdf.csv"); promote = true)
+    for scenario in scenarios, shock in shocks
+        append!(adf, CSV.File("data/shock=$(shock)/$(scenario)/adf.csv"); promote = true)
+        append!(mdf, CSV.File("data/shock=$(shock)/$(scenario)/mdf.csv"); promote = true)
     end
     
     return adf, mdf
@@ -97,12 +131,34 @@ function create_plots()
     adf, mdf = load_data()
 
     cd(mkpath("img/pdf")) do
-        cd(mkpath("overviews_model")) do
-            overviews_model(mdf)
+        cd(mkpath("Missing-shock")) do
+            cd(mkpath("overviews_model")) do
+                overviews_model(filter(:shock => x -> x == "Missing", mdf))
+            end
+
+            cd(mkpath("scenarios_lines")) do 
+                scenarios_lines(filter(:shock => x -> x == "Missing", adf), filter(:shock => x -> x == "Missing", mdf))
+            end
         end
 
-        cd(mkpath("scenarios_lines")) do 
-            scenarios_lines(adf, mdf)
+        cd(mkpath("Corridor-shock")) do
+            cd(mkpath("overviews_model")) do
+                overviews_model(filter(:shock => x -> x == "Corridor", mdf))
+            end
+
+            cd(mkpath("scenarios_lines")) do 
+                scenarios_lines(filter(:shock => x -> x == "Corridor", adf), filter(:shock => x -> x == "Corridor", mdf))
+            end
+        end
+
+        cd(mkpath("Width-shock")) do
+            cd(mkpath("overviews_model")) do
+                overviews_model(filter(:shock => x -> x == "Width", mdf))
+            end
+
+            cd(mkpath("scenarios_lines")) do 
+                scenarios_lines(filter(:shock => x -> x == "Width", adf), filter(:shock => x -> x == "Width", mdf))
+            end
         end
     end
 
