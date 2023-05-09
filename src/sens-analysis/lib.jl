@@ -4,7 +4,7 @@ function pmb(df::DataFrame, param::Symbol)
     gdf = groupby(df, param)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.pmb),  1294400)
+        _, trend = hp_filter((subdf.pmb),  129600)
         lines!(trend; 
             label = "$(param) = $(key[1])")
     end
@@ -23,7 +23,7 @@ function pml(df::DataFrame, param::Symbol)
     gdf = groupby(df, param)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.pml), 1294400)
+        _, trend = hp_filter((subdf.pml), 129600)
         lines!(trend; 
             label = "$(param) = $(key[1])")
         end
@@ -43,7 +43,7 @@ function credit_loans(df::DataFrame, param::Symbol; f::Bool = true)
     gdf = groupby(df, param)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.loans), 1294400)
+        _, trend = hp_filter((subdf.loans), 129600)
         lines!(trend; 
             label = "$(param) = $(key[1])")
     end
@@ -69,7 +69,7 @@ function output(df::DataFrame, param::Symbol)
     gdf = groupby(df, param)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.output), 1294400)
+        _, trend = hp_filter((subdf.output), 129600)
         lines!(trend; 
             label = "$(param) = $(key[1])")
     end
