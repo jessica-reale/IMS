@@ -13,7 +13,7 @@ using Distributions
 using IMS
 
 # runs the sensitivity analysis for the parameters of interests, transforms and collects datas
-function run_sens(param::Symbol, param_range::Vector{Float64})
+function run_sens(param::Symbol, param_range::Vector{Float64}; scenario::String = "Baseline")
     # collect agent variables
     adata = [:type, :status, :ON_assets, :ON_liabs, :margin_stability, :am, :bm,
         :Term_assets, :Term_liabs, :loans, :loans_prev, :output, :pmb, :pml,
@@ -24,11 +24,12 @@ function run_sens(param::Symbol, param_range::Vector{Float64})
         # Setup model properties
         properties = Dict(
             param => x,
+            :scenario => scenario,
         )
 
         println("Running parameter scans for $(param) at $(x)...")
-
-        df, _ = paramscan(properties, IMS.init_model;
+        
+        df, _ = paramscan(properties, IMS.init_model; 
                 adata = adata, model_step! = IMS.model_step!, n = 1200,
                 include_constants = true)
 
@@ -52,11 +53,11 @@ end
 function run()
     run_sens(:r, [0.9, 1.1, 1.3])
     run_sens(:δ, [0.05, 0.5, 1.0])
-    run_sens(:m1, [0.1, 0.5, 1.0])
-    run_sens(:m2, [0.1, 0.5, 1.0])
-    run_sens(:m3, [0.1, 0.5, 1.0])
-    run_sens(:m4, [0.1, 0.5, 1.0])
-    run_sens(:m5, [0.1, 0.5, 1.0])
+    run_sens(:m1, [0.1, 0.5, 1.0]; scenario = "Maturity")
+    run_sens(:m2, [0.1, 0.5, 1.0]; scenario = "Maturity")
+    run_sens(:m3, [0.1, 0.5, 1.0]; scenario = "Maturity")
+    run_sens(:m4, [0.1, 0.5, 1.0]; scenario = "Maturity")
+    run_sens(:m5, [0.1, 0.5, 1.0]; scenario = "Maturity")
 
     printstyled("Paramascan and data collection finished."; color = :blue)
     return nothing
