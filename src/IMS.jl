@@ -136,8 +136,8 @@ end
 Updates money market conditions based on interest rates.
 """
 function update_willingenss_ON!(model)
-    model.θ = max(0.0, min(model.a0 + model.a1 * (model.icbl - model.ion_prev) + model.a2 * (model.iterm_prev - model.ion_prev) - model.a3 * (model.icbl - model.iterm_prev) - model.a4 * model.PDU, 1.0))
-    model.LbW = max(0.0, min(model.a0 + model.a1 * (model.ion_prev - model.icbd) -  model.a2 * (model.iterm_prev - model.ion_prev) - model.a3 * (model.iterm_prev - model.icbd) + model.a4 * model.PDU, 1.0))
+    model.θ = max(0.0, min(model.a0 + (model.icbl - model.ion_prev) + (model.iterm_prev - model.ion_prev) - (model.icbl - model.iterm_prev) - model.PDU, 1.0))
+    model.LbW = max(0.0, min(model.a0 + (model.ion_prev - model.icbd) -  (model.iterm_prev - model.ion_prev) -  (model.iterm_prev - model.icbd) + model.PDU, 1.0))
     return model.θ, model.LbW
 end
 

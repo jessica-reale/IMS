@@ -148,40 +148,48 @@ function NSFR!(agent::Bank, model)
 end
 
 """
-    lending_targets!(agent::Bank, rng) → agent.pml
+    lending_targets!(agent::Bank, scenario, rng) → agent.pml
 
 Update lenders' preferences for overnight interbank assets based on NSFR.
 """
-function lending_targets!(agent::Bank, rng)
+function lending_targets!(agent::Bank, scenario, rng)
     agent.status != :surplus && return
 
-    agent.actual_lend_ratio = 1 - agent.bm
-    agent.target_lend_ratio = 
-        if agent.margin_stability >= 1.0
-            agent.actual_lend_ratio
-        else 
-            rand(rng, Uniform(0.0, agent.actual_lend_ratio))
-        end
-    agent.pml = agent.actual_lend_ratio - agent.target_lend_ratio
+    if scenario == "Maturity"
+        agent.actual_lend_ratio = 1 - agent.bm
+        agent.target_lend_ratio = 
+            if agent.margin_stability >= 1.0
+                agent.actual_lend_ratio
+            else 
+                rand(rng, Uniform(0.0, agent.actual_lend_ratio))
+            end
+        agent.pml = agent.actual_lend_ratio - agent.target_lend_ratio
+    else
+        agent.pml = 1.0
+    end
     return agent.pml
 end
 
 """
-    borrowing_targets!(agent::Bank, rng) → agent.pmb
+    borrowing_targets!(agent::Bank, scenario, rng) → agent.pmb
 
 Update borrowers' preferences for overnight interbank assets based on NSFR.
 """
-function borrowing_targets!(agent::Bank, rng)
+function borrowing_targets!(agent::Bank, scenario, rng)
     agent.status != :deficit && return
-
-    agent.actual_borr_ratio = 1 - agent.am
-    agent.target_borr_ratio = 
-        if agent.margin_stability < 1.0
-            agent.actual_borr_ratio
-        else 
-            rand(rng, Uniform(0.0, agent.actual_borr_ratio))
-        end
-    agent.pmb = agent.actual_borr_ratio - agent.target_borr_ratio
+    
+    if scenario == "Maturity"
+        agent.actual_borr_ratio = 1 - agent.am
+        agent.target_borr_ratio = 
+            if agent.margin_stability < 1.0
+                agent.actual_borr_ratio
+            else 
+                rand(rng, Uniform(0.0, agent.actual_borr_ratio))
+            end
+        agent.pmb = agent.actual_borr_ratio - agent.target_borr_ratio
+    else
+        agent.pmb = 1.0
+    end
     return agent.pmb
 end
 
@@ -269,8 +277,8 @@ end
 Updates demand and supply in the interbank market based on the above functions.
 """
 function update_ib_demand_supply!(agent::Bank, model)
-    IMS.borrowing_targets!(agent, model.rng)
-    IMS.lending_targets!(agent, model.rng)
+    IMS.borrowing_targets!(agent, model.scenario, model.rng)
+    IMS.lending_targets!(agent, model.scenario, model.rng)
     IMS.tot_demand!(agent)
     IMS.on_demand!(agent, model)
     IMS.term_demand!(agent, model)

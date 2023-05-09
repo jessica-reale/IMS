@@ -57,8 +57,4 @@ Base.@kwdef mutable struct Parameters
     σib::Float64 = 0.1
     # params set in init.jl
     a0::Float64 = 0.0
-    a1::Float64 = 0.0
-    a2::Float64 = 0.0
-    a3::Float64 = 0.0
-    a4::Float64 = 0.0
 end
