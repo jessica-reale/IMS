@@ -12,7 +12,7 @@ function init_model(; seed::UInt32 = UInt32(96100), scenario::String = "Baseline
         properties...) 
         if shock in ["Missing", "Corridor", "Width"] && scenario in ["Baseline", "Maturity"]
             model = ABM(Union{Government, CentralBank, Firm, Household, Bank};
-                properties = Parameters(; shock, properties...), 
+                properties = Parameters(; shock, scenario, properties...), 
                 scheduler = Schedulers.Randomly(),
                 rng = Xoshiro(seed),
                 warn = false # turns off Agents.jl warning of Union types
