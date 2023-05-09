@@ -21,18 +21,7 @@ function model_step!(model)
     model.step += 1
 
     #begin: apply shocks
-    if model.scenario == "Corridor" && model.step == model.shock_step
-        model.icbd += 0.005
-        model.icbl += 0.005
-        model.icbt = (model.icbl + model.icbd) / 2.0
-    end
-    if model.scenario == "Uncertainty" && model.step == model.shock_step
-        model.PDU += 0.3
-    end
-    if model.scenario == "Width" && model.step == model.shock_step
-        model.icbl += 0.005
-        model.icbt = (model.icbl + model.icbd) / 2.0
-    end
+    IMS.shocks!(model)
     #end: apply shocks
 
     IMS.update_vars!(model)
@@ -55,6 +44,7 @@ function model_step!(model)
         IMS.unit_costs!(model[id])
     end
 
+    IMS.consumption_matching!(model)
     for id in ids_by_type(Household, model)
         IMS.prev_vars!(model[id])
         IMS.interests_payments!(model[id], model)
@@ -78,7 +68,9 @@ function model_step!(model)
     spending = sum(a.spending for a in allagents(model) if a isa Government) / model.n_f
     for id in ids_by_type(Firm, model)
         IMS.consumption!(model[id], model)
-        IMS.inventories!(model[id], model.g)
+        IMS.sales!(model[id], model.g)
+        IMS.rationing!(model[id], model)
+        IMS.inventories!(model[id])
         IMS.profits!(model[id], spending)
         IMS.loans!(model[id], model)
         IMS.non_performing_loans!(model[id], model)
@@ -117,12 +109,16 @@ function model_step!(model)
         IMS.lending_facility!(model[id])
         IMS.deposit_facility!(model[id])
         IMS.funding_costs!(model[id], model.icbt, model.ion, model.iterm, model.icbl)
-        IMS.SFC!(model[id], model)
+        IMS.bonds!(model[id])
     end
     IMS.ib_rates!(model)
     # end: Interbank Market
     
     for id in ids_by_type(Government, model)
+        IMS.SFC!(model[id], model)
+    end
+
+    for id in ids_by_type(Bank, model)
         IMS.SFC!(model[id], model)
     end
 
@@ -143,6 +139,34 @@ function update_willingenss_ON!(model)
     model.θ = max(0.0, min(model.a0 + model.a1 * (model.icbl - model.ion_prev) + model.a2 * (model.iterm_prev - model.ion_prev) - model.a3 * (model.icbl - model.iterm_prev) - model.a4 * model.PDU, 1.0))
     model.LbW = max(0.0, min(model.a0 + model.a1 * (model.ion_prev - model.icbd) -  model.a2 * (model.iterm_prev - model.ion_prev) - model.a3 * (model.iterm_prev - model.icbd) + model.a4 * model.PDU, 1.0))
     return model.θ, model.LbW
+end
+
+"""
+    consumption_matching!(model) → model
+
+Updates firms' and households' matching in the goods market.
+"""
+function consumption_matching!(model)
+    for id in ids_by_type(Household, model)
+        #Select potential partners
+        potential_partners = filter(i -> model[i] isa Firm && i != model[id].belongToFirm, collect(allids(model)))[1:model.χ]
+        #Select new partner with the best price
+        new_partner = rand(model.rng, filter(i -> i in potential_partners && model[i].prices == minimum(model[a].prices for a in potential_partners), potential_partners))
+        #Select price of the new potential partner
+        inew = model[new_partner].prices
+        #Pick up old partner
+        old_partner = model[id].belongToFirm
+        #PICK UP THE PRICE OF THE OLD PARTNER
+        iold = model[old_partner].prices
+        #COMPARE OLD AND NEW PRICES
+        if rand(model.rng) < (1 - exp(model.λ * (inew - iold)/inew))
+            #THEN SWITCH TO A NEW PARTNER
+            deleteat!(model[old_partner].customers, findall(x -> x == id, model[old_partner].customers))
+            model[id].belongToFirm = new_partner
+            push!(model[new_partner].customers, id)
+        end
+    end
+    return model
 end
 
 """
@@ -229,23 +253,23 @@ end
 Update interbank rates on overnight and term segments based on disequilibrium dynamics between demand and supply.
 The function also checks that interest rates fall within the central bank's corridor, otherwise a warning is issued.
 """
-function ib_rates!(model)
+function ib_rates!(model; tol::Float64 = 1e-06)
     if length([a.id for a in allagents(model) if a isa Bank && a.status == :deficit && !ismissing(a.belongToBank)]) > 0 && 
         length([a.id for a in allagents(model) if a isa Bank && a.status == :surplus && !isempty(a.ib_customers)]) > 0
  
-        ON = sum(a.on_demand for a in allagents(model) if a isa Bank && a.status == :deficit) - 
-            sum(a.on_supply for a in allagents(model) if a isa Bank && a.status == :surplus)
-        Term = sum(a.term_demand for a in allagents(model) if a isa Bank && a.status == :deficit) - 
-            sum(a.term_supply for a in allagents(model) if a isa Bank && a.status == :surplus)
+        ON = sum(a.on_demand for a in allagents(model) if a isa Bank && a.status == :deficit && !ismissing(a.belongToBank)) - 
+            sum(a.on_supply for a in allagents(model) if a isa Bank && a.status == :surplus && !isempty(a.ib_customers))
+        Term = sum(a.term_demand for a in allagents(model) if a isa Bank && a.status == :deficit && !ismissing(a.belongToBank)) - 
+            sum(a.term_supply for a in allagents(model) if a isa Bank && a.status == :surplus && !isempty(a.ib_customers))
 
         model.ion = model.icbd + ((model.icbl - model.icbd)/(1 + exp(-model.σib * ON)))
         model.iterm = model.icbd + ((model.icbl - model.icbd)/(1 + exp(-model.σib * Term)))
     end
 
     # check corridor
-    if model.ion > model.icbl || model.ion < model.icbd
+    if model.ion - model.icbl > tol || model.icbd - model.ion > tol
         @warn "Interbank ON rate outside the central bank's corridor!"
-    elseif model.iterm > model.icbl || model.iterm < model.icbd
+    elseif model.iterm - model.icbl > tol || model.icbd - model.iterm > tol
         @warn "Interbank Term rate outside the central bank's corridor!"
     end
     return model.ion, model.iterm
@@ -254,6 +278,22 @@ end
 function update_vars!(model)
     model.ion_prev = model.ion
     model.iterm_prev = model.iterm
+    return model
+end
+
+function shocks!(model)
+    if model.shock == "Corridor" && iszero(model.step % model.shock_incr)
+        model.icbd += 0.005
+        model.icbl += 0.005
+        model.icbt = (model.icbl + model.icbd) / 2.0
+    elseif model.shock == "Width" && iszero(model.step % model.shock_incr)
+        model.icbl += 0.005
+        model.icbd += 0.001
+        model.icbt = (model.icbl + model.icbd) / 2.0
+    elseif model.shock == "Uncertainty" && model.step == 200
+        model.PDU = 0.9
+    end
+    
     return model
 end
 

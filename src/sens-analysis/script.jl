@@ -11,17 +11,17 @@ using QuantEcon
 include("lib.jl")
 
 function interbank(df::DataFrame, param::Symbol)
-    vars = [:ON_assets, :Term_assets]
+    vars = [:pmb, :pml]
 
     # take only bank agents
-    df = @pipe df |> dropmissing(_, vars) |> groupby(_, [:step, param]) |> 
-        combine(_, vars .=> mean, renamecols = false)
+    df = @pipe df |> dropmissing(_, vars) |> groupby(_, [:step, :status, param]) |> 
+        combine(_, vars .=> mean, renamecols = false) |> filter(row -> all(x -> !(x isa Number && isnan(x)), row), _)
     
-    p = on_loans(df, param)
-    save("on_loans_sens.pdf", p)
+    p = pmb(filter(:status => x -> x == "deficit", df), param)
+    save("pmb.pdf", p)
 
-    p = term_loans(df, param)
-    save("term_loans_sens.pdf", p)
+    p = pml(filter(:status => x -> x == "surplus", df), param)
+    save("pml.pdf", p)
 
 end
 
@@ -46,14 +46,12 @@ end
 
 function load_data()
     # parameter names as strings
-    params_strings = ["r", "a0", "a1", "a2", "a3", "δ"]
+    params_strings = ["r", "δ", "m1", "m2", "m3", "m4", "m5"]
     # parameter ranges
     params_range = [
         "0.9", "1.1", "1.3", 
-        "0.1", "0.5", "1.0", 
-        "0.2", "0.5", "1.0", 
-        "0.4", "0.5", "1.0", 
-        "0.05", "0.5", "1.0"
+        "0.05", "0.5", "1.0",
+        "0.1", "0.5", "1.0"
         ]
 
     df = DataFrame()
@@ -62,20 +60,12 @@ function load_data()
             for val in params_range[1:3]
                 append!(df, CSV.File("data/sensitivity_analysis/$(param)/$(val)/df.csv"); cols = :union)
             end
-        elseif param in params_strings[2:2]
+        elseif param == "δ"
             for val in params_range[4:6]
                 append!(df, CSV.File("data/sensitivity_analysis/$(param)/$(val)/df.csv"); cols = :union)
             end
-        elseif param in params_strings[3:4]
-            for val in params_range[7:9]
-                append!(df, CSV.File("data/sensitivity_analysis/$(param)/$(val)/df.csv"); cols = :union)
-            end
-        elseif param in params_strings[5:5]
-            for val in params_range[10:12]
-                append!(df, CSV.File("data/sensitivity_analysis/$(param)/$(val)/df.csv"); cols = :union)
-            end
         else
-            for val in params_range[13:end]
+            for val in params_range[7:end]
                 append!(df, CSV.File("data/sensitivity_analysis/$(param)/$(val)/df.csv"); cols = :union)
             end
         end
@@ -83,7 +73,7 @@ function load_data()
 
     # take model variables from Baseline scenario
     mdf = DataFrame()
-    append!(mdf, CSV.File("data/Baseline/mdf.csv"))
+    append!(mdf, CSV.File("data/shock=Missing/Low/mdf.csv"))
 
     return df, mdf
 end
@@ -92,7 +82,7 @@ function create_sens_plots()
     df, mdf = load_data()
 
     # parameter names as symbols
-    param_symbols = [:r, :a0, :a1, :a2, :a3, :δ]
+    param_symbols = [:r, :δ, :m1, :m2, :m3, :m4, :m5]
 
     cd(mkpath("img/pdf/sens-analysis")) do
         for param in param_symbols

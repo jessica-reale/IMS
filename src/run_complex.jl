@@ -29,7 +29,8 @@ end
 
 # runs the model, transforms and saves data
 function run_model(number_of_runs::Int = 50)
-    scenarios = ("Baseline", "Corridor", "Uncertainty", "Width")
+    scenarios = ("Baseline", "Maturity")
+    shocks = ("Missing", "Corridor" , "Width", "Uncertainty")
 
     # collect agent variables
     adata = [:type, :status, :ON_assets, :ON_liabs, :margin_stability, :am, :bm,
@@ -43,37 +44,44 @@ function run_model(number_of_runs::Int = 50)
     for scenario in scenarios
         seeds = rand(UInt32, number_of_runs)
         
-        println("Creating $number_of_runs seeded $(scenario)-scenario models and running...")
-
-        models = [IMS.init_model(; seed, scenario = scenario) for seed in seeds]
-        
-        adf, mdf, _ =  ensemblerun!(models, dummystep, IMS.model_step!, 1200;
-            adata, mdata, parallel = true, showprogress = true)
+        for shock in shocks 
+            properties = (scenario = scenario,
+                shock = shock) 
             
-        println("Collecting data for $(scenario)-scenario...")
+            println("Creating $number_of_runs seeded $(properties.shock)-shock and $(properties.scenario)-scenario models and running...")
 
-        # Aggregate model data over replicates
-        mdf = @pipe mdf |>
-            groupby(_, :step) |>
-            combine(_, mdata[1:2] .=> unique, mdata[3:end] .=> mean; renamecols = false)
-        mdf[!, :scenario] = fill(scenario, nrow(mdf))
+            models = [IMS.init_model(; seed, properties...) for seed in seeds]
+            
+            adf, mdf, _ =  ensemblerun!(models, dummystep, IMS.model_step!, 1200;
+                adata, mdata, parallel = true, showprogress = true)
+                
+            println("Collecting data for $(properties.shock)-shock and $(properties.scenario)-scenario...")
 
-        # Aggregate agent data over replicates
-        adf = @pipe adf |>
-            groupby(_, [:step, :id, :status, :type]) |>
-            combine(_, adata[1:2] .=> unique, adata[3:end] .=> mean; renamecols = false)
-        adf[!, :scenario] = fill(scenario, nrow(adf))
+            # Aggregate model data over replicates
+            mdf = @pipe mdf |>
+                groupby(_, :step) |>
+                combine(_, mdata[1:2] .=> unique, mdata[3:end] .=> mean; renamecols = false)
+            mdf[!, :shock] = fill(properties.shock, nrow(mdf))
+            mdf[!, :scenario] = fill(properties.scenario, nrow(mdf))
 
-        # Write data to disk
-        println("Saving to disk for $(scenario)-scenario...")
-        datapath = mkpath("data/$(scenario)")
-        filepath = "$datapath/adf.csv"
-        isfile(filepath) && rm(filepath)
-        CSV.write(filepath, adf)
-        filepath = "$datapath/mdf.csv"
-        isfile(filepath) && rm(filepath)
-        CSV.write(filepath, mdf)
-        println("Finished for $(scenario) scenario.")
+            # Aggregate agent data over replicates
+            adf = @pipe adf |>
+                groupby(_, [:step, :id, :status, :type]) |>
+                combine(_, adata[1:2] .=> unique, adata[3:end] .=> mean; renamecols = false)
+            adf[!, :shock] = fill(properties.shock, nrow(adf))
+            adf[!, :scenario] = fill(properties.scenario, nrow(adf))
+
+            # Write data to disk
+            println("Saving to disk for $(properties.shock)-shock and $(properties.scenario)-scenario...")
+            datapath = mkpath("data/shock=$(properties.shock)/$(properties.scenario)")
+            filepath = "$datapath/adf.csv"
+            isfile(filepath) && rm(filepath)
+            CSV.write(filepath, adf)
+            filepath = "$datapath/mdf.csv"
+            isfile(filepath) && rm(filepath)
+            CSV.write(filepath, mdf)
+            println("Finished for $(properties.shock) shock and $(properties.scenario) scenario.")
+        end
     end
 
     printstyled("Simulations finished and data saved!"; color = :blue)
