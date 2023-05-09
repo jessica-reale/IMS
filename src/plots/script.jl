@@ -15,17 +15,17 @@ const vars_ib = [:lending_facility, :deposit_facility, :Term_assets, :Term_liabs
     :margin_stability, :on_supply, :term_supply, :on_demand, :term_demand, :il_rate, :id_rate, :tot_assets, :tot_liabilities]
 
 function overviews_model(df)
-    p = ib_rates_scenarios(df)
-    save("ib_rates_scenarios.pdf", p)
-    
-    p = willingness(df)
-    save("willlingness.pdf", p)
+    p = interest_ib_on(df)
+    save("ib_rates_on.pdf", p)
+
+    p = interest_ib_term(df)
+    save("ib_rates_term.pdf", p)
 end
 
-function scenarios_lines(df, m)
+function overviews_agents(df, m)
     # ib market
-    df1 = @pipe df |> dropmissing(_, vars_ib) |> groupby(_, [:step, :scenario]) |>
-            combine(_, vars_ib .=> mean, renamecols = false) |> filter(row -> all(x -> !(x isa Number && isnan(x)), row), _)
+    df1 = @pipe df |> dropmissing(_, vars_ib) |> groupby(_, [:step, :shock, :scenario]) |>
+            combine(_, vars_ib .=> mean, renamecols = false)
 
     p = assets(df1)
     save("total_assets.pdf", p)
@@ -33,10 +33,10 @@ function scenarios_lines(df, m)
     p = liabilities(df1)
     save("total_liabilities.pdf", p)
 
-    p = ib_on_scenarios(df1)
+    p = ib_on(df1)
     save("ib_on_scenarios.pdf", p)  
 
-    p = ib_term_scenarios(df1)
+    p = ib_term(df1)
     save("ib_term_scenarios.pdf", p) 
 
     p = margin_stability(df1)
@@ -57,8 +57,8 @@ function scenarios_lines(df, m)
     p = pml(df1)
     save("pml.pdf", p)
     
-    df2 = @pipe df |> dropmissing(_, vars_ib) |> groupby(_, [:step, :status, :scenario]) |>
-            combine(_, vars_ib .=> mean, renamecols = false) |> filter(row -> all(x -> !(x isa Number && isnan(x)), row), _)
+    df2 = @pipe df |> dropmissing(_, vars_ib) |> groupby(_, [:step, :shock, :status, :scenario]) |>
+            combine(_, vars_ib .=> mean, renamecols = false)
 
     p = ib_on_rationing(filter(:status => x -> x == "deficit", df2))
     save("ib_on_rationing.pdf", p)  
@@ -92,11 +92,11 @@ function scenarios_lines(df, m)
 
     # credit market
     df_hh = @pipe df |> filter(:id => x -> x >= 1 && x <= mean(m[!, :n_hh]), _) |>
-            groupby(_, [:step, :scenario]) |> 
+            groupby(_, [:step, :shock, :scenario]) |> 
             combine(_, [:loans] .=> mean, renamecols = false)
    
     df_firms = @pipe df |>  filter(:id => x -> x > mean(m[!, :n_hh]) && x <= mean(m[!, :n_hh]) + mean(m[!, :n_f]), _) |>
-            groupby(_, [:step, :scenario]) |> 
+            groupby(_, [:step, :shock, :scenario]) |> 
             combine(_, [:loans, :output, :prices] .=> mean, renamecols = false)
 
     p = scenarios_loans(df_firms)
@@ -113,8 +113,8 @@ function scenarios_lines(df, m)
 end
 
 function load_data()
-    scenarios = ["Low", "High"]
-    shocks = ["Missing", "Corridor", "Width"]
+    scenarios = ["Baseline", "Maturity"]
+    shocks = ["Missing", "Corridor", "Width", "Uncertainty"]
 
     adf = DataFrame()
     mdf = DataFrame()
@@ -131,34 +131,14 @@ function create_plots()
     adf, mdf = load_data()
 
     cd(mkpath("img/pdf")) do
-        cd(mkpath("Missing-shock")) do
-            cd(mkpath("overviews_model")) do
-                overviews_model(filter(:shock => x -> x == "Missing", mdf))
-            end
-
-            cd(mkpath("scenarios_lines")) do 
-                scenarios_lines(filter(:shock => x -> x == "Missing", adf), filter(:shock => x -> x == "Missing", mdf))
-            end
+        cd(mkpath("Baseline")) do
+                overviews_model(filter(:scenario => x -> x == "Baseline", mdf))
+                overviews_agents(filter(:scenario => x -> x == "Baseline", adf), filter(:scenario => x -> x == "Baseline", mdf))
         end
 
-        cd(mkpath("Corridor-shock")) do
-            cd(mkpath("overviews_model")) do
-                overviews_model(filter(:shock => x -> x == "Corridor", mdf))
-            end
-
-            cd(mkpath("scenarios_lines")) do 
-                scenarios_lines(filter(:shock => x -> x == "Corridor", adf), filter(:shock => x -> x == "Corridor", mdf))
-            end
-        end
-
-        cd(mkpath("Width-shock")) do
-            cd(mkpath("overviews_model")) do
-                overviews_model(filter(:shock => x -> x == "Width", mdf))
-            end
-
-            cd(mkpath("scenarios_lines")) do 
-                scenarios_lines(filter(:shock => x -> x == "Width", adf), filter(:shock => x -> x == "Width", mdf))
-            end
+        cd(mkpath("Maturity")) do
+            overviews_model(filter(:scenario => x -> x == "Maturity", mdf))
+            overviews_agents(filter(:scenario => x -> x == "Maturity", adf), filter(:scenario => x -> x == "Maturity", mdf))
         end
     end
 
