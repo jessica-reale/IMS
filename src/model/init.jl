@@ -24,7 +24,7 @@ function init_model(; seed::UInt32 = UInt32(96100), scenario::String = "Baseline
             real_sector_interactions!(model)
             credit_sector_interactions!(model)
         else
-            error("You provided a shock named $(shock) or a scenario named $(scenario) that is not yet implemented. Check for typos or add the scenario")
+            error("You provided a shock named $(shock) or a scenario named $(scenario) that is not yet implemented. Check for typos or add the scenario/shock.")
         end
     return model
 end
