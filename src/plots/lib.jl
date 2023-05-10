@@ -372,12 +372,12 @@ end
 
 function output(df)
     fig = Figure(resolution = (600, 300), fontsize = 10)
-    ax = fig[1,1] = Axis(fig, title = "Firms' output", xlabel = "Steps", ylabel = "Mean")
+    ax = fig[1,1] = Axis(fig, title = "GDP", xlabel = "Steps", ylabel = "Mean")
     gdf = @pipe df |> 
         groupby(_, :shock)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.output[50:end]), 129600)
+        _, trend = hp_filter((subdf.output[50:end] .* subdf.prices[50:end]), 129600)
         lines!(trend; 
             label = "$(key.shock)-shock")
     end
