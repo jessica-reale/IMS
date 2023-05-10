@@ -11,12 +11,18 @@ using QuantEcon
 include("lib.jl")
 
 function interbank(df::DataFrame, param::Symbol)
-    vars = [:pmb, :pml]
+    vars = [:ON_assets, :Term_assets, :pmb, :pml]
 
     # take only bank agents
     df = @pipe df |> dropmissing(_, vars) |> groupby(_, [:step, :status, param]) |> 
-        combine(_, vars .=> mean, renamecols = false) |> filter(row -> all(x -> !(x isa Number && isnan(x)), row), _)
+        combine(_, vars .=> mean, renamecols = false)
     
+    p = ib_on(filter(:status => x -> x == "surplus", df), param)
+    save("ib_on.pdf", p)
+
+    p = ib_term(filter(:status => x -> x == "surplus", df), param)
+    save("ib_term.pdf", p)
+
     p = pmb(filter(:status => x -> x == "deficit", df), param)
     save("pmb.pdf", p)
 
@@ -32,7 +38,7 @@ function credit(df::DataFrame, m::DataFrame, param::Symbol)
    
     df_firms = @pipe df |>  filter(:id => x -> x > mean(m[!, :n_hh]) && x <= mean(m[!, :n_hh]) + mean(m[!, :n_f]), _) |>
         groupby(_, [:step, param]) |> 
-        combine(_, [:loans, :output] .=> mean, renamecols = false)
+        combine(_, [:loans, :output, :prices] .=> mean, renamecols = false)
 
     p = credit_loans(df_firms, param)
     save("loans_firms_sens.pdf", p)
