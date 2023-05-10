@@ -17,6 +17,11 @@ include("model/SFC/hh.jl")
 include("model/SFC/firms.jl")
 include("model/SFC/banks.jl")
 
+"""
+    model_step!(model) → model
+
+Stepping function of the model: defines what happens during each simulation step.
+"""
 function model_step!(model)
     model.step += 1
 
@@ -275,12 +280,25 @@ function ib_rates!(model; tol::Float64 = 1e-06)
     return model.ion, model.iterm
 end
 
+"""
+    update_vars!(model) → model
+
+Updates model paramaters: overnight interbank rate `model.ion` and term interbank one `model.iterm`.
+"""
 function update_vars!(model)
     model.ion_prev = model.ion
     model.iterm_prev = model.iterm
     return model
 end
 
+"""
+    shocks!(model) → model
+
+Defines what happens when shocks are called for: 
+1) Corridor: corridor central bank's rates (`icbt`, `icbl`, `icbd`) are increased symmetrically by 50 basis points every `model.shock_incr` steps;
+2) Width: corridor rates are increasead asymmetrically, altering the width, by 50 and 10 basis points;
+3) Uncertainty: the degree of perceived uncertainty (`PDU`) is increased at 0.9 at step 200.
+"""
 function shocks!(model)
     if model.shock == "Corridor" && iszero(model.step % model.shock_incr)
         model.icbd += 0.005
