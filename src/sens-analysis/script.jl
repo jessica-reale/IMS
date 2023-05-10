@@ -79,7 +79,7 @@ function load_data()
 
     # take model variables from Baseline scenario
     mdf = DataFrame()
-    append!(mdf, CSV.File("data/shock=Missing/Low/mdf.csv"))
+    append!(mdf, CSV.File("data/shock=Missing/Baseline/mdf.csv"))
 
     return df, mdf
 end
