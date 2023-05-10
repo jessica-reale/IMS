@@ -20,10 +20,17 @@ function overviews_model(df)
 
     p = interest_ib_term(df)
     save("ib_rates_term.pdf", p)
+
+    p = theta(df)
+    save("theta.pdf", p)
+
+    p = LbW(df)
+    save("LbW.pdf", p)
 end
 
 function overviews_agents(df, m)
     # ib market
+    ## general
     df1 = @pipe df |> dropmissing(_, vars_ib) |> groupby(_, [:step, :shock, :scenario]) |>
             combine(_, vars_ib .=> mean, renamecols = false)
 
@@ -57,6 +64,7 @@ function overviews_agents(df, m)
     p = pml(df1)
     save("pml.pdf", p)
     
+    ## group by status
     df2 = @pipe df |> dropmissing(_, vars_ib) |> groupby(_, [:step, :shock, :status, :scenario]) |>
             combine(_, vars_ib .=> mean, renamecols = false)
 
@@ -72,23 +80,27 @@ function overviews_agents(df, m)
     p = lending_facility(filter(:status => x -> x == "deficit", df2))
     save("lending_facility.pdf", p) 
 
-    p = margin_stability(filter(:status => x -> x == "deficit", df2))
-    save("margin_stability_deficit.pdf", p)
+    ## group by type
+    df3 = @pipe df |> dropmissing(_, vars_ib) |> groupby(_, [:step, :shock, :type, :scenario]) |>
+        combine(_, vars_ib .=> mean, renamecols = false)
 
-    p = am(filter(:status => x -> x == "deficit", df2))
-    save("am_deficit.pdf", p)
+    p = margin_stability(filter(:type => x -> x == "commercial", df3))
+    save("margin_stability_commercial.pdf", p)
 
-    p = bm(filter(:status => x -> x == "deficit", df2))
-    save("bm_deficit.pdf", p)
+    p = am(filter(:type => x -> x == "commercial", df3))
+    save("am_commercial.pdf", p)
 
-    p = margin_stability(filter(:status => x -> x == "surplus", df2))
-    save("margin_stability_surplus.pdf", p)
+    p = bm(filter(:type => x -> x == "commercial", df3))
+    save("bm_commercial.pdf", p)
 
-    p = am(filter(:status => x -> x == "surplus", df2))
-    save("am_surplus.pdf", p)
+    p = margin_stability(filter(:type => x -> x == "business", df3))
+    save("margin_stability_business.pdf", p)
 
-    p = bm(filter(:status => x -> x == "surplus", df2))
-    save("bm_surplus.pdf", p)
+    p = am(filter(:type => x -> x == "business", df3))
+    save("am_business.pdf", p)
+
+    p = bm(filter(:type => x -> x == "business", df3))
+    save("bm_business.pdf", p)
 
     # credit market
     df_hh = @pipe df |> filter(:id => x -> x >= 1 && x <= mean(m[!, :n_hh]), _) |>

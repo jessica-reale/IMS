@@ -141,7 +141,15 @@ function NSFR!(agent::Bank, model)
     agent.tot_assets = agent.loans_prev + agent.hpm_prev + agent.bills_prev + agent.bonds_prev + agent.ON_assets_prev + agent.Term_assets_prev + agent.deposit_facility_prev
     agent.tot_liabilities = agent.deposits_prev + agent.ON_liabs_prev + agent.Term_liabs_prev + agent.npl_prev + agent.lending_facility_prev + agent.advances_prev
     agent.am = (model.m4 * agent.deposits_prev + model.m5 * agent.Term_liabs_prev) / agent.tot_liabilities
-    agent.bm = (model.m1 * (agent.loans_prev + agent.ON_assets_prev) + model.m2 * (agent.bills_prev + agent.Term_assets_prev) + model.m3 * agent.bonds_prev) / agent.tot_assets
+    agent.bm = 
+        if agent.type == :business 
+            (model.m1 * (agent.loans_prev + agent.ON_assets_prev) + model.m2 * (agent.bills_prev + agent.Term_assets_prev) + 
+                model.m3 * agent.bonds_prev) / agent.tot_assets
+        elseif agent.type == :commercial
+            (model.m1 * agent.ON_assets_prev + model.m2 * (agent.loans_prev + agent.bills_prev + agent.Term_assets_prev) + 
+                model.m3 * agent.bonds_prev) / agent.tot_assets
+        end
+    # update margin of stability    
     if model.scenario == "Maturity"
         agent.margin_stability = agent.am / agent.bm
     else

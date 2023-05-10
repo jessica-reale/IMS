@@ -410,3 +410,45 @@ function prices(df)
 
     return fig
 end
+
+function theta(df)
+    fig = Figure(resolution = (600, 300), fontsize = 10)
+    ax = fig[1,1] = Axis(fig, title = "Borrowers' money market parameter", xlabel = "Steps", ylabel = "Mean")
+    gdf = @pipe df |> 
+        groupby(_, :shock)
+
+    for (key, subdf) in pairs(gdf)
+        _, trend = hp_filter((subdf.θ[50:end]), 129600)
+        lines!(trend; 
+            label = "$(key.shock)-shock")
+    end
+    ax.xticks = 100:200:1200
+   
+    fig[end + 1, 1:1] = Legend(fig, ax; 
+        tellheight = true, 
+        tellwidth = false,
+        orientation = :horizontal)
+
+    return fig
+end
+
+function LbW(df)
+    fig = Figure(resolution = (600, 300), fontsize = 10)
+    ax = fig[1,1] = Axis(fig, title = "Lenders' money market parameter", xlabel = "Steps", ylabel = "Mean")
+    gdf = @pipe df |> 
+        groupby(_, :shock)
+
+    for (key, subdf) in pairs(gdf)
+        _, trend = hp_filter((subdf.LbW[50:end]), 129600)
+        lines!(trend; 
+            label = "$(key.shock)-shock")
+    end
+    ax.xticks = 100:200:1200
+   
+    fig[end + 1, 1:1] = Legend(fig, ax; 
+        tellheight = true, 
+        tellwidth = false,
+        orientation = :horizontal)
+
+    return fig
+end
