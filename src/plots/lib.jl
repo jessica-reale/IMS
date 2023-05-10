@@ -432,7 +432,6 @@ function theta(df)
     return fig
 end
 
-
 function LbW(df)
     fig = Figure(resolution = (600, 300), fontsize = 10)
     ax = fig[1,1] = Axis(fig, title = "Lenders' money market parameter", xlabel = "Steps", ylabel = "Mean")
