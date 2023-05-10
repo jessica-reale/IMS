@@ -20,6 +20,12 @@ function overviews_model(df)
 
     p = interest_ib_term(df)
     save("ib_rates_term.pdf", p)
+
+    p = theta(df)
+    save("theta.pdf", p)
+
+    p = LbW(df)
+    save("LbW.pdf", p)
 end
 
 function overviews_agents(df, m)
@@ -133,12 +139,12 @@ function create_plots()
     cd(mkpath("img/pdf")) do
         cd(mkpath("Baseline")) do
                 overviews_model(filter(:scenario => x -> x == "Baseline", mdf))
-                overviews_agents(filter(:scenario => x -> x == "Baseline", adf), filter(:scenario => x -> x == "Baseline", mdf))
+               # overviews_agents(filter(:scenario => x -> x == "Baseline", adf), filter(:scenario => x -> x == "Baseline", mdf))
         end
 
         cd(mkpath("Maturity")) do
             overviews_model(filter(:scenario => x -> x == "Maturity", mdf))
-            overviews_agents(filter(:scenario => x -> x == "Maturity", adf), filter(:scenario => x -> x == "Maturity", mdf))
+          #  overviews_agents(filter(:scenario => x -> x == "Maturity", adf), filter(:scenario => x -> x == "Maturity", mdf))
         end
     end
 
