@@ -180,19 +180,19 @@ Updates firms' matching in the credit market.
 """
 function firms_matching!(model)
     for id in ids_by_type(Firm, model)
-        #Select potential partners
+        # Select potential partners
         potential_partners = filter(i -> model[i] isa Bank && i != model[id].belongToBank && model[i].type == :business, collect(allids(model)))[1:model.χ]
-        #Select new partner with the best interest rate among potential partners
+        # Select new partner with the best interest rate among potential partners
         new_partner = rand(model.rng, filter(i -> i in potential_partners && model[i].il_rate == minimum(model[a].il_rate for a in potential_partners), potential_partners))
-        #Select interest rate of the new potential partner
+        # Select interest rate of the new potential partner
         inew = model[new_partner].il_rate
-        #Pick up old partner
+        # Pick up old partner
         old_partner = model[id].belongToBank
-        #PICK UP THE INTEREST OF THE OLD PARTNER
+        # PICK UP THE INTEREST OF THE OLD PARTNER
         iold = model[old_partner].il_rate
-        #COMPARE OLD AND NEW INTERESTS
+        # COMPARE OLD AND NEW INTERESTS
         if rand(model.rng) < (1 - exp(model.λ * (inew - iold)/inew))
-            #THEN SWITCH TO A NEW PARTNER
+            # THEN SWITCH TO A NEW PARTNER
             deleteat!(model[old_partner].firms_customers, findall(x -> x == id, model[old_partner].firms_customers))
             model[id].belongToBank = new_partner
             push!(model[new_partner].firms_customers, id)
@@ -207,19 +207,19 @@ Updates households' matching in the credit market.
 """
 function hhs_matching!(model)
     for id in ids_by_type(Household, model)
-        #Select potential partners
+        # Select potential partners
         potential_partners = filter(i -> model[i] isa Bank && i != model[id].belongToBank && model[i].type == :commercial, collect(allids(model)))[1:model.χ]
-        #Select new partner with the best interest rate among potential partners
+        # Select new partner with the best interest rate among potential partners
         new_partner = rand(model.rng, filter(i -> i in potential_partners && model[i].il_rate == minimum(model[a].il_rate for a in potential_partners), potential_partners))
-        #Select interest rate of the new potential partner
+        # Select interest rate of the new potential partner
         inew = model[new_partner].il_rate
-        #Pick up old partner
+        # Pick up old partner
         old_partner = model[id].belongToBank
-        #PICK UP THE INTEREST OF THE OLD PARTNER
+        # PICK UP THE INTEREST OF THE OLD PARTNER
         iold = model[old_partner].il_rate
-        #COMPARE OLD AND NEW INTERESTS
+        # COMPARE OLD AND NEW INTERESTS
         if rand(model.rng) < (1 - exp(model.λ * (inew - iold)/inew))
-            #THEN SWITCH TO A NEW PARTNER
+            # THEN SWITCH TO A NEW PARTNER
             deleteat!(model[old_partner].hh_customers, findall(x -> x == id, model[old_partner].hh_customers))
             model[id].belongToBank = new_partner
             push!(model[new_partner].hh_customers, id)
@@ -239,13 +239,25 @@ function ib_matching!(model)
         isempty([a.id for a in allagents(model) if a isa Bank && a.status == :surplus]) && return
 
         if model[id].status == :deficit
-            #Select potential partners with the closest preferences for overnight funds
-            potential_partners = filter(i -> model[i] isa Bank && model[i].status == :surplus && abs(model[i].pml - model[id].pmb) <= 1e-01, collect(allids(model)))
-            if !isempty(potential_partners)
-                #Select new partner
-                new_partner = rand(model.rng, filter(i -> i in potential_partners, potential_partners))
-                model[id].belongToBank = new_partner
-                push!(model[new_partner].ib_customers, id)
+            # interbank matching depends on the scenario implemented
+            if model.scenario == "Maturity"
+                # Select potential partners with the closest preferences for overnight funds
+                potential_partners = filter(i -> model[i] isa Bank && model[i].status == :surplus && abs(model[i].pml - model[id].pmb) <= 1e-01, collect(allids(model)))                          
+                if !isempty(potential_partners)
+                    # Select new partner
+                    new_partner = rand(model.rng, filter(i -> i in potential_partners, potential_partners))
+                    model[id].belongToBank = new_partner
+                    push!(model[new_partner].ib_customers, id)
+                end
+            else
+                # Select potenital partners based only on interbank status
+                potential_partners = filter(i -> model[i] isa Bank && model[i].status == :surplus, collect(allids(model)))                          
+                if rand(model.rng, Bool)
+                    # Select new partner
+                    new_partner = rand(model.rng, filter(i -> i in potential_partners, potential_partners))
+                    model[id].belongToBank = new_partner
+                    push!(model[new_partner].ib_customers, id)
+                end
             end
         end
     end

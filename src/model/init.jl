@@ -252,7 +252,7 @@ function distribute_SS_values(model)
             a.tot_assets = a.loans + a.hpm + a.bills
             a.tot_liabilities = a.deposits + a.advances
             a.am = (model.m4 * a.deposits) / a.tot_liabilities
-            a.bm = (model.m1 * a.loans + model.m2 * a.bills) / a.tot_assets
+            a.bm = (model.m2 * (a.bills + a.loans)) / a.tot_assets
             a.margin_stability = a.am/ a.bm
         elseif isa(a, Bank) && a.type == :business
             a.deposits = Df / model.n_bk
