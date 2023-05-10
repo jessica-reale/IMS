@@ -28,7 +28,7 @@ using IMS
 end
 
 # runs the model, transforms and saves data
-function run_model(number_of_runs::Int = 1)
+function run_model(number_of_runs::Int = 100)
     scenarios = ("Baseline", "Maturity")
     shocks = ("Missing", "Corridor" , "Width", "Uncertainty")
 
