@@ -130,7 +130,10 @@ end
 """
     NSFR!(agent::Bank, model) → model
 
-Update the elements of the Net Stable Funding Ratio (NSFR).
+Update the elements of the Net Stable Funding Ratio (NSFR). The resulting `margin_stability` depends on the scenario implemented:
+1) Baseline scenario: NSFR weights are excluded from the calculations and the margin of stability depends on the ratio of total liabilities
+over total assets;
+2) Maturity scenario: the margin of stability is weighted for the residual maturities of the NSFR.
 """
 function NSFR!(agent::Bank, model)
     agent.status == :neutral && return
@@ -150,7 +153,8 @@ end
 """
     lending_targets!(agent::Bank, scenario, rng) → agent.pml
 
-Update lenders' preferences for overnight interbank assets based on NSFR.
+Update lenders' preferences for overnight interbank assets: banks' are assumed to be indifferent to maturity considerations in 
+the `Baseline` scenario. When the `Maturity` scenario is active, preferences depend on NSFR weights.
 """
 function lending_targets!(agent::Bank, scenario, rng)
     agent.status != :surplus && return
@@ -173,7 +177,8 @@ end
 """
     borrowing_targets!(agent::Bank, scenario, rng) → agent.pmb
 
-Update borrowers' preferences for overnight interbank assets based on NSFR.
+Update borrowers' preferences for overnight interbank assets: banks' are assumed to be indifferent to maturity considerations in 
+the `Baseline` scenario. When the `Maturity` scenario is active, preferences depend on NSFR weights.
 """
 function borrowing_targets!(agent::Bank, scenario, rng)
     agent.status != :deficit && return
@@ -220,7 +225,9 @@ end
 """
     on_demand!(agent::Bank, model) → agent.on_demand
 
-Banks define their demand for overnight interbank loans dependent on money market rates and NSFR-based borrowing preferences.
+Banks define their demand for overnight interbank loans dependent on money market rates (`Baseline` scenario) 
+and NSFR-based borrowing preferences (`Maturity` scenario). When the `Baseline` scenario is active, lenders accommodate borrowers' demand for funds 
+in the overnight segment. Otherwise, 
 """
 function on_demand!(agent::Bank, model)
     if agent.status == :deficit && !ismissing(agent.belongToBank)
@@ -235,7 +242,8 @@ end
 """
     term_demand!(agent::Bank, model) → agent.term_demand
 
-Banks define their demand for term interbank loans as a residual.
+Banks define their demand for term interbank loans as a residual. When the `Baseline` scenario is active, lenders accommodate borrowers' demand for funds 
+in the term segment.
 """
 function term_demand!(agent::Bank, model)
     if agent.status == :deficit && !ismissing(agent.belongToBank)
@@ -293,7 +301,8 @@ end
 """
     ib_on!(agent::Bank, model) → model
 
-Updates overnight interbank assets and liabilities.
+Updates overnight interbank assets and liabilities. When the `Baseline` scenario is active, lenders accommodate borrowers' demand for funds 
+in the overnight segment. Otherwise, borrowers receive funds according to the short-side of the market.
 """
 function ib_on!(agent::Bank, model)
     if agent.status == :deficit && !ismissing(agent.belongToBank)
@@ -316,7 +325,8 @@ end
 """
     ib_term!(agent::Bank, model) → model
 
-Updates term interbank assets and liabilities.
+Updates term interbank assets and liabilities. When the `Baseline` scenario is active, lenders accommodate borrowers' demand for funds 
+in the term segment. Otherwise, borrowers receive funds according to the short-side of the market.
 """
 function ib_term!(agent::Bank, model)
     if agent.status == :deficit && !ismissing(agent.belongToBank)
@@ -365,7 +375,7 @@ end
 """
     funding_costs!(agent::Bank, icbt, ion, iterm) → agent.funding_costs
 
-Banks compute their funding costs.
+Banks compute their funding costs according to their recourse to the interbank market and/or the central bank's lending facility.
 """
 function funding_costs!(agent::Bank, icbt, ion, iterm, icbl)
     if agent.status == :deficit
@@ -389,7 +399,7 @@ end
 """
     credit_rates!(agent::Bank, χ1) → agent.il_rate, agent.id_rate
 
-Banks determine lending and deposit rates on the credit market.
+Banks determine lending and deposit rates on the credit market based on their previous period funding costs.
 """
 function credit_rates!(agent::Bank, χ1)
     agent.il_rate = agent.funding_costs_prev + χ1
