@@ -318,7 +318,6 @@ function shocks!(model)
         model.icbt = (model.icbl + model.icbd) / 2.0
     elseif model.shock == "Width" && iszero(model.step % model.shock_incr)
         model.icbl += 0.005
-        model.icbd += 0.001
         model.icbt = (model.icbl + model.icbd) / 2.0
     elseif model.shock == "Uncertainty" && model.step == 200
         model.PDU = 0.9
