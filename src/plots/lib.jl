@@ -480,16 +480,16 @@ function big_ib_plots(df)
     gdf = @pipe df |> 
         groupby(_, :shock)
     
-    vars = (symbols = [:ON_assets, :Term_assets, :deposit_facility, :lending_facility, :margin_stability, :am, :bm, :pmb, :pml], 
+    vars = (variables = [:ON_assets, :Term_assets, :deposit_facility, :lending_facility, :margin_stability, :am, :bm, :pmb, :pml], 
         labels = ["Overnight volumes", "Term volumes", "Deposit facility", "Lending Facility", "Margin of stability", "ASF", "RSF", 
             "Borrowers' preferences", "Lenders' preferences"])   
             
-    for i in 1:length(vars.symbols)   
+    for i in 1:length(vars.variables)   
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
         for j in 1:length(gdf)
-         _, trend = hp_filter(gdf[j][!, vars.symbols[i]][50:end], 129600)
-                lines!(trend; label = only(unique(gdf[j].shock)))
-            end
+            _, trend = hp_filter(gdf[j][!, vars.variables[i]][50:end], 129600)
+            lines!(trend; label = only(unique(gdf[j].shock)))
+        end
         ax.xticks = 100:200:1200
     end
 
@@ -506,6 +506,41 @@ function big_ib_plots(df)
         ax4.xticksvisible = ax5.xticksvisible = ax6.xticksvisible = false
    
     fig[end+1,1:3] = Legend(fig, 
+        ax1; 
+        tellheight = true, 
+        tellwidth = false,
+        orientation = :horizontal, 
+        )
+    return fig 
+end
+
+function big_rationing_plot(df)
+    fig = Figure(resolution = (800, 300), fontsize = 10)
+    axes = ((1,1), (1,2))
+    gdf = @pipe df |> 
+        groupby(_, :shock)
+            
+    vars = (variables_num = [:ON_liabs, :Term_liabs], variables_den = [:on_demand, :term_demand], labels = ["ON rationing", "Term rationing"])
+
+    for i in 1:length(vars.variables_num)
+        ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
+        for j in 1:length(gdf)
+            _, trend = hp_filter((1 .- gdf[j][!, vars.variables_num[i]][50:end] ./ gdf[j][!, vars.variables_den[i]][50:end]), 129600)
+            lines!(trend; label = only(unique(gdf[j].shock)))
+        end
+        ax.xticks = 100:200:1200
+    end
+
+    ax1 = fig.content[1]; ax2 = fig.content[2]
+    
+
+    ax1.ylabel = "Mean"
+    ax1.xlabel = ax2.xlabel = "Steps"
+    linkyaxes!(fig.content...)
+    ax2.yticklabelsvisible = false
+    ax2.yticksvisible = false
+
+    fig[end+1,1:2] = Legend(fig, 
         ax1; 
         tellheight = true, 
         tellwidth = false,

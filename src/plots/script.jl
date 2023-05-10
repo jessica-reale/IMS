@@ -77,6 +77,9 @@ function overviews_agents(df, m)
     p = ib_term_rationing(filter(:status => x -> x == "deficit", df2))
     save("ib_term_rationing.pdf", p) 
 
+    p = big_rationing_plot(filter(:status => x -> x == "deficit", df2))
+    save("big_rationing_plot.pdf", p) 
+
     p = deposit_facility(filter(:status => x -> x == "surplus", df2))
     save("deposit_facility.pdf", p) 
 
@@ -159,7 +162,7 @@ function create_plots()
 
     cd(mkpath("img/pdf")) do
         cd(mkpath("Baseline")) do
-                overviews_model(filter(:scenario => x -> x == "Baseline", mdf))
+               overviews_model(filter(:scenario => x -> x == "Baseline", mdf))
                 overviews_agents(filter(:scenario => x -> x == "Baseline", adf), filter(:scenario => x -> x == "Baseline", mdf))
         end
 
