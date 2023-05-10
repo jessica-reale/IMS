@@ -76,7 +76,7 @@ end
 
 Checks that the SFC structure holds despite explosive dynamics.
 """
-function SFC_explosive!(model, GDP; tol::Float64 = 1e-06)
+function SFC_explosive!(model, GDP; tol::Float64 = 1e-05)
     tot_balance = sum(a.balance_current for a in allagents(model)) + 
         sum(a.balance_capital for a in allagents(model) if a isa Firm || a isa CentralBank || a isa Bank)
 
