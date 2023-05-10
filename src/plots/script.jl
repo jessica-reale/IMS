@@ -12,7 +12,7 @@ using QuantEcon
 include("lib.jl")
 
 const vars_ib = [:lending_facility, :deposit_facility, :Term_assets, :Term_liabs, :ON_assets, :ON_liabs, :am, :bm, :pmb, :pml,
-    :margin_stability, :on_supply, :term_supply, :on_demand, :term_demand, :il_rate, :id_rate, :tot_assets, :tot_liabilities]
+    :margin_stability, :on_supply, :term_supply, :on_demand, :term_demand, :il_rate, :id_rate, :tot_assets, :tot_liabilities, :funding_costs]
 
 function overviews_model(df)
     p = interest_ib_on(df)
@@ -64,6 +64,9 @@ function overviews_agents(df, m)
     p = pml(df1)
     save("pml.pdf", p)
     
+    p = big_ib_plots(df1)
+    save("big_ib_plots.pdf", p)
+
     ## group by status
     df2 = @pipe df |> dropmissing(_, vars_ib) |> groupby(_, [:step, :shock, :status, :scenario]) |>
             combine(_, vars_ib .=> mean, renamecols = false)
@@ -101,6 +104,18 @@ function overviews_agents(df, m)
 
     p = bm(filter(:type => x -> x == "business", df3))
     save("bm_business.pdf", p)
+
+    p = funding_costs(filter(:type => x -> x == "business", df3))
+    save("funding_costs_business.pdf", p)
+
+    p = funding_costs(filter(:type => x -> x == "commercial", df3))
+    save("funding_costs_commercial.pdf", p)
+
+    p = scenarios_credit_rates(filter(:type => x -> x == "business", df3))
+    save("credit_rates_business.pdf", p)
+
+    p = scenarios_credit_rates(filter(:type => x -> x == "commercial", df3))
+    save("credit_rates_commercial.pdf", p)
 
     # credit market
     df_hh = @pipe df |> filter(:id => x -> x >= 1 && x <= mean(m[!, :n_hh]), _) |>

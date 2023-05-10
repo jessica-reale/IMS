@@ -452,3 +452,64 @@ function LbW(df)
 
     return fig
 end
+
+function funding_costs(df)
+    fig = Figure(resolution = (600, 300), fontsize = 10)
+    ax = fig[1,1] = Axis(fig, title = "Funding costs", xlabel = "Steps", ylabel = "Mean")
+    gdf = @pipe df |> 
+        groupby(_, :shock)
+
+    for (key, subdf) in pairs(gdf)
+        _, trend = hp_filter((subdf.funding_costs[50:end]), 129600)
+        lines!(trend; 
+            label = "$(key.shock)-shock")
+    end
+    ax.xticks = 100:200:1200
+  
+    fig[end + 1, 1:1] = Legend(fig, ax; 
+        tellheight = true, 
+        tellwidth = false,
+        orientation = :horizontal)
+
+    return fig
+end
+
+function big_ib_plots(df)
+    fig = Figure(resolution = (1200, 700), fontsize = 10)
+    axes = ((1,1), (1,2), (1,3), (2,1), (2,2), (2,3), (3,1), (3,2), (3,3))
+    gdf = @pipe df |> 
+        groupby(_, :shock)
+    
+    vars = (symbols = [:ON_assets, :Term_assets, :deposit_facility, :lending_facility, :margin_stability, :am, :bm, :pmb, :pml], 
+        labels = ["Overnight volumes", "Term volumes", "Deposit facility", "Lending Facility", "Margin of stability", "ASF", "RSF", 
+            "Borrowers' preferences", "Lenders' preferences"])   
+            
+    for i in 1:length(vars.symbols)   
+        ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
+        for j in 1:length(gdf)
+         _, trend = hp_filter(gdf[j][!, vars.symbols[i]][50:end], 129600)
+                lines!(trend; label = only(unique(gdf[j].shock)))
+            end
+        ax.xticks = 100:200:1200
+    end
+
+    ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];
+    ax4 = fig.content[4]; ax5 = fig.content[5]; ax6 = fig.content[6];
+    ax7 = fig.content[7]; ax8 = fig.content[8]; ax9 = fig.content[9]
+
+    ax1.ylabel = ax4.ylabel = ax7.ylabel = "Mean"
+    ax7.xlabel = ax8.xlabel = ax9.xlabel = "Steps"
+    ax1.xticklabelsvisible = ax2.xticklabelsvisible = ax3.xticklabelsvisible = 
+        ax4.xticklabelsvisible = ax5.xticklabelsvisible = ax6.xticklabelsvisible = false
+    
+    ax1.xticksvisible = ax2.xticksvisible = ax3.xticksvisible =  
+        ax4.xticksvisible = ax5.xticksvisible = ax6.xticksvisible = false
+   
+    fig[end+1,1:3] = Legend(fig, 
+        ax1; 
+        tellheight = true, 
+        tellwidth = false,
+        orientation = :horizontal, 
+        )
+    return fig 
+end
