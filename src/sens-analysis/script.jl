@@ -11,24 +11,25 @@ using QuantEcon
 include("lib.jl")
 
 function interbank(df::DataFrame, param::Symbol)
-    vars = [:ON_assets, :Term_assets, :pmb, :pml]
+    vars = [:ON_assets, :Term_assets, :deposit_facility, :lending_facility, :margin_stability, :am, :bm, :pmb, :pml]
 
-    # take only bank agents
-    df = @pipe df |> dropmissing(_, vars) |> groupby(_, [:step, :status, param]) |> 
+    df = @pipe df |> dropmissing(_, vars) |> groupby(_, [:step, param]) |> 
         combine(_, vars .=> mean, renamecols = false)
+
+    p = big_ib_plots_sens(df, param)
+    save("big_ib_plots_sens.pdf", p)
     
-    p = ib_on(filter(:status => x -> x == "surplus", df), param)
+    p = ib_on(df, param)
     save("ib_on.pdf", p)
 
-    p = ib_term(filter(:status => x -> x == "surplus", df), param)
+    p = ib_term(df, param)
     save("ib_term.pdf", p)
 
-    p = pmb(filter(:status => x -> x == "deficit", df), param)
+    p = pmb(df, param)
     save("pmb.pdf", p)
 
-    p = pml(filter(:status => x -> x == "surplus", df), param)
-    save("pml.pdf", p)
-
+    p = pml(df, param)
+    save("pml.pdf", p)    
 end
 
 function credit(df::DataFrame, m::DataFrame, param::Symbol)
