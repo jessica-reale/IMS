@@ -86,6 +86,12 @@ function overviews_agents(df, m)
     p = lending_facility(filter(:status => x -> x == "deficit", df2))
     save("lending_facility.pdf", p) 
 
+    p = margin_stability(filter(:status => x -> x == "deficit", df2))
+    save("margin_stability_deficit.pdf", p)
+
+    p = margin_stability(filter(:status => x -> x == "surplus", df2))
+    save("margin_stability_surplus.pdf", p)
+
     ## group by type
     df3 = @pipe df |> dropmissing(_, vars_ib) |> groupby(_, [:step, :shock, :type, :scenario]) |>
         combine(_, vars_ib .=> mean, renamecols = false)
