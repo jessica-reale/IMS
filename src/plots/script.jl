@@ -31,8 +31,9 @@ end
 function overviews_agents(df, m)
     # ib market
     ## general
-    df1 = @pipe df |> dropmissing(_, vars_ib) |> groupby(_, [:step, :shock, :scenario]) |>
-            combine(_, vars_ib .=> mean, renamecols = false)
+    df1 = @pipe df |> dropmissing(_, vars_ib) |> 
+        groupby(_, [:step, :shock, :scenario]) |>
+        combine(_, vars_ib .=> mean, renamecols = false)
 
     p = assets(df1)
     save("total_assets.pdf", p)
@@ -125,6 +126,25 @@ function overviews_agents(df, m)
 
     p = scenarios_credit_rates(filter(:type => x -> x == "commercial", df3))
     save("credit_rates_commercial.pdf", p)
+
+    # by status 
+    df4 = @pipe df |> dropmissing(_, vars_ib) |> filter(:status => x -> x == "surplus", _) |> 
+        groupby(_, [:step, :shock, :scenario]) |>
+        combine(_, vars_ib .=> mean, renamecols = false)
+
+    p = big_ib_volumes(df4)
+    save("big_ib_volumes.pdf", p)
+    
+    p = big_ib_surplus(df4)
+    save("big_ib_surplus.pdf", p)
+
+    df5 = @pipe df |> dropmissing(_, vars_ib) |> filter(:status => x -> x == "deficit", _) |> 
+        groupby(_, [:step, :shock, :scenario]) |>
+        combine(_, vars_ib .=> mean, renamecols = false)
+
+    p = big_ib_deficit(df5)
+    save("big_ib_deficit.pdf", p)    
+
 
     # credit market
     df_hh = @pipe df |> filter(:id => x -> x >= 1 && x <= mean(m[!, :n_hh]), _) |>
