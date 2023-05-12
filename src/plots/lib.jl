@@ -550,7 +550,7 @@ function big_rationing_plot(df)
 end
 
 function big_ib_volumes(df)
-    fig = Figure(resolution = (1000, 400), fontsize = 10)
+    fig = Figure(resolution = (800, 400), fontsize = 10)
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, :shock)
@@ -582,14 +582,14 @@ function big_ib_volumes(df)
 end
 
 function big_ib_surplus(df)
-    fig = Figure(resolution = (1000, 400), fontsize = 10)
-    axes = ((1,1), (1,2), (1,3), (2,1), (2,2), (2,3))
+    fig = Figure(resolution = (1200, 300), fontsize = 10)
+    axes = ((1,1), (1,2), (1,3))
 
     gdf = @pipe df |> 
         groupby(_, :shock)
     
-    vars = (variables = [:margin_stability, :am, :bm, :deposit_facility, :on_supply, :term_supply], 
-        labels = ["Margin of stability", "ASF", "RSF",  "Deposit facility", "ON interbank supply", "Term interbank supply"])   
+    vars = (variables = [:margin_stability, :am, :bm], 
+        labels = ["Margin of stability", "ASF", "RSF"])   
         
     for i in 1:length(vars.variables)   
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
@@ -601,13 +601,10 @@ function big_ib_surplus(df)
     end
 
     ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];
-    ax4 = fig.content[4]; ax5 = fig.content[5]; ax6 = fig.content[6];
 
-    ax1.ylabel = ax4.ylabel = "Mean"
-    ax4.xlabel = ax5.xlabel = ax6.xlabel = "Steps"
-    ax1.xticklabelsvisible = ax2.xticklabelsvisible = ax3.xticklabelsvisible =  false
-    ax1.xticksvisible = ax2.xticksvisible = ax3.xticksvisible = false
-   
+    ax1.ylabel =  "Mean"
+    ax1.xlabel = ax2.xlabel = ax3.xlabel = "Steps"
+
     fig[end+1,1:3] = Legend(fig, 
         ax1; 
         tellheight = true, 
@@ -618,14 +615,14 @@ function big_ib_surplus(df)
 end
 
 function big_ib_deficit(df)
-    fig = Figure(resolution = (800, 500), fontsize = 10)
-    axes = ((1,1), (1,2), (1,3), (2,1), (2,2), (2,3))
+    fig = Figure(resolution = (1200, 300), fontsize = 10)
+    axes = ((1,1), (1,2), (1,3))
 
     gdf = @pipe df |> 
         groupby(_, :shock)
     
-    vars = (variables = [:margin_stability, :am, :bm, :lending_facility, :on_demand, :term_demand], 
-        labels = ["Margin of stability", "ASF", "RSF", "Lending facility", "ON demand", "Term demand"])   
+    vars = (variables = [:margin_stability, :am, :bm], 
+        labels = ["Margin of stability", "ASF", "RSF"])   
         
     for i in 1:length(vars.variables)   
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
@@ -637,12 +634,9 @@ function big_ib_deficit(df)
     end
 
     ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];
-    ax4 = fig.content[4]; ax5 = fig.content[5]; ax6 = fig.content[6];
 
-    ax1.ylabel = ax4.ylabel = "Mean"
-    ax4.xlabel = ax5.xlabel = ax6.xlabel = "Steps"
-    ax1.xticklabelsvisible = ax2.xticklabelsvisible = ax3.xticklabelsvisible =  false
-    ax1.xticksvisible = ax2.xticksvisible = ax3.xticksvisible = false
+    ax1.ylabel =  "Mean"
+    ax1.xlabel = ax2.xlabel = ax3.xlabel = "Steps"
    
     fig[end+1,1:3] = Legend(fig, 
         ax1; 
