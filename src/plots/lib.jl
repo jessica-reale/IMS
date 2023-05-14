@@ -1,25 +1,4 @@
 # Scenarios comparisons in the same plot
-function ib_on(df)
-    fig = Figure(resolution = (600, 300), fontsize = 10)
-    ax = fig[1,1] = Axis(fig, title = "Overnight interbank loans", xlabel = "Steps", ylabel = "Mean")
-    gdf = @pipe df |> 
-        groupby(_, :shock)
-
-    for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.ON_assets[50:end]), 129600)
-        lines!(trend; 
-            label = "$(key.shock)-shock")
-    end
-    ax.xticks = 100:200:1200
-  
-    fig[end + 1, 1:1] = Legend(fig, ax; 
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :horizontal)
-
-    return fig
-end
-
 function interest_ib_on(df)
     fig = Figure(resolution = (600, 300), fontsize = 10)
     ax = fig[1,1] = Axis(fig, title = "Overnight interbank rate", xlabel = "Steps", ylabel = "Mean")
@@ -56,262 +35,6 @@ function interest_ib_term(df)
     end
     ax.xticks = 100:200:1200
   
-    fig[end + 1, 1:1] = Legend(fig, ax; 
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :horizontal)
-
-    return fig
-end
-
-function ib_term(df)
-    fig = Figure(resolution = (600, 300), fontsize = 10)
-    ax = fig[1,1] = Axis(fig, title = "Term interbank loans", xlabel = "Steps", ylabel = "Mean")
-    gdf = @pipe df |> 
-        groupby(_, :shock)
-
-    for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.Term_assets[50:end]), 129600)
-        lines!(trend; 
-            label = "$(key.shock)-shock")
-    end
-    ax.xticks = 100:200:1200
-  
-
-    fig[end + 1, 1:1] = Legend(fig, ax; 
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :horizontal)
-
-    return fig
-end
-
-function ib_term_rationing(df)
-    fig = Figure(resolution = (600, 300), fontsize = 10)
-    ax = fig[1,1] = Axis(fig, title = "Term interbank rationing", xlabel = "Steps", ylabel = "Mean")
-    gdf = @pipe df |> 
-        groupby(_, :shock)
-
-    for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((1 .- subdf.Term_liabs[50:end]./subdf.term_demand[50:end]), 129600)
-        lines!(trend; 
-            label = "$(key.shock)-shock")
-    end
-    ax.xticks = 100:200:1200
-  
-
-    fig[end + 1, 1:1] = Legend(fig, ax; 
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :horizontal)
-
-    return fig
-end
-
-function ib_on_rationing(df)
-    fig = Figure(resolution = (600, 300), fontsize = 10)
-    ax = fig[1,1] = Axis(fig, title = "ON interbank rationing", xlabel = "Steps", ylabel = "Mean")
-    gdf = @pipe df |> 
-        groupby(_, :shock)
-
-    for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((1 .- subdf.ON_liabs[50:end]./subdf.on_demand[50:end]), 129600)
-        lines!(trend; 
-            label = "$(key.shock)-shock")
-    end
-    ax.xticks = 100:200:1200
-  
-
-    fig[end + 1, 1:1] = Legend(fig, ax; 
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :horizontal)
-
-    return fig
-end
-
-function margin_stability(df)
-    fig = Figure(resolution = (600, 300), fontsize = 10)
-    ax = fig[1,1] = Axis(fig, title = "Margins of stability", xlabel = "Steps", ylabel = "Mean")
-    gdf = @pipe df |> 
-        groupby(_, :shock)
-
-    for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.margin_stability[50:end]), 129600)
-        lines!(trend; 
-            label = "$(key.shock)-shock")
-    end
-    ax.xticks = 100:200:1200
-
-    fig[end + 1, 1:1] = Legend(fig, ax; 
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :horizontal)
-
-    return fig
-end
-
-function am(df)
-    fig = Figure(resolution = (600, 300), fontsize = 10)
-    ax = fig[1,1] = Axis(fig, title = "ASF factor", xlabel = "Steps", ylabel = "Mean")
-    gdf = @pipe df |> 
-        groupby(_, :shock)
-
-    for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.am[50:end]), 129600)
-        lines!(trend; 
-            label = "$(key.shock)-shock")
-    end
-    ax.xticks = 100:200:1200
-  
-    fig[end + 1, 1:1] = Legend(fig, ax; 
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :horizontal)
-
-    return fig
-end
-
-function bm(df)
-    fig = Figure(resolution = (600, 300), fontsize = 10)
-    ax = fig[1,1] = Axis(fig, title = "RSF factor", xlabel = "Steps", ylabel = "Mean")
-    gdf = @pipe df |> 
-        groupby(_, :shock)
-
-    for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.bm[50:end]), 129600)
-        lines!(trend; 
-            label = "$(key.shock)-shock")
-    end
-    ax.xticks = 100:200:1200
-   
-
-    fig[end + 1, 1:1] = Legend(fig, ax; 
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :horizontal)
-
-    return fig
-end
-
-function assets(df)
-    fig = Figure(resolution = (600, 300), fontsize = 10)
-    ax = fig[1,1] = Axis(fig, title = "Total assets", xlabel = "Steps", ylabel = "Mean")
-    gdf = @pipe df |> 
-        groupby(_, :shock)
-
-    for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.tot_assets[50:end]), 129600)
-        lines!(trend; 
-            label = "$(key.shock)-shock")
-    end
-    ax.xticks = 100:200:1200
-
-    fig[end + 1, 1:1] = Legend(fig, ax; 
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :horizontal)
-
-    return fig
-end
-
-function liabilities(df)
-    fig = Figure(resolution = (600, 300), fontsize = 10)
-    ax = fig[1,1] = Axis(fig, title = "Total liabilities", xlabel = "Steps", ylabel = "Mean")
-    gdf = @pipe df |> 
-        groupby(_, :shock)
-
-    for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.tot_liabilities[50:end]), 129600)
-        lines!(trend; 
-            label = "$(key.shock)-shock")
-    end
-    ax.xticks = 100:200:1200
-  
-    fig[end + 1, 1:1] = Legend(fig, ax; 
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :horizontal)
-
-    return fig
-end
-
-function pmb(df)
-    fig = Figure(resolution = (600, 300), fontsize = 10)
-    ax = fig[1,1] = Axis(fig, title = "Borrowers' preferences for maturities", xlabel = "Steps", ylabel = "Mean")
-    gdf = @pipe df |> 
-        groupby(_, :shock)
-
-    for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.pmb[50:end]), 129600)
-        lines!(trend; 
-            label = "$(key.shock)-shock")
-    end
-    ax.xticks = 100:200:1200
-
-    fig[end + 1, 1:1] = Legend(fig, ax; 
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :horizontal)
-
-    return fig
-end
-
-function pml(df)
-    fig = Figure(resolution = (600, 300), fontsize = 10)
-    ax = fig[1,1] = Axis(fig, title = "Lenders' preferences for maturities", xlabel = "Steps", ylabel = "Mean")
-    gdf = @pipe df |> 
-        groupby(_, :shock)
-
-    for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.pml[50:end]), 129600)
-        lines!(trend; 
-            label = "$(key.shock)-shock")
-    end
-    ax.xticks = 100:200:1200
-  
-    fig[end + 1, 1:1] = Legend(fig, ax; 
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :horizontal)
-
-    return fig
-end
-
-function deposit_facility(df)
-    fig = Figure(resolution = (600, 300), fontsize = 10)
-    ax = fig[1,1] = Axis(fig, title = "Deposit facility", xlabel = "Steps", ylabel = "Mean")
-    gdf = @pipe df |> 
-        groupby(_, :shock)
-
-    for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.deposit_facility[50:end]), 129600)
-        lines!(trend; 
-            label = "$(key.shock)-shock")
-    end
-    ax.xticks = 100:200:1200
-
-    fig[end + 1, 1:1] = Legend(fig, ax; 
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :horizontal)
-
-    return fig
-end
-
-function lending_facility(df)
-    fig = Figure(resolution = (600, 300), fontsize = 10)
-    ax = fig[1,1] = Axis(fig, title = "Lending facility", xlabel = "Steps", ylabel = "Mean")
-    gdf = @pipe df |> 
-        groupby(_, :shock)
-
-    for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.lending_facility[50:end]), 129600)
-        lines!(trend; 
-            label = "$(key.shock)-shock")
-    end
-    ax.xticks = 100:200:1200
-
     fig[end + 1, 1:1] = Legend(fig, ax; 
         tellheight = true, 
         tellwidth = false,
@@ -474,6 +197,7 @@ function funding_costs(df)
     return fig
 end
 
+# Big plots 
 function big_ib_plots(df)
     fig = Figure(resolution = (1200, 700), fontsize = 10)
     axes = ((1,1), (1,2), (1,3), (2,1), (2,2), (2,3), (3,1), (3,2), (3,3))
@@ -533,7 +257,6 @@ function big_rationing_plot(df)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
     
-
     ax1.ylabel = "Mean"
     ax1.xlabel = ax2.xlabel = "Steps"
     linkyaxes!(fig.content...)
@@ -581,7 +304,7 @@ function big_ib_volumes(df)
     return fig 
 end
 
-function big_ib_surplus(df)
+function big_ib_by_status(df)
     fig = Figure(resolution = (1200, 300), fontsize = 10)
     axes = ((1,1), (1,2), (1,3))
 
@@ -605,39 +328,6 @@ function big_ib_surplus(df)
     ax1.ylabel =  "Mean"
     ax1.xlabel = ax2.xlabel = ax3.xlabel = "Steps"
 
-    fig[end+1,1:3] = Legend(fig, 
-        ax1; 
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :horizontal, 
-        )
-    return fig 
-end
-
-function big_ib_deficit(df)
-    fig = Figure(resolution = (1200, 300), fontsize = 10)
-    axes = ((1,1), (1,2), (1,3))
-
-    gdf = @pipe df |> 
-        groupby(_, :shock)
-    
-    vars = (variables = [:margin_stability, :am, :bm], 
-        labels = ["Margin of stability", "ASF", "RSF"])   
-        
-    for i in 1:length(vars.variables)   
-        ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
-        for j in 1:length(gdf)
-            _, trend = hp_filter(gdf[j][!, vars.variables[i]][50:end], 129600)
-            lines!(trend; label = only(unique(gdf[j].shock)))
-        end
-        ax.xticks = 100:200:1200
-    end
-
-    ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];
-
-    ax1.ylabel =  "Mean"
-    ax1.xlabel = ax2.xlabel = ax3.xlabel = "Steps"
-   
     fig[end+1,1:3] = Legend(fig, 
         ax1; 
         tellheight = true, 

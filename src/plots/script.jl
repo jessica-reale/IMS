@@ -34,86 +34,20 @@ function overviews_agents(df, m)
     df1 = @pipe df |> dropmissing(_, vars_ib) |> 
         groupby(_, [:step, :shock, :scenario]) |>
         combine(_, vars_ib .=> mean, renamecols = false)
-
-    p = assets(df1)
-    save("total_assets.pdf", p)
-
-    p = liabilities(df1)
-    save("total_liabilities.pdf", p)
-
-    p = ib_on(df1)
-    save("ib_on_scenarios.pdf", p)  
-
-    p = ib_term(df1)
-    save("ib_term_scenarios.pdf", p) 
-
-    p = margin_stability(df1)
-    save("margin_stability.pdf", p)
-
-    p = am(df1)
-    save("am.pdf", p)
-
-    p = bm(df1)
-    save("bm.pdf", p)
-
-    p = scenarios_credit_rates(df1)
-    save("credit_rates.pdf", p)
-
-    p = pmb(df1)
-    save("pmb.pdf", p)
-
-    p = pml(df1)
-    save("pml.pdf", p)
     
     p = big_ib_plots(df1)
     save("big_ib_plots.pdf", p)
 
-    ## group by status
+    ## deficit banks' rationing
     df2 = @pipe df |> dropmissing(_, vars_ib) |> groupby(_, [:step, :shock, :status, :scenario]) |>
             combine(_, vars_ib .=> mean, renamecols = false)
-
-    p = ib_on_rationing(filter(:status => x -> x == "deficit", df2))
-    save("ib_on_rationing.pdf", p)  
-
-    p = ib_term_rationing(filter(:status => x -> x == "deficit", df2))
-    save("ib_term_rationing.pdf", p) 
 
     p = big_rationing_plot(filter(:status => x -> x == "deficit", df2))
     save("big_rationing_plot.pdf", p) 
 
-    p = deposit_facility(filter(:status => x -> x == "surplus", df2))
-    save("deposit_facility.pdf", p) 
-
-    p = lending_facility(filter(:status => x -> x == "deficit", df2))
-    save("lending_facility.pdf", p) 
-
-    p = margin_stability(filter(:status => x -> x == "deficit", df2))
-    save("margin_stability_deficit.pdf", p)
-
-    p = margin_stability(filter(:status => x -> x == "surplus", df2))
-    save("margin_stability_surplus.pdf", p)
-
     ## group by type
     df3 = @pipe df |> dropmissing(_, vars_ib) |> groupby(_, [:step, :shock, :type, :scenario]) |>
         combine(_, vars_ib .=> mean, renamecols = false)
-
-    p = margin_stability(filter(:type => x -> x == "commercial", df3))
-    save("margin_stability_commercial.pdf", p)
-
-    p = am(filter(:type => x -> x == "commercial", df3))
-    save("am_commercial.pdf", p)
-
-    p = bm(filter(:type => x -> x == "commercial", df3))
-    save("bm_commercial.pdf", p)
-
-    p = margin_stability(filter(:type => x -> x == "business", df3))
-    save("margin_stability_business.pdf", p)
-
-    p = am(filter(:type => x -> x == "business", df3))
-    save("am_business.pdf", p)
-
-    p = bm(filter(:type => x -> x == "business", df3))
-    save("bm_business.pdf", p)
 
     p = funding_costs(filter(:type => x -> x == "business", df3))
     save("funding_costs_business.pdf", p)
@@ -135,16 +69,30 @@ function overviews_agents(df, m)
     p = big_ib_volumes(df4)
     save("big_ib_volumes.pdf", p)
     
-    p = big_ib_surplus(df4)
+    p = big_ib_by_status(df4)
     save("big_ib_surplus.pdf", p)
 
     df5 = @pipe df |> dropmissing(_, vars_ib) |> filter(:status => x -> x == "deficit", _) |> 
         groupby(_, [:step, :shock, :scenario]) |>
         combine(_, vars_ib .=> mean, renamecols = false)
 
-    p = big_ib_deficit(df5)
+    p = big_ib_by_status(df5)
     save("big_ib_deficit.pdf", p)    
 
+    # by type
+    df6 = @pipe df |> dropmissing(_, vars_ib) |> filter(:type => x -> x == "commercial", _) |> 
+        groupby(_, [:step, :shock, :scenario]) |>
+        combine(_, vars_ib .=> mean, renamecols = false)
+
+    p = big_ib_by_status(df6)
+    save("big_ib_commercial.pdf", p)    
+
+    df7 = @pipe df |> dropmissing(_, vars_ib) |> filter(:type => x -> x == "business", _) |> 
+        groupby(_, [:step, :shock, :scenario]) |>
+        combine(_, vars_ib .=> mean, renamecols = false)
+
+    p = big_ib_by_status(df7)
+    save("big_ib_business.pdf", p)   
 
     # credit market
     df_hh = @pipe df |> filter(:id => x -> x >= 1 && x <= mean(m[!, :n_hh]), _) |>
