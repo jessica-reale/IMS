@@ -35,7 +35,7 @@ function run_model(number_of_runs::Int = 50)
     # collect agent variables
     adata = [:type, :status, :ON_assets, :margin_stability, :am, :bm,
         :Term_assets, :lending_facility, :deposit_facility, :on_demand, :term_demand,
-        :loans, :output, :pmb, :pml, :il_rate, :id_rate, 
+        :loans, :output, :pmb, :pml, :il_rate, :id_rate, :ON_liabs, :Term_liabs,
         :spending, :prices, :consumption, :income, :Invent, :investments, :networth]
     # collect model variables
     mdata = [:n_hh, :n_f, :ion, :iterm, :icbl, :icbd, :icbt, :θ, :LbW]

@@ -55,15 +55,12 @@ function overviews_agents(df, m)
     p = big_ib_growth_plots(df1)
     save("big_ib_growth_plots.pdf", p)
 
-    p = big_rationing_plot(df1)
-    save("big_rationing_plot.pdf", p) 
-
     ## deficit banks' rationing
     df2 = @pipe df |> dropmissing(_, vars_ib) |> groupby(_, [:step, :shock, :status, :scenario]) |>
             combine(_, vars_ib .=> mean, renamecols = false)
 
-    #p = big_rationing_plot(filter(:status => x -> x == "deficit", df2))
-    #save("big_rationing_plot.pdf", p) 
+    p = big_rationing_plot(filter(:status => x -> x == "deficit", df2))
+    save("big_rationing_plot.pdf", p) 
 
     ## group by type
     df3 = @pipe df |> dropmissing(_, vars_ib) |> groupby(_, [:step, :shock, :type, :scenario]) |>

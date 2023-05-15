@@ -288,7 +288,7 @@ function big_rationing_plot(df)
     gdf = @pipe df |> 
         groupby(_, :shock)
             
-    vars = (variables_num = [:ON_assets, :Term_assets], variables_den = [:on_demand, :term_demand], labels = ["ON rationing", "Term rationing"])
+    vars = (variables_num = [:ON_liabs, :Term_liabs], variables_den = [:on_demand, :term_demand], labels = ["ON rationing", "Term rationing"])
 
     for i in 1:length(vars.variables_num)
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
