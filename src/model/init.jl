@@ -249,9 +249,9 @@ function distribute_SS_values(model)
             a.id_rate = id
             a.profits = Pbj / model.n_bj
             # NSFR
+            a.tot_assets = a.loans + a.hpm + a.bills
+            a.tot_liabilities = a.deposits + a.advances
             if model.scenario == "Maturity"
-                a.tot_assets = a.loans + a.hpm + a.bills
-                a.tot_liabilities = a.deposits + a.advances
                 a.am = (model.m4 * a.deposits) / a.tot_liabilities
                 a.bm = (model.m2 * (a.bills + a.loans)) / a.tot_assets
                 a.margin_stability = a.am / a.bm
@@ -269,9 +269,9 @@ function distribute_SS_values(model)
             a.id_rate = id
             a.profits = Pbk / model.n_bk
             # NSFR
-            if model.scenario == "Maturity"
-                a.tot_assets = a.loans + a.hpm + a.bills
-                a.tot_liabilities = a.deposits + a.advances
+            a.tot_assets = a.loans + a.hpm + a.bills
+            a.tot_liabilities = a.deposits + a.advances
+            if model.scenario == "Maturity" 
                 a.am = (model.m4 * a.deposits) / a.tot_liabilities
                 a.bm = (model.m1 * a.loans + model.m2 * a.bills) / a.tot_assets
                 a.margin_stability = a.am / a.bm
