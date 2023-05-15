@@ -183,8 +183,8 @@ function big_credit_firms_plots(df)
     gdf = @pipe df |> 
         groupby(_, :shock)
     
-    vars = (variables = [:loans, :output, :investments], 
-        labels = ["Loans", "Output", "Investments"])   
+    vars = (variables = [:loans, :output, :Invent], 
+        labels = ["Loans", "Output", "Inventories"])   
             
     for i in 1:length(vars.variables)   
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])

@@ -112,7 +112,7 @@ function overviews_agents(df, m)
    
     df_firms = @pipe df |>  filter(:id => x -> x > mean(m[!, :n_hh]) && x <= mean(m[!, :n_hh]) + mean(m[!, :n_f]), _) |>
             groupby(_, [:step, :shock, :scenario]) |> 
-            combine(_, [:loans, :output, :prices, :Invent, :investments, :networth] .=> mean, renamecols = false)
+            combine(_, [:loans, :output, :prices, :Invent] .=> mean, renamecols = false)
 
     p = scenarios_loans(df_firms)
     save("loans_firms_scenarios.pdf", p)
