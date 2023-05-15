@@ -138,6 +138,9 @@ over total assets;
 2) Maturity scenario: the margin of stability is weighted for the residual maturities of the NSFR.
 """
 function NSFR!(agent::Bank, model)
+    # end function prematurely if agent is neutral
+    agent.status == :neutral && return
+
     agent.am = (model.m4 * agent.deposits_prev + model.m5 * agent.Term_liabs_prev) / agent.tot_liabilities
     agent.bm = 
         if agent.type == :business 
