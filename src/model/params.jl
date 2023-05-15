@@ -11,7 +11,7 @@ Base.@kwdef mutable struct Parameters
     # scenarios and shocks
     scenario::String = "Baseline"
     PDU::Float64 = 0.1
-    shock_incr::Int = 200
+    shock_incr::Int = 300
     shock::String = "Missing"
     # initial GD/GDP ratio 
     r::Float64 = 0.9

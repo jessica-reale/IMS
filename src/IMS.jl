@@ -34,7 +34,7 @@ function model_step!(model)
     for id in ids_by_type(Bank, model)
         IMS.prev_vars!(model[id])
         IMS.credit_rates!(model[id], model.χ1)
-        IMS.reset_vars!(model[id])
+        IMS.reset_vars!(model[id], model.scenario)
     end
 
     for id in ids_by_type(Firm, model)
@@ -88,7 +88,10 @@ function model_step!(model)
         IMS.profits!(model[id])
         IMS.current_balance!(model[id])
         IMS.update_status!(model[id]) # updates IB status
-        IMS.NSFR!(model[id], model)
+        IMS.portfolio!(model[id])
+        if model.scenario == "Maturity"
+            IMS.NSFR!(model[id], model)
+        end
         IMS.reset_after_status!(model[id])
     end
     
@@ -319,8 +322,8 @@ function shocks!(model)
     elseif model.shock == "Width" && iszero(model.step % model.shock_incr)
         model.icbl += 0.005
         model.icbt = (model.icbl + model.icbd) / 2.0
-    elseif model.shock == "Uncertainty" && model.step == 200
-        model.PDU = 0.9
+    elseif model.shock == "Uncertainty" && iszero(model.step % model.shock_incr)
+        model.PDU += 0.2
     end
     
     return model

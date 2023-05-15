@@ -33,7 +33,7 @@ end
 
 Reset banks' variables.
 """
-function reset_vars!(agent::Bank)
+function reset_vars!(agent::Bank, scenario)
     agent.flow = 0.0
     agent.loans = 0.0 
     agent.npl = 0.0
@@ -45,16 +45,18 @@ function reset_vars!(agent::Bank)
     agent.term_demand = 0.0
     agent.on_supply = 0.0
     agent.term_supply = 0.0
-    agent.pmb = 0.0
-    agent.pml = 0.0
-    agent.am = 0.0
-    agent.bm = 0.0
-    agent.tot_assets = 0.0
-    agent.tot_liabilities = 0.0
     agent.tot_demand = 0.0
     agent.tot_supply = 0.0
-    agent.margin_stability = 0.0
+    agent.tot_assets = 0.0
+    agent.tot_liabilities = 0.0
     empty!(agent.ib_customers)
+    if scenario == "Maturity"
+        agent.am = 0.0
+        agent.bm = 0.0
+        agent.margin_stability = 0.0
+        agent.pmb = 0.0
+        agent.pml = 0.0
+    end
     return nothing
 end
 
@@ -136,10 +138,6 @@ over total assets;
 2) Maturity scenario: the margin of stability is weighted for the residual maturities of the NSFR.
 """
 function NSFR!(agent::Bank, model)
-    agent.status == :neutral && return
-
-    agent.tot_assets = agent.loans_prev + agent.hpm_prev + agent.bills_prev + agent.bonds_prev + agent.ON_assets_prev + agent.Term_assets_prev + agent.deposit_facility_prev
-    agent.tot_liabilities = agent.deposits_prev + agent.ON_liabs_prev + agent.Term_liabs_prev + agent.npl_prev + agent.lending_facility_prev + agent.advances_prev
     agent.am = (model.m4 * agent.deposits_prev + model.m5 * agent.Term_liabs_prev) / agent.tot_liabilities
     agent.bm = 
         if agent.type == :business 
@@ -150,12 +148,22 @@ function NSFR!(agent::Bank, model)
                 model.m3 * agent.bonds_prev) / agent.tot_assets
         end
     # update margin of stability    
-    if model.scenario == "Maturity"
-        agent.margin_stability = agent.am / agent.bm
-    else
-        agent.margin_stability = agent.tot_liabilities / agent.tot_assets 
+    agent.margin_stability = agent.am / agent.bm
+    if isnan(agent.margin_stability)
+        println("NaN MS")
     end
     return model
+end
+
+""" 
+    portfolio!(agent::Bank) → agent.tot_assets, agent.tot_liabilities
+
+Update banks' asset holdings and liabilities.   
+"""
+function portfolio!(agent::Bank)
+    agent.tot_assets = agent.loans_prev + agent.hpm_prev + agent.bills_prev + agent.bonds_prev + agent.ON_assets_prev + agent.Term_assets_prev + agent.deposit_facility_prev
+    agent.tot_liabilities = agent.deposits_prev + agent.ON_liabs_prev + agent.Term_liabs_prev + agent.npl_prev + agent.lending_facility_prev + agent.advances_prev
+    return agent.tot_assets, agent.tot_liabilities
 end
 
 """
@@ -165,20 +173,20 @@ Update lenders' preferences for overnight interbank assets: banks' are assumed t
 the `Baseline` scenario. When the `Maturity` scenario is active, preferences depend on NSFR weights.
 """
 function lending_targets!(agent::Bank, scenario, rng)
+    # end function prematurely if agent is not surplus
     agent.status != :surplus && return
+    # end function prematurely if scenario is not "Maturity"
+    scenario != "Maturity" && return
+    
+    agent.actual_lend_ratio = 1 - agent.bm
+    agent.target_lend_ratio = 
+        if agent.margin_stability >= 1.0
+            agent.actual_lend_ratio
+        else 
+            rand(rng, Uniform(0.0, agent.actual_lend_ratio))
+        end
+    agent.pml = agent.actual_lend_ratio - agent.target_lend_ratio
 
-    if scenario == "Maturity"
-        agent.actual_lend_ratio = 1 - agent.bm
-        agent.target_lend_ratio = 
-            if agent.margin_stability >= 1.0
-                agent.actual_lend_ratio
-            else 
-                rand(rng, Uniform(0.0, agent.actual_lend_ratio))
-            end
-        agent.pml = agent.actual_lend_ratio - agent.target_lend_ratio
-    else
-        agent.pml = 1.0
-    end
     return agent.pml
 end
 
@@ -189,20 +197,20 @@ Update borrowers' preferences for overnight interbank assets: banks' are assumed
 the `Baseline` scenario. When the `Maturity` scenario is active, preferences depend on NSFR weights.
 """
 function borrowing_targets!(agent::Bank, scenario, rng)
+    # end function prematurely if agent is not deficit
     agent.status != :deficit && return
-    
-    if scenario == "Maturity"
-        agent.actual_borr_ratio = 1 - agent.am
-        agent.target_borr_ratio = 
-            if agent.margin_stability < 1.0
-                agent.actual_borr_ratio
-            else 
-                rand(rng, Uniform(0.0, agent.actual_borr_ratio))
-            end
-        agent.pmb = agent.actual_borr_ratio - agent.target_borr_ratio
-    else
-        agent.pmb = 1.0
-    end
+    # end function prematurely if scenario is not "Maturity"
+    scenario != "Maturity" && return   
+
+    agent.actual_borr_ratio = 1 - agent.am
+    agent.target_borr_ratio = 
+        if agent.margin_stability < 1.0
+            agent.actual_borr_ratio
+        else 
+            rand(rng, Uniform(0.0, agent.actual_borr_ratio))
+        end
+    agent.pmb = agent.actual_borr_ratio - agent.target_borr_ratio
+
     return agent.pmb
 end
 
@@ -314,15 +322,10 @@ in the overnight segment. Otherwise, borrowers receive funds according to the sh
 """
 function ib_on!(agent::Bank, model)
     if agent.status == :deficit && !ismissing(agent.belongToBank)
-        if model.scenario == "Maturity"
-            if agent.on_demand > model[agent.belongToBank].on_supply
-                agent.ON_liabs = model[agent.belongToBank].on_supply
-                model[agent.belongToBank].ON_assets += agent.ON_liabs
-            elseif agent.on_demand <= model[agent.belongToBank].on_supply
-                agent.ON_liabs = agent.on_demand
-                model[agent.belongToBank].ON_assets += agent.ON_liabs
-            end
-        else
+        if agent.on_demand > model[agent.belongToBank].on_supply
+            agent.ON_liabs = model[agent.belongToBank].on_supply
+            model[agent.belongToBank].ON_assets += agent.ON_liabs
+        elseif agent.on_demand <= model[agent.belongToBank].on_supply
             agent.ON_liabs = agent.on_demand
             model[agent.belongToBank].ON_assets += agent.ON_liabs
         end
@@ -338,15 +341,10 @@ in the term segment. Otherwise, borrowers receive funds according to the short-s
 """
 function ib_term!(agent::Bank, model)
     if agent.status == :deficit && !ismissing(agent.belongToBank)
-        if model.scenario == "Maturity"
-            if agent.term_demand > model[agent.belongToBank].term_supply
-                agent.Term_liabs = model[agent.belongToBank].term_supply
-                model[agent.belongToBank].Term_assets += agent.Term_liabs
-            elseif agent.term_demand <= model[agent.belongToBank].term_supply
-                agent.Term_liabs = agent.term_demand
-                model[agent.belongToBank].Term_assets += agent.Term_liabs
-            end
-        else
+        if agent.term_demand > model[agent.belongToBank].term_supply
+            agent.Term_liabs = model[agent.belongToBank].term_supply
+            model[agent.belongToBank].Term_assets += agent.Term_liabs
+        elseif agent.term_demand <= model[agent.belongToBank].term_supply
             agent.Term_liabs = agent.term_demand
             model[agent.belongToBank].Term_assets += agent.Term_liabs
         end
