@@ -11,8 +11,18 @@ using QuantEcon
 ##
 include("lib.jl")
 
-const vars_ib = [:lending_facility, :deposit_facility, :Term_assets, :Term_liabs, :ON_assets, :ON_liabs, :am, :bm, :pmb, :pml,
-    :margin_stability, :on_supply, :term_supply, :on_demand, :term_demand, :il_rate, :id_rate, :tot_assets, :tot_liabilities, :funding_costs]
+const vars_ib = [:lending_facility, :deposit_facility, :Term_assets, :ON_assets, :am, :bm, :pmb, :pml,
+    :margin_stability, :on_demand, :term_demand, :il_rate, :id_rate]
+
+function growth(df::DataFrame, var::Symbol)
+    name = "$(var)_growth"
+    df[!, name] = fill(0.0, nrow(df))
+    for i in 2:length(df.step) 
+        df[!, name][1] = 0.0         
+        df[!, name][i] = (df[!, var][i] .- df[!, var][i-1]) ./ df[!, var][i-1]        
+    end    
+    return df
+end    
 
 function overviews_model(df)
     p = interest_ib_on(df)
@@ -35,25 +45,29 @@ function overviews_agents(df, m)
         groupby(_, [:step, :shock, :scenario]) |>
         combine(_, vars_ib .=> mean, renamecols = false)
     
+    for var in vars_ib
+        growth(df1, var)
+    end
+
     p = big_ib_plots(df1)
     save("big_ib_plots.pdf", p)
+
+    p = big_ib_growth_plots(df1)
+    save("big_ib_growth_plots.pdf", p)
+
+    p = big_rationing_plot(df1)
+    save("big_rationing_plot.pdf", p) 
 
     ## deficit banks' rationing
     df2 = @pipe df |> dropmissing(_, vars_ib) |> groupby(_, [:step, :shock, :status, :scenario]) |>
             combine(_, vars_ib .=> mean, renamecols = false)
 
-    p = big_rationing_plot(filter(:status => x -> x == "deficit", df2))
-    save("big_rationing_plot.pdf", p) 
+    #p = big_rationing_plot(filter(:status => x -> x == "deficit", df2))
+    #save("big_rationing_plot.pdf", p) 
 
     ## group by type
     df3 = @pipe df |> dropmissing(_, vars_ib) |> groupby(_, [:step, :shock, :type, :scenario]) |>
         combine(_, vars_ib .=> mean, renamecols = false)
-
-    p = funding_costs(filter(:type => x -> x == "business", df3))
-    save("funding_costs_business.pdf", p)
-
-    p = funding_costs(filter(:type => x -> x == "commercial", df3))
-    save("funding_costs_commercial.pdf", p)
 
     p = scenarios_credit_rates(filter(:type => x -> x == "business", df3))
     save("credit_rates_business.pdf", p)
@@ -97,11 +111,11 @@ function overviews_agents(df, m)
     # credit market
     df_hh = @pipe df |> filter(:id => x -> x >= 1 && x <= mean(m[!, :n_hh]), _) |>
             groupby(_, [:step, :shock, :scenario]) |> 
-            combine(_, [:loans] .=> mean, renamecols = false)
+            combine(_, [:loans, :consumption, :networth] .=> mean, renamecols = false)
    
     df_firms = @pipe df |>  filter(:id => x -> x > mean(m[!, :n_hh]) && x <= mean(m[!, :n_hh]) + mean(m[!, :n_f]), _) |>
             groupby(_, [:step, :shock, :scenario]) |> 
-            combine(_, [:loans, :output, :prices] .=> mean, renamecols = false)
+            combine(_, [:loans, :output, :prices, :Invent, :investments, :networth] .=> mean, renamecols = false)
 
     p = scenarios_loans(df_firms)
     save("loans_firms_scenarios.pdf", p)
@@ -109,11 +123,17 @@ function overviews_agents(df, m)
     p = scenarios_loans(df_hh; f = false)
     save("loans_hh_scenarios.pdf", p)
 
+    p = big_credit_hh_plots(df_hh)
+    save("big_credit_hh_plots.pdf", p)
+
     p = output(df_firms)
     save("output.pdf", p)
 
     p = prices(df_firms)
     save("prices.pdf", p)
+
+    p = big_credit_firms_plots(df_firms)
+    save("big_credit_firms_plots.pdf", p)
 end
 
 function load_data()
