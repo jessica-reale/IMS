@@ -190,9 +190,9 @@ function lending_targets!(agent::Bank, scenario, rng)
         if agent.margin_stability >= 1.0
             agent.actual_lend_ratio
         else 
-            rand(rng, Uniform(0.0, agent.actual_lend_ratio))
+            rand(rng, Uniform(0.0, 1.0))
         end
-    agent.pml = agent.actual_lend_ratio - agent.target_lend_ratio
+    agent.pml = max(0.0, min(agent.actual_lend_ratio - agent.target_lend_ratio, 1.0))
 
     return agent.pml
 end
@@ -214,9 +214,9 @@ function borrowing_targets!(agent::Bank, scenario, rng)
         if agent.margin_stability < 1.0
             agent.actual_borr_ratio
         else 
-            rand(rng, Uniform(0.0, agent.actual_borr_ratio))
+            rand(rng, Uniform(0.0, 1.0))
         end
-    agent.pmb = agent.actual_borr_ratio - agent.target_borr_ratio
+    agent.pmb = max(0.0, min(agent.actual_borr_ratio - agent.target_borr_ratio, 1.0))
 
     return agent.pmb
 end
