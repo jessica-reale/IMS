@@ -33,10 +33,10 @@ function run_model(number_of_runs::Int = 50)
     shocks = ("Missing", "Corridor" , "Width", "Uncertainty")
 
     # collect agent variables
-    adata = [:type, :status, :ON_assets, :margin_stability, :am, :bm,
+    adata = [:type, :status, :ON_assets, :margin_stability, :am, :bm, :flow,
         :Term_assets, :lending_facility, :deposit_facility, :on_demand, :term_demand,
-        :loans, :output, :pmb, :pml, :il_rate, :id_rate, :ON_liabs, :Term_liabs, :tot_assets, 
-        :tot_liabilities, :prices, :consumption, :income, :Invent, :investments, :networth]
+        :loans, :output, :pmb, :pml, :il_rate, :id_rate, :ON_liabs, :Term_liabs,
+        :prices, :consumption, :income, :Invent, :investments]
     # collect model variables
     mdata = [:n_hh, :n_f, :ion, :iterm, :icbl, :icbd, :icbt, :θ, :LbW, :g]
 

@@ -54,6 +54,10 @@ function reset_vars!(agent::Bank, scenario)
         agent.am = 0.0
         agent.bm = 0.0
         agent.margin_stability = 0.0
+        agent.actual_borr_ratio = 0.0
+        agent.target_borr_ratio = 0.0
+        agent.actual_lend_ratio = 0.0
+        agent.target_lend_ratio = 0.0
         agent.pmb = 0.0
         agent.pml = 0.0
     end

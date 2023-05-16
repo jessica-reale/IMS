@@ -288,9 +288,9 @@ function ib_rates!(model; tol::Float64 = 1e-06)
 
     # check corridor
     if model.ion - model.icbl > tol || model.icbd - model.ion > tol
-        @warn "Interbank ON rate outside the central bank's corridor!"
+        @warn "Interbank ON rate outside the central bank's corridor at step $(model.step)!"
     elseif model.iterm - model.icbl > tol || model.icbd - model.iterm > tol
-        @warn "Interbank Term rate outside the central bank's corridor!"
+        @warn "Interbank Term rate outside the central bank's corridor at step $(model.step)!"
     end
     return model.ion, model.iterm
 end
