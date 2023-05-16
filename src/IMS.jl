@@ -310,9 +310,9 @@ end
     shocks!(model) → model
 
 Defines what happens when shocks are called for: 
-1) Corridor: corridor central bank's rates (`icbt`, `icbl`, `icbd`) are increased symmetrically by 50 basis points every `model.shock_incr` steps;
-2) Width: corridor rates are increasead asymmetrically, altering the width, by 50 and 10 basis points;
-3) Uncertainty: the degree of perceived uncertainty (`PDU`) is increased at 0.9 at step 200.
+1) Corridor: corridor central bank's rates (`icbt`, `icbl`, `icbd`) are increased symmetrically by 50 bp every `model.shock_incr` steps;
+2) Width: ceiling rate is increasead by 50 bp, altering the width every `model.shock_incr` steps;
+3) Uncertainty: the degree of perceived uncertainty (`PDU`) is increased by 0.2 every `model.shock_incr` steps.
 """
 function shocks!(model)
     if model.shock == "Corridor" && iszero(model.step % model.shock_incr)
