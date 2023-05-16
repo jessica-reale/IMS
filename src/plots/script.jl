@@ -12,7 +12,7 @@ using QuantEcon
 include("lib.jl")
 
 const vars_ib = [:lending_facility, :deposit_facility, :Term_assets, :ON_assets, :am, :bm, :pmb, :pml,
-    :margin_stability, :on_demand, :term_demand, :il_rate, :id_rate]
+    :margin_stability, :on_demand, :ON_liabs, :Term_liabs, :term_demand, :il_rate, :id_rate]
 
 function growth(df::DataFrame, var::Symbol)
     name = "$(var)_growth"
@@ -38,7 +38,7 @@ function overviews_model(df)
     save("LbW.pdf", p)
 end
 
-function overviews_agents(df, m)
+function overviews_agents(df, m; baseline::Bool = false)
     # ib market
     ## general
     df1 = @pipe df |> dropmissing(_, vars_ib) |> 
@@ -48,12 +48,18 @@ function overviews_agents(df, m)
     for var in vars_ib
         growth(df1, var)
     end
-
-    p = big_ib_plots(df1)
-    save("big_ib_plots.pdf", p)
-
-    p = big_ib_growth_plots(df1)
-    save("big_ib_growth_plots.pdf", p)
+ 
+    if baseline 
+        p = big_ib_baseline_plots(df1)
+        save("big_ib_plots.pdf", p)
+        p = big_ib_growth_baseline_plots(df1)
+        save("big_ib_growth_plots.pdf", p)
+    else 
+        p = big_ib_plots(df1)
+        save("big_ib_plots.pdf", p)
+        p = big_ib_growth_plots(df1)
+        save("big_ib_growth_plots.pdf", p)
+    end
 
     ## deficit banks' rationing
     df2 = @pipe df |> dropmissing(_, vars_ib) |> groupby(_, [:step, :shock, :status, :scenario]) |>
@@ -108,7 +114,7 @@ function overviews_agents(df, m)
     # credit market
     df_hh = @pipe df |> filter(:id => x -> x >= 1 && x <= mean(m[!, :n_hh]), _) |>
             groupby(_, [:step, :shock, :scenario]) |> 
-            combine(_, [:loans, :consumption, :networth] .=> mean, renamecols = false)
+            combine(_, [:loans, :consumption] .=> mean, renamecols = false)
    
     df_firms = @pipe df |>  filter(:id => x -> x > mean(m[!, :n_hh]) && x <= mean(m[!, :n_hh]) + mean(m[!, :n_f]), _) |>
             groupby(_, [:step, :shock, :scenario]) |> 
@@ -154,7 +160,7 @@ function create_plots()
     cd(mkpath("img/pdf")) do
         cd(mkpath("Baseline")) do
                overviews_model(filter(:scenario => x -> x == "Baseline", mdf))
-                overviews_agents(filter(:scenario => x -> x == "Baseline", adf), filter(:scenario => x -> x == "Baseline", mdf))
+                overviews_agents(filter(:scenario => x -> x == "Baseline", adf), filter(:scenario => x -> x == "Baseline", mdf); baseline = true)
         end
 
         cd(mkpath("Maturity")) do
