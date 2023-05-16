@@ -29,8 +29,10 @@ end
 
 # runs the model, transforms and saves data
 function run_model(number_of_runs::Int = 50)
-    scenarios = ("Baseline", "Maturity")
+    #scenarios = ("Baseline", "Maturity")
     shocks = ("Missing", "Corridor" , "Width", "Uncertainty")
+
+    scenario = "Maturity"
 
     # collect agent variables
     adata = [:type, :status, :ON_assets, :margin_stability, :am, :bm, :flow,
@@ -40,7 +42,7 @@ function run_model(number_of_runs::Int = 50)
     # collect model variables
     mdata = [:n_hh, :n_f, :ion, :iterm, :icbl, :icbd, :icbt, :θ, :LbW, :g]
 
-    for scenario in scenarios
+    #for scenario in scenarios
         seeds = rand(UInt32, number_of_runs)
         
         for shock in shocks 
@@ -81,7 +83,7 @@ function run_model(number_of_runs::Int = 50)
             CSV.write(filepath, mdf)
             println("Finished for $(properties.shock) shock and $(properties.scenario) scenario.")
         end
-    end
+   #end
 
     printstyled("Simulations finished and data saved!"; color = :blue)
     return nothing
