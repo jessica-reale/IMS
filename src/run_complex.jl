@@ -65,7 +65,7 @@ function run_model(number_of_runs::Int = 50)
 
             # Aggregate agent data over replicates
             adf = @pipe adf |>
-                groupby(_, [:step, :id, :status, :type]) |>
+                groupby(_, [:step, :id]) |>
                 combine(_, adata[1:2] .=> unique, adata[3:end] .=> mean; renamecols = false)
             adf[!, :shock] = fill(properties.shock, nrow(adf))
             adf[!, :scenario] = fill(properties.scenario, nrow(adf))
