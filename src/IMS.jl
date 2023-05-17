@@ -315,6 +315,9 @@ Defines what happens when shocks are called for:
 3) Uncertainty: the degree of perceived uncertainty (`PDU`) is increased by 0.2 every `model.shock_incr` steps.
 """
 function shocks!(model)
+    # end prematurely if shock setting is "Missing"
+    model.shock == "Missing" && return
+
     if model.shock == "Corridor" && iszero(model.step % model.shock_incr)
         model.icbd += 0.005
         model.icbl += 0.005
@@ -325,7 +328,6 @@ function shocks!(model)
     elseif model.shock == "Uncertainty" && iszero(model.step % model.shock_incr)
         model.PDU += 0.2
     end
-    
     return model
 end
 
