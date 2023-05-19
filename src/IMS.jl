@@ -132,9 +132,6 @@ function model_step!(model)
     end
     IMS.ib_rates!(model)
     # end: Interbank Market
-    if length([a.id for a in allagents(model) if a isa Bank && a.status == :surplus && a.ib_flag]) > 0
-        println(mean(a.ON_assets for a in allagents(model) if a isa Bank && a.status == :surplus && a.ib_flag))
-    end
 
     for id in ids_by_type(Government, model)
         IMS.SFC!(model[id], model)
