@@ -33,10 +33,10 @@ function run_model(number_of_runs::Int = 50)
     shocks = ("Missing", "Corridor" , "Width", "Uncertainty")
 
     # collect agent variables
-    adata = [:type, :status, :ON_assets, :margin_stability, :am, :bm, :flow,
-        :Term_assets, :lending_facility, :deposit_facility, :on_demand, :term_demand,
+    adata = [:type, :status, :ib_flag, :margin_stability, :am, :bm, :flow,
+        :lending_facility, :deposit_facility, :on_demand, :term_demand,
         :loans, :output, :pmb, :pml, :il_rate, :id_rate, :ON_liabs, :Term_liabs,
-        :prices, :consumption, :income, :Invent, :investments]
+        :prices, :consumption, :income, :Invent]
     # collect model variables
     mdata = [:n_hh, :n_f, :ion, :iterm, :icbl, :icbd, :icbt, :θ, :LbW, :g]
 
@@ -65,8 +65,8 @@ function run_model(number_of_runs::Int = 50)
 
             # Aggregate agent data over replicates
             adf = @pipe adf |>
-                groupby(_, [:step, :id]) |>
-                combine(_, adata[1:2] .=> unique, adata[3:end] .=> mean; renamecols = false)
+                groupby(_, [:step, :id, :status, :type, :ib_flag]) |>
+                combine(_, adata[1:3] .=> unique, adata[4:end] .=> mean; renamecols = false)
             adf[!, :shock] = fill(properties.shock, nrow(adf))
             adf[!, :scenario] = fill(properties.scenario, nrow(adf))
 
@@ -81,7 +81,7 @@ function run_model(number_of_runs::Int = 50)
             CSV.write(filepath, mdf)
             println("Finished for $(properties.shock) shock and $(properties.scenario) scenario.")
         end
-   end
+    end
 
     printstyled("Simulations finished and data saved!"; color = :blue)
     return nothing
