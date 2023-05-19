@@ -21,6 +21,7 @@ function prev_vars!(agent::Bank)
     agent.deposit_facility_prev = agent.deposit_facility
     agent.funding_costs_prev = agent.funding_costs
     # ib
+    agent.ib_flag = false
     agent.ON_assets_prev = agent.ON_assets 
     agent.ON_liabs_prev = agent.ON_liabs
     agent.Term_assets_prev = agent.Term_assets 
@@ -154,11 +155,8 @@ function NSFR!(agent::Bank, model)
             (model.m1 * agent.ON_assets_prev + model.m2 * (agent.loans_prev + agent.bills_prev + agent.Term_assets_prev) + 
                 model.m3 * agent.bonds_prev) / agent.tot_assets
         end
-    # update margin of stability    
+    # update margin of stability
     agent.margin_stability = agent.am / agent.bm
-    if isnan(agent.margin_stability)
-        println("NaN MS")
-    end
     return model
 end
 
@@ -179,18 +177,16 @@ end
 Update lenders' preferences for overnight interbank assets: banks' are assumed to be indifferent to maturity considerations in 
 the `Baseline` scenario. When the `Maturity` scenario is active, preferences depend on NSFR weights.
 """
-function lending_targets!(agent::Bank, scenario, rng)
+function lending_targets!(agent::Bank, rng)
     # end function prematurely if agent is not surplus
     agent.status != :surplus && return
-    # end function prematurely if scenario is not "Maturity"
-    scenario != "Maturity" && return
-    
+
     agent.actual_lend_ratio = 1 - agent.bm
     agent.target_lend_ratio = 
         if agent.margin_stability >= 1.0
             agent.actual_lend_ratio
         else 
-            rand(rng, Uniform(0.0, 1.0))
+            rand(rng, Uniform(0.0, agent.actual_lend_ratio))
         end
     agent.pml = max(0.0, min(agent.actual_lend_ratio - agent.target_lend_ratio, 1.0))
 
@@ -198,23 +194,21 @@ function lending_targets!(agent::Bank, scenario, rng)
 end
 
 """
-    borrowing_targets!(agent::Bank, scenario, rng) → agent.pmb
+    borrowing_targets!(agent::Bank, rng) → agent.pmb
 
 Update borrowers' preferences for overnight interbank assets: banks' are assumed to be indifferent to maturity considerations in 
 the `Baseline` scenario. When the `Maturity` scenario is active, preferences depend on NSFR weights.
 """
-function borrowing_targets!(agent::Bank, scenario, rng)
+function borrowing_targets!(agent::Bank, rng)
     # end function prematurely if agent is not deficit
-    agent.status != :deficit && return
-    # end function prematurely if scenario is not "Maturity"
-    scenario != "Maturity" && return   
+    agent.status != :deficit && return 
 
     agent.actual_borr_ratio = 1 - agent.am
     agent.target_borr_ratio = 
         if agent.margin_stability < 1.0
             agent.actual_borr_ratio
         else 
-            rand(rng, Uniform(0.0, 1.0))
+            rand(rng, Uniform(0.0, agent.actual_borr_ratio))
         end
     agent.pmb = max(0.0, min(agent.actual_borr_ratio - agent.target_borr_ratio, 1.0))
 
@@ -253,7 +247,7 @@ and NSFR-based borrowing preferences (`Maturity` scenario). When the `Baseline` 
 in the overnight segment. Otherwise, 
 """
 function on_demand!(agent::Bank, model)
-    if agent.status == :deficit && !ismissing(agent.belongToBank)
+    if agent.status == :deficit && agent.ib_flag
         agent.on_demand = agent.tot_demand * (model.θ * agent.pmb)
         if model.scenario == "Baseline" 
             model[agent.belongToBank].on_supply += agent.on_demand
@@ -269,7 +263,7 @@ Banks define their demand for term interbank loans as a residual. When the `Base
 in the term segment.
 """
 function term_demand!(agent::Bank, model)
-    if agent.status == :deficit && !ismissing(agent.belongToBank)
+    if agent.status == :deficit && agent.ib_flag
         agent.term_demand = agent.tot_demand - agent.on_demand
         if model.scenario == "Baseline" 
             model[agent.belongToBank].term_supply += agent.term_demand
@@ -284,7 +278,7 @@ end
 Banks define their supply for overnight interbank loans dependent on money market rates and NSFR-based lending preferences.
 """
 function on_supply!(agent::Bank, LbW)
-    if agent.status == :surplus && !isempty(agent.ib_customers)
+    if agent.status == :surplus && agent.ib_flag
         agent.on_supply = agent.tot_supply * (LbW * agent.pml)
     end
     return agent.on_supply
@@ -296,29 +290,10 @@ end
 Banks define their supply for term interbank loans as a residual.
 """
 function term_supply!(agent::Bank)
-    if agent.status == :surplus && !isempty(agent.ib_customers)
+    if agent.status == :surplus && agent.ib_flag
         agent.term_supply = agent.tot_supply - agent.on_supply
     end
     return agent.term_supply
-end
-
-"""
-    update_ib_demand_supply!(agent::Bank) → agent
-
-Updates demand and supply in the interbank market based on the above functions.
-"""
-function update_ib_demand_supply!(agent::Bank, model)
-    IMS.borrowing_targets!(agent, model.scenario, model.rng)
-    IMS.lending_targets!(agent, model.scenario, model.rng)
-    IMS.tot_demand!(agent)
-    IMS.on_demand!(agent, model)
-    IMS.term_demand!(agent, model)
-    IMS.tot_supply!(agent)
-    if model.scenario == "Maturity"
-        IMS.on_supply!(agent, model.LbW)
-        IMS.term_supply!(agent)
-    end
-    return agent
 end
 
 """
@@ -328,7 +303,7 @@ Updates overnight interbank assets and liabilities. When the `Baseline` scenario
 in the overnight segment. Otherwise, borrowers receive funds according to the short-side of the market.
 """
 function ib_on!(agent::Bank, model)
-    if agent.status == :deficit && !ismissing(agent.belongToBank)
+    if agent.status == :deficit && agent.ib_flag
         if agent.on_demand > model[agent.belongToBank].on_supply
             agent.ON_liabs = model[agent.belongToBank].on_supply
             model[agent.belongToBank].ON_assets += agent.ON_liabs
@@ -347,7 +322,7 @@ Updates term interbank assets and liabilities. When the `Baseline` scenario is a
 in the term segment. Otherwise, borrowers receive funds according to the short-side of the market.
 """
 function ib_term!(agent::Bank, model)
-    if agent.status == :deficit && !ismissing(agent.belongToBank)
+    if agent.status == :deficit && agent.ib_flag
         if agent.term_demand > model[agent.belongToBank].term_supply
             agent.Term_liabs = model[agent.belongToBank].term_supply
             model[agent.belongToBank].Term_assets += agent.Term_liabs
@@ -366,7 +341,7 @@ Deficit banks that do not find a suitable partner in the interbank market access
 to cover their outflows.    
 """
 function lending_facility!(agent::Bank)
-    if agent.status == :deficit && ismissing(agent.belongToBank)
+    if agent.status == :deficit && !agent.ib_flag
         agent.lending_facility = agent.tot_demand
     end
     return agent.lending_facility
@@ -379,7 +354,7 @@ Surplus banks that do not find a suitable partner in the interbank market access
 to deposit their excess reserves deriving from payment inflows.    
 """
 function deposit_facility!(agent::Bank)
-    if agent.status == :surplus && isempty(agent.ib_customers)
+    if agent.status == :surplus && !agent.ib_flag
         agent.deposit_facility = agent.tot_supply
     end
     return agent.deposit_facility
@@ -392,7 +367,7 @@ Banks compute their funding costs according to their recourse to the interbank m
 """
 function funding_costs!(agent::Bank, icbt, ion, iterm, icbl)
     if agent.status == :deficit
-        if !ismissing(agent.belongToBank)
+        if agent.ib_flag
             if agent.ON_liabs > 0.0 && agent.Term_liabs > 0.0
                 agent.funding_costs = (icbt + ion + iterm)/3
             elseif agent.ON_liabs > 0.0 && agent.Term_liabs == 0.0

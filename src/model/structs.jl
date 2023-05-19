@@ -153,6 +153,7 @@ Base.@kwdef mutable struct Bank <: AbstractAgent
     actual_borr_ratio::Float64 = 0.0
     target_borr_ratio::Float64 = 0.0
     # ib 
+    ib_flag::Bool = false
     tot_demand::Float64 = 0.0
     on_demand::Float64 = 0.0
     term_demand::Float64 = 0.0

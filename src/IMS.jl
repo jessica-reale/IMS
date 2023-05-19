@@ -87,12 +87,7 @@ function model_step!(model)
         IMS.interests_payments!(model[id], model)
         IMS.profits!(model[id])
         IMS.current_balance!(model[id])
-        IMS.update_status!(model[id]) # updates IB status
         IMS.portfolio!(model[id])
-        if model.scenario == "Maturity"
-            IMS.NSFR!(model[id], model)
-        end
-        IMS.reset_after_status!(model[id])
     end
     
     profits = sum(a.profits for a in allagents(model) if a isa Bank || a isa Firm) / model.n_hh
@@ -108,10 +103,26 @@ function model_step!(model)
     end
 
     # begin: Interbank Market
-    IMS.ib_matching!(model)
     IMS.update_willingenss_ON!(model)
     for id in ids_by_type(Bank, model)
-        IMS.update_ib_demand_supply!(model[id], model)
+        IMS.update_status!(model[id]) # updates IB status
+        if model.scenario == "Maturity"
+            IMS.NSFR!(model[id], model)
+            IMS.borrowing_targets!(model[id], model.rng)
+            IMS.lending_targets!(model[id], model.rng)
+        end
+        IMS.reset_after_status!(model[id])
+        IMS.tot_demand!(model[id])
+        IMS.tot_supply!(model[id])
+    end
+    IMS.ib_matching!(model)
+    for id in ids_by_type(Bank, model)
+        IMS.on_demand!(model[id], model)
+        IMS.term_demand!(model[id], model)
+        if model.scenario == "Maturity"
+            IMS.on_supply!(model[id], model.LbW)
+            IMS.term_supply!(model[id])
+        end
         IMS.ib_on!(model[id], model)
         IMS.ib_term!(model[id], model)
         IMS.lending_facility!(model[id])
@@ -121,7 +132,10 @@ function model_step!(model)
     end
     IMS.ib_rates!(model)
     # end: Interbank Market
-    
+    if length([a.id for a in allagents(model) if a isa Bank && a.status == :surplus && a.ib_flag]) > 0
+        println(mean(a.ON_assets for a in allagents(model) if a isa Bank && a.status == :surplus && a.ib_flag))
+    end
+
     for id in ids_by_type(Government, model)
         IMS.SFC!(model[id], model)
     end
@@ -144,8 +158,8 @@ end
 Updates money market conditions based on interest rates.
 """
 function update_willingenss_ON!(model)
-    model.θ = max(0.0, min(model.a0 + (model.icbl - model.ion_prev) + (model.iterm_prev - model.ion_prev) - (model.icbl - model.iterm_prev) - model.PDU, 1.0))
-    model.LbW = max(0.0, min(model.a0 + (model.ion_prev - model.icbd) -  (model.iterm_prev - model.ion_prev) -  (model.iterm_prev - model.icbd) + model.PDU, 1.0))
+    model.θ = max(0.0, min(model.a0 + (model.icbl - model.ion_prev) + (model.iterm_prev - model.ion_prev) - model.PDU, 1.0))
+    model.LbW = max(0.0, min(model.a0 + (model.ion_prev - model.icbd) -  (model.iterm_prev - model.ion_prev) + model.PDU, 1.0))
     return model.θ, model.LbW
 end
 
@@ -243,24 +257,21 @@ function ib_matching!(model)
 
         if model[id].status == :deficit
             # interbank matching depends on the scenario implemented
-            if model.scenario == "Maturity"
-                # Select potential partners with the closest preferences for overnight funds
-                potential_partners = filter(i -> model[i] isa Bank && model[i].status == :surplus && abs(model[i].pml - model[id].pmb) <= 1e-01, collect(allids(model)))                          
-                if !isempty(potential_partners)
-                    # Select new partner
-                    new_partner = rand(model.rng, filter(i -> i in potential_partners, potential_partners))
-                    model[id].belongToBank = new_partner
-                    push!(model[new_partner].ib_customers, id)
+            potential_partners = 
+                if model.scenario == "Maturity"
+                    # Select potential partners with the closest preferences for overnight funds
+                    filter(i -> model[i] isa Bank && model[i].status == :surplus && abs(model[i].pml - model[id].pmb) <= 1e-01, collect(allids(model)))   
+                else
+                    # Select potenital partners based only on interbank status and supply amount
+                    filter(i -> model[i] isa Bank && model[i].status == :surplus && abs(model[i].tot_supply - model[id].tot_demand) <= 1e-06, collect(allids(model)))                          
                 end
-            else
-                # Select potenital partners based only on interbank status
-                potential_partners = filter(i -> model[i] isa Bank && model[i].status == :surplus, collect(allids(model)))                          
-                if rand(model.rng, Bool)
-                    # Select new partner
-                    new_partner = rand(model.rng, filter(i -> i in potential_partners, potential_partners))
-                    model[id].belongToBank = new_partner
-                    push!(model[new_partner].ib_customers, id)
-                end
+            if !isempty(potential_partners)
+                # Select new partner
+                new_partner = rand(model.rng, filter(i -> i in potential_partners, potential_partners))
+                model[id].belongToBank = new_partner
+                push!(model[new_partner].ib_customers, id)
+                model[id].ib_flag = true
+                model[new_partner].ib_flag = true
             end
         end
     end
@@ -273,10 +284,10 @@ end
 Update interbank rates on overnight and term segments based on disequilibrium dynamics between demand and supply.
 The function also checks that interest rates fall within the central bank's corridor, otherwise a warning is issued.
 """
-function ib_rates!(model; tol::Float64 = 1e-06)
+function ib_rates!(model; tol::Float64 = 1e-03)
     if length([a.id for a in allagents(model) if a isa Bank && a.status == :deficit && !ismissing(a.belongToBank)]) > 0 && 
         length([a.id for a in allagents(model) if a isa Bank && a.status == :surplus && !isempty(a.ib_customers)]) > 0
- 
+
         ON = sum(a.on_demand for a in allagents(model) if a isa Bank && a.status == :deficit && !ismissing(a.belongToBank)) - 
             sum(a.on_supply for a in allagents(model) if a isa Bank && a.status == :surplus && !isempty(a.ib_customers))
         Term = sum(a.term_demand for a in allagents(model) if a isa Bank && a.status == :deficit && !ismissing(a.belongToBank)) - 
