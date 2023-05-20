@@ -12,7 +12,7 @@ using QuantEcon
 ##
 include("lib.jl")
 
-const vars_ib = [:lending_facility, :deposit_facility, :Term_assets, :ON_assets, :am, :bm, :pmb, :pml,
+const vars_ib = [:lending_facility, :deposit_facility, :am, :bm, :pmb, :pml,
     :margin_stability, :on_demand, :ON_liabs, :Term_liabs, :term_demand, :il_rate, :id_rate, :flow]
 
 function growth(df::DataFrame, var::Symbol)
@@ -23,34 +23,22 @@ function growth(df::DataFrame, var::Symbol)
         if df[!, var][i] == 0.0 || df[!, var][i - 1] == 0.0
             df[!, name][i] = 0.0
         else
-            df[!, name][i] = ((df[!, var][i] - df[!, var][i-1]) / df[!, var][i-1]) * 100  
+            df[!, name][i] = ((df[!, var][i] - df[!, var][i-1]) / df[!, var][i-1]) * 100
         end
     end    
     return df
 end    
 
-function overviews_model(df)
-    vars = [:ion, :iterm, :LbW, :θ]
-    
-    for var in vars
-        growth(df, var)
-    end
-    
-    p = interest_ib_on(df)
-    save("ib_rates_on.pdf", p)
+function overviews_model(df::DataFrame)
+    p = interest_ib(df)
+    save("ib_rates.pdf", p)
 
-    p = interest_ib_term(df)
-    save("ib_rates_term.pdf", p)
-
-    p = theta(df)
-    save("theta.pdf", p)
-
-    p = LbW(df)
-    save("LbW.pdf", p)
+    p = theta_lbw(df)
+    save("theta_lbw.pdf", p)
 end
 
-function overviews_ib_general(df; baseline::Bool = false)
-    df = @pipe df |> dropmissing(_, vars_ib) |> 
+function overviews_ib_general(df::DataFrame; baseline::Bool = false)
+    df = @pipe df |> dropmissing(_, vars_ib) |> filter(:ib_flag => x -> x == true, _) |>
         groupby(_, [:step, :shock, :scenario]) |>
         combine(_, vars_ib .=> mean, renamecols = false)
 
@@ -62,13 +50,9 @@ function overviews_ib_general(df; baseline::Bool = false)
     if baseline 
         p = big_ib_baseline_plots(df)
         save("big_ib_plots.pdf", p)
-        p = big_ib_growth_baseline_plots(df)
-        save("big_ib_growth_plots.pdf", p)
     else 
         p = big_ib_plots(df)
         save("big_ib_plots.pdf", p)
-        p = big_ib_growth_plots(df)
-        save("big_ib_growth_plots.pdf", p)
     end
 
     p = flow_plots(df)
@@ -76,7 +60,7 @@ function overviews_ib_general(df; baseline::Bool = false)
 end
 
 function rationing(df)
-    df = @pipe df |> dropmissing(_, vars_ib) |> filter(:status => x -> x == "deficit", _) |>
+    df = @pipe df |> dropmissing(_, vars_ib) |> filter([:status, :ib_flag] => (x, y) -> x == "deficit" && y == true, _) |>
         groupby(_, [:step, :shock, :scenario]) |>
         combine(_, vars_ib .=> mean, renamecols = false)
 
@@ -88,34 +72,15 @@ function overviews_credit_rates(df)
     df = @pipe df |> dropmissing(_, vars_ib) |> groupby(_, [:step, :shock, :type, :scenario]) |>
     combine(_, vars_ib .=> mean, renamecols = false)
 
-    p = scenarios_credit_rates(filter(:type => x -> x == "business", df))
+    p = credit_rates(filter(:type => x -> x == "business", df))
     save("credit_rates_business.pdf", p)
 
-    p = scenarios_credit_rates(filter(:type => x -> x == "commercial", df))
+    p = credit_rates(filter(:type => x -> x == "commercial", df))
     save("credit_rates_commercial.pdf", p)
 end
 
-function overviews_surplus(df)
-    # by status 
-    df = @pipe df |> dropmissing(_, vars_ib) |> filter(:status => x -> x == "surplus", _) |> 
-        groupby(_, [:step, :shock, :scenario]) |>
-        combine(_, vars_ib .=> mean, renamecols = false)
-
-    p = big_ib_by_status(df)
-    save("big_ib_surplus.pdf", p)
-end
-
-function overviews_deficit(df)
-    df = @pipe df |> dropmissing(_, vars_ib) |> filter(:status => x -> x == "deficit", _) |> 
-        groupby(_, [:step, :shock, :scenario]) |>
-        combine(_, vars_ib .=> mean, renamecols = false)
-
-    p = big_ib_by_status(df)
-    save("big_ib_deficit.pdf", p)
-end
-
 function overviews_commercial(df)
-    df = @pipe df |> dropmissing(_, vars_ib) |> filter(:type => x -> x == "commercial", _) |> 
+    df = @pipe df |> dropmissing(_, vars_ib) |> filter([:type, :ib_flag] => (x, y) -> x == "commercial" && y == true, _) |> 
         groupby(_, [:step, :shock, :scenario]) |>
         combine(_, vars_ib .=> mean, renamecols = false)
 
@@ -124,7 +89,7 @@ function overviews_commercial(df)
 end
 
 function overviews_business(df)
-    df = @pipe df |> dropmissing(_, vars_ib) |> filter(:type => x -> x == "business", _) |> 
+    df = @pipe df |> dropmissing(_, vars_ib) |> filter([:type, :ib_flag] => (x, y) -> x == "business" && y == true, _) |> 
     groupby(_, [:step, :shock, :scenario]) |>
     combine(_, vars_ib .=> mean, renamecols = false)
 
@@ -134,24 +99,20 @@ end
 
 function overviews_hh(df, m)
     # credit market
+    vars =  [:loans, :consumption]
     df = @pipe df |> filter(:id => x -> x >= 1 && x <= mean(m[!, :n_hh]), _) |>
             groupby(_, [:step, :shock, :scenario]) |> 
-            combine(_, [:loans, :consumption, :income] .=> mean, renamecols = false)
-
-    p = scenarios_loans(df; f = false)
-    save("loans_hh_scenarios.pdf", p)
+            combine(_, vars .=> mean, renamecols = false)
 
     p = big_credit_hh_plots(df)
     save("big_credit_hh_plots.pdf", p)
 end
 
 function overviews_firms(df, m)
+    vars = [:loans, :output]
     df = @pipe df |>  filter(:id => x -> x > mean(m[!, :n_hh]) && x <= mean(m[!, :n_hh]) + mean(m[!, :n_f]), _) |>
             groupby(_, [:step, :shock, :scenario]) |> 
-            combine(_, [:loans, :output, :prices, :Invent] .=> mean, renamecols = false)
-
-    p = scenarios_loans(df)
-    save("loans_firms_scenarios.pdf", p)
+            combine(_, vars .=> mean, renamecols = false)
 
     p = big_credit_firms_plots(df)
     save("big_credit_firms_plots.pdf", p)
@@ -180,10 +141,6 @@ function create_plots()
             overviews_model(filter(:scenario => x -> x == "Baseline", mdf))
             overviews_ib_general(filter(:scenario => x -> x == "Baseline", adf); baseline = true)
             overviews_credit_rates(filter(:scenario => x -> x == "Baseline", adf))
-            overviews_surplus(filter(:scenario => x -> x == "Baseline", adf))
-            overviews_deficit(filter(:scenario => x -> x == "Baseline", adf))
-            overviews_commercial(filter(:scenario => x -> x == "Baseline", adf))
-            overviews_business(filter(:scenario => x -> x == "Baseline", adf))
             overviews_hh(filter(:scenario => x -> x == "Baseline", adf), filter(:scenario => x -> x == "Baseline", mdf))
             overviews_firms(filter(:scenario => x -> x == "Baseline", adf), filter(:scenario => x -> x == "Baseline", mdf))
         end
@@ -193,8 +150,6 @@ function create_plots()
             overviews_ib_general(filter(:scenario => x -> x == "Maturity", adf))
             rationing(filter(:scenario => x -> x == "Maturity", adf))
             overviews_credit_rates(filter(:scenario => x -> x == "Maturity", adf))
-            overviews_surplus(filter(:scenario => x -> x == "Maturity", adf))
-            overviews_deficit(filter(:scenario => x -> x == "Maturity", adf))
             overviews_commercial(filter(:scenario => x -> x == "Maturity", adf))
             overviews_business(filter(:scenario => x -> x == "Maturity", adf))
             overviews_hh(filter(:scenario => x -> x == "Maturity", adf), filter(:scenario => x -> x == "Maturity", mdf))
