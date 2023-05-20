@@ -28,7 +28,7 @@ using IMS
 end
 
 # runs the model, transforms and saves data
-function run_model(number_of_runs::Int = 50)
+function run_model(number_of_runs::Int = 100)
     scenarios = ("Baseline", "Maturity")
     shocks = ("Missing", "Corridor" , "Width", "Uncertainty")
 
@@ -36,14 +36,15 @@ function run_model(number_of_runs::Int = 50)
     adata = [:type, :status, :ib_flag, :margin_stability, :am, :bm, :flow,
         :lending_facility, :deposit_facility, :on_demand, :term_demand,
         :loans, :output, :pmb, :pml, :il_rate, :id_rate, :ON_liabs, :Term_liabs,
-        :prices, :consumption, :income, :Invent]
+        :consumption]
+
     # collect model variables
     mdata = [:n_hh, :n_f, :ion, :iterm, :icbl, :icbd, :icbt, :θ, :LbW, :g]
 
     for scenario in scenarios
         seeds = rand(UInt32, number_of_runs)
         
-        for shock in shocks 
+       for shock in shocks
             properties = (scenario = scenario,
                 shock = shock) 
             
