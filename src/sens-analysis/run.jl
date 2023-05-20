@@ -15,10 +15,10 @@ using IMS
 # runs the sensitivity analysis for the parameters of interests, transforms and collects datas
 function run_sens(param::Symbol, param_range::Vector{Float64}; scenario::String = "Baseline")
     # collect agent variables
-    adata = [:type, :status, :ON_assets, :ON_liabs, :margin_stability, :am, :bm,
-        :Term_assets, :Term_liabs, :loans, :loans_prev, :output, :pmb, :pml,
-        :il_rate, :id_rate, :funding_costs, :lending_facility, :deposit_facility,
-        :on_demand, :term_demand, :on_supply, :term_supply, :prices]
+    adata = [:type, :status, :ib_flag, :margin_stability, :am, :bm, :flow,
+        :lending_facility, :deposit_facility, :on_demand, :term_demand,
+        :loans, :output, :pmb, :pml, :il_rate, :id_rate, :ON_liabs, :Term_liabs,
+        :consumption]
 
     for x in param_range
         # Setup model properties
