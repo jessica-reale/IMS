@@ -71,7 +71,7 @@ function big_ib_plots(df)
     
     vars = (variables = [:ON_liabs, :Term_liabs, :deposit_facility, :lending_facility, :margin_stability, :am, :bm, :pmb, :pml], 
         labels = ["Overnight segment", "Term segment", "Deposit facility", "Lending Facility", "Margin of stability", "ASF", "RSF", 
-            "Borrowers' preferences", "Lenders' preferences"])   
+            L"\Pi^{b}", L"\Pi^{l}"])   
             
     for i in 1:length(vars.variables)   
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
