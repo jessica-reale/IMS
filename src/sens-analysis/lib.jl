@@ -1,80 +1,3 @@
-function ib_on(df::DataFrame, param::Symbol)
-    fig = Figure(resolution = (600, 300), fontsize = 10)
-    ax = fig[1,1] = Axis(fig, title = "Overnight interbank volumes", xlabel = "Steps", ylabel = "Mean")
-    gdf = groupby(df, param)
-
-    for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.ON_assets[50:end]),  129600)
-        lines!(trend; 
-            label = "$(param) = $(key[1])")
-    end
-    ax.xticks = 100:200:1200
-
-    fig[end + 1, 1:1] = Legend(fig, ax; 
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :horizontal)
-    return fig
-end
-
-function ib_term(df::DataFrame, param::Symbol)
-    fig = Figure(resolution = (600, 300), fontsize = 10)
-    ax = fig[1,1] = Axis(fig, title = "Term interbank volumes", xlabel = "Steps", ylabel = "Mean")
-    gdf = groupby(df, param)
-
-    for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.Term_assets[50:end]), 129600)
-        lines!(trend; 
-            label = "$(param) = $(key[1])")
-        end
-    ax.xticks = 100:200:1200
-
-    fig[end + 1, 1:1] = Legend(fig, ax; 
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :horizontal)
-
-    return fig
-end
-
-function pmb(df::DataFrame, param::Symbol)
-    fig = Figure(resolution = (600, 300), fontsize = 10)
-    ax = fig[1,1] = Axis(fig, title = "Borrowers' preferences for maturities", xlabel = "Steps", ylabel = "Mean")
-    gdf = groupby(df, param)
-
-    for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.pmb[50:end]),  129600)
-        lines!(trend; 
-            label = "$(param) = $(key[1])")
-    end
-    ax.xticks = 100:200:1200
-
-    fig[end + 1, 1:1] = Legend(fig, ax; 
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :horizontal)
-    return fig
-end
-
-function pml(df::DataFrame, param::Symbol)
-    fig = Figure(resolution = (600, 300), fontsize = 10)
-    ax = fig[1,1] = Axis(fig, title = "Lenders' preferences for maturities", xlabel = "Steps", ylabel = "Mean")
-    gdf = groupby(df, param)
-
-    for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.pml[50:end]), 129600)
-        lines!(trend; 
-            label = "$(param) = $(key[1])")
-        end
-    ax.xticks = 100:200:1200
-
-    fig[end + 1, 1:1] = Legend(fig, ax; 
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :horizontal)
-
-    return fig
-end
 
 function credit_loans(df::DataFrame, param::Symbol; f::Bool = true)
     fig = Figure(resolution = (600, 300), fontsize = 10)
@@ -82,12 +5,12 @@ function credit_loans(df::DataFrame, param::Symbol; f::Bool = true)
     gdf = groupby(df, param)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.loans[50:end]), 129600)
+        _, trend = hp_filter((subdf.loans[100:end]), 129600)
         lines!(trend; 
             label = "$(param) = $(key[1])")
     end
     ax.xticks = 100:200:1200
-
+    
     ax.title = if f 
         "Firms Loans"
         else
@@ -108,7 +31,7 @@ function output(df::DataFrame, param::Symbol)
     gdf = groupby(df, param)
 
     for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.output[50:end] .* subdf.prices[50:end]), 129600)
+        _, trend = hp_filter((subdf.output[100:end]), 129600)
         lines!(trend; 
             label = "$(param) = $(key[1])")
     end
@@ -128,14 +51,14 @@ function big_ib_plots_sens(df, param)
     gdf = @pipe df |> 
         groupby(_, param)
     
-    vars = (variables = [:ON_assets, :Term_assets, :deposit_facility, :lending_facility, :margin_stability, :am, :bm, :pmb, :pml], 
+    vars = (variables = [:ON_liabs, :Term_liabs, :deposit_facility, :lending_facility, :margin_stability, :am, :bm, :pmb, :pml], 
         labels = ["Overnight volumes", "Term volumes", "Deposit facility", "Lending Facility", "Margin of stability", "ASF", "RSF", 
-            "Borrowers' preferences", "Lenders' preferences"])   
+            L"\Pi^{b}", L"\Pi^{l}"])   
             
     for i in 1:length(vars.variables)   
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
         for (key, subdf) in pairs(gdf)
-            _, trend = hp_filter(subdf[!, vars.variables[i]][50:end], 129600)
+            _, trend = hp_filter(subdf[!, vars.variables[i]][100:end], 129600)
             lines!(trend; label = "$(param) = $(key[1])")
         end
         ax.xticks = 100:200:1200

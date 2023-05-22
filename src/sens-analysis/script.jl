@@ -1,4 +1,5 @@
 using Pkg
+Pkg.activate("src/plots")
 
 # Load packages & code libraries
 using DataFrames
@@ -11,25 +12,13 @@ using QuantEcon
 include("lib.jl")
 
 function interbank(df::DataFrame, param::Symbol)
-    vars = [:ON_assets, :Term_assets, :deposit_facility, :lending_facility, :margin_stability, :am, :bm, :pmb, :pml]
+    vars = [:ON_liabs, :Term_liabs, :deposit_facility, :lending_facility, :margin_stability, :am, :bm, :pmb, :pml]
 
     df = @pipe df |> dropmissing(_, vars) |> groupby(_, [:step, param]) |> 
         combine(_, vars .=> mean, renamecols = false)
 
     p = big_ib_plots_sens(df, param)
     save("big_ib_plots_sens.pdf", p)
-    
-    p = ib_on(df, param)
-    save("ib_on.pdf", p)
-
-    p = ib_term(df, param)
-    save("ib_term.pdf", p)
-
-    p = pmb(df, param)
-    save("pmb.pdf", p)
-
-    p = pml(df, param)
-    save("pml.pdf", p)    
 end
 
 function credit(df::DataFrame, m::DataFrame, param::Symbol)
@@ -39,7 +28,7 @@ function credit(df::DataFrame, m::DataFrame, param::Symbol)
    
     df_firms = @pipe df |>  filter(:id => x -> x > mean(m[!, :n_hh]) && x <= mean(m[!, :n_hh]) + mean(m[!, :n_f]), _) |>
         groupby(_, [:step, param]) |> 
-        combine(_, [:loans, :output, :prices] .=> mean, renamecols = false)
+        combine(_, [:loans, :output] .=> mean, renamecols = false)
 
     p = credit_loans(df_firms, param)
     save("loans_firms_sens.pdf", p)
