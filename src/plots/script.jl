@@ -72,8 +72,8 @@ end
 
 function overviews_by_status(df)
     df = @pipe df |> dropmissing(_, vars_ib) |> 
-    groupby(_, [:step, :shock, :status, :scenario]) |>
-    combine(_, vars_ib .=> mean, renamecols = false)
+        groupby(_, [:step, :shock, :status, :scenario]) |>
+        combine(_, vars_ib .=> mean, renamecols = false)
 
     p = flows_by_status_levels(df)
     save("flows_by_status.pdf", p) 
@@ -85,8 +85,8 @@ end
 
 function overviews_by_type(df)
     df = @pipe df |> dropmissing(_, vars_ib) |> 
-    groupby(_, [:step, :shock, :type, :scenario]) |>
-    combine(_, vars_ib .=> mean, renamecols = false)
+        groupby(_, [:step, :shock, :type, :scenario]) |>
+        combine(_, vars_ib .=> mean, renamecols = false)
 
     p = flows_by_type_levels(df)
     save("flows_by_type.pdf", p) 
