@@ -21,7 +21,6 @@ function prev_vars!(agent::Bank)
     agent.deposit_facility_prev = agent.deposit_facility
     agent.funding_costs_prev = agent.funding_costs
     # ib
-    agent.ib_flag = false
     agent.ON_assets_prev = agent.ON_assets 
     agent.ON_liabs_prev = agent.ON_liabs
     agent.Term_assets_prev = agent.Term_assets 
@@ -35,6 +34,7 @@ end
 Reset banks' variables.
 """
 function reset_vars!(agent::Bank, scenario)
+    agent.ib_flag = false
     agent.flow = 0.0
     agent.loans = 0.0 
     agent.npl = 0.0
