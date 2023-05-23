@@ -1,13 +1,15 @@
+const colors = Makie.wong_colors()[5:end]
+
 
 function credit_loans(df::DataFrame, param::Symbol; f::Bool = true)
     fig = Figure(resolution = (600, 300), fontsize = 10)
-    ax = fig[1,1] = Axis(fig, xlabel = "Steps", ylabel = "Mean")
+    ax = fig[1,1] = Axis(fig, xlabel = "Steps", ylabel = "Moving Average")
     gdf = groupby(df, param)
 
-    for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.loans[100:end]), 129600)
-        lines!(movavg(trend, 200).x; 
-            label = "$(param) = $(key[1])")
+    for i in 1:length(gdf)
+        _, trend = hp_filter((gdf[i].loans[100:end]), 129600)
+        lines!(movavg(trend, 200).x; color = colors[i],
+            label = "$(param) = $(only(unique(gdf[i][!, param])))")
     end
     ax.xticks = 100:200:1200
     
@@ -27,13 +29,13 @@ end
 
 function output(df::DataFrame, param::Symbol)
     fig = Figure(resolution = (600, 300), fontsize = 10)
-    ax = fig[1,1] = Axis(fig, title = "GDP", xlabel = "Steps", ylabel = "Mean")
+    ax = fig[1,1] = Axis(fig, title = "GDP", xlabel = "Steps", ylabel = "Moving Average")
     gdf = groupby(df, param)
 
-    for (key, subdf) in pairs(gdf)
-        _, trend = hp_filter((subdf.output[100:end]), 129600)
-        lines!(movavg(trend, 200).x; 
-            label = "$(param) = $(key[1])")
+    for i in 1:length(gdf)
+        _, trend = hp_filter((gdf[i].output[100:end]), 129600)
+        lines!(movavg(trend, 200).x; color = colors[i],
+            label = "$(param) = $(only(unique(gdf[i][!, param])))")
     end
     ax.xticks = 100:200:1200
 
@@ -57,9 +59,9 @@ function big_ib_plots_sens(df, param)
             
     for i in 1:length(vars.variables)   
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
-        for (key, subdf) in pairs(gdf)
-            _, trend = hp_filter(subdf[!, vars.variables[i]][100:end], 129600)
-            lines!(movavg(trend, 200).x; label = "$(param) = $(key[1])")
+       for i in 1:length(gdf)
+            _, trend = hp_filter(gdf[i][!, vars.variables[i]][100:end], 129600)
+            lines!(movavg(trend, 200).x;  label = "$(param) = $(only(unique(gdf[i][!, param])))")
         end
         ax.xticks = 100:200:1200
     end
@@ -68,7 +70,7 @@ function big_ib_plots_sens(df, param)
     ax4 = fig.content[4]; ax5 = fig.content[5]; ax6 = fig.content[6];
     ax7 = fig.content[7]; ax8 = fig.content[8]; ax9 = fig.content[9]
 
-    ax1.ylabel = ax4.ylabel = ax7.ylabel = "Mean"
+    ax1.ylabel = ax4.ylabel = ax7.ylabel = "Moving Average"
     ax7.xlabel = ax8.xlabel = ax9.xlabel = "Steps"
     ax1.xticklabelsvisible = ax2.xticklabelsvisible = ax3.xticklabelsvisible = 
         ax4.xticklabelsvisible = ax5.xticklabelsvisible = ax6.xticklabelsvisible = false
