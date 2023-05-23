@@ -19,7 +19,7 @@ function big_credit_firms_plots(df)
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
         for j in 2:length(gdf)
             _, trend = hp_filter((((gdf[j][!, vars.variables[i]][100:end] .- gdf[1][!, vars.variables[i]][100:end])) ./ gdf[1][!, vars.variables[i]][100:end]) .* 100, 129600)
-            lines!(trend; color = colors[j],  label = only(unique(gdf[j].shock)))
+            lines!(movavg(trend, 200).x; color = colors[j],  label = only(unique(gdf[j].shock)))
         end
         ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
     end
@@ -54,7 +54,7 @@ function big_credit_hh_plots(df)
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
         for j in 2:length(gdf)
             _, trend = hp_filter((((gdf[j][!, vars.variables[i]][100:end] .- gdf[1][!, vars.variables[i]][100:end])) ./ gdf[1][!, vars.variables[i]][100:end]) .* 100, 129600)
-            lines!(trend; color = colors[j], label = only(unique(gdf[j].shock)))
+            lines!(movavg(trend, 200).x; color = colors[j], label = only(unique(gdf[j].shock)))
         end
         ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
     end
@@ -88,7 +88,7 @@ function big_ib_plots(df)
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
         for j in 2:length(gdf)
             _, trend = hp_filter(((gdf[j][!, vars.variables[i]][100:end] .- gdf[1][!, vars.variables[i]][100:end])./gdf[1][!, vars.variables[i]][100:end]) .* 100, 129600)
-            lines!(trend; color = colors[j], label = only(unique(gdf[j].shock)))
+            lines!(movavg(trend, 200).x; color = colors[j], label = only(unique(gdf[j].shock)))
         end
         ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
     end
@@ -128,7 +128,7 @@ function big_ib_plots_levels(df)
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
         for j in 1:length(gdf)
             _, trend = hp_filter((gdf[j][!, vars.variables[i]][100:end]), 129600)
-            lines!(trend; label = only(unique(gdf[j].shock)))
+            lines!(movavg(trend, 200).x; label = only(unique(gdf[j].shock)))
         end
         ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
     end
@@ -169,7 +169,7 @@ function big_ib_baseline_plots(df)
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
         for j in 2:length(gdf)
             _, trend = hp_filter(((gdf[j][!, vars.variables[i]][100:end] .- gdf[1][!, vars.variables[i]][100:end])./gdf[1][!, vars.variables[i]][100:end]) .* 100, 129600)
-            lines!(trend; color = colors[j], label = only(unique(gdf[j].shock)))
+            lines!(movavg(trend, 200).x; color = colors[j], label = only(unique(gdf[j].shock)))
         end
         ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
     end
@@ -202,7 +202,7 @@ function big_ib_baseline_plots_levels(df)
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
         for j in 1:length(gdf)
             _, trend = hp_filter((gdf[j][!, vars.variables[i]][100:end]), 129600)
-            lines!(trend; label = only(unique(gdf[j].shock)))
+            lines!(movavg(trend, 200).x; label = only(unique(gdf[j].shock)))
         end
         ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
     end
@@ -235,7 +235,7 @@ function big_rationing_plot(df)
         for j in 2:length(gdf)
            _, base_trend = hp_filter((1 .- gdf[1][!, vars.variables_num[i]][100:end] ./ gdf[1][!, vars.variables_den[i]][100:end]), 129600)
             _, trend = hp_filter((1 .- gdf[j][!, vars.variables_num[i]][100:end] ./ gdf[j][!, vars.variables_den[i]][100:end]) ./ base_trend, 129600)
-            lines!(trend; label = only(unique(gdf[j].shock)))
+            lines!(movavg(trend, 200).x; label = only(unique(gdf[j].shock)))
         end
         ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
     end
@@ -272,7 +272,7 @@ function big_ib_by_status(df)
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
         for j in 2:length(gdf)
             _, trend = hp_filter((((gdf[j][!, vars.variables[i]][100:end] .- gdf[1][!, vars.variables[i]][100:end])) ./ gdf[1][!, vars.variables[i]][100:end]) .* 100, 129600)
-            lines!(trend; color = colors[j], label = only(unique(gdf[j].shock)))
+            lines!(movavg(trend, 200).x; color = colors[j], label = only(unique(gdf[j].shock)))
         end
         ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
     end
@@ -306,7 +306,7 @@ function theta_lbw(df)
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
         for j in 2:length(gdf)
             _, trend = hp_filter((((gdf[j][!, vars.variables[i]][100:end] .- gdf[1][!, vars.variables[i]][100:end])) ./ gdf[1][!, vars.variables[i]][100:end]) .* 100, 129600)
-            lines!(trend; color = colors[j], label = only(unique(gdf[j].shock)))
+            lines!(movavg(trend, 200).x; color = colors[j], label = only(unique(gdf[j].shock)))
         end
         ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
     end
@@ -341,7 +341,7 @@ function interest_ib(df)
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
         for j in 2:length(gdf)
             _, trend = hp_filter((((gdf[j][!, vars.variables[i]][100:end] .- gdf[1][!, vars.variables[i]][100:end])) ./ gdf[1][!, vars.variables[i]][100:end]) .* 100, 129600)
-            lines!(trend; color = colors[j], label = only(unique(gdf[j].shock)))
+            lines!(movavg(trend, 200).x; color = colors[j], label = only(unique(gdf[j].shock)))
         end
         ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
     end
@@ -367,7 +367,7 @@ function by_status(fig::Figure, axes, gdf::GroupedDataFrame, var::Symbol)
         for j in 1:length(gdf)
             sdf = filter(r -> r.status == IB_STATUS[i], gdf[j])
             _, trend = hp_filter(sdf[!, var][100:end], 129600)
-            lines!(trend; label = only(unique(gdf[j].shock)))
+            lines!(movavg(trend, 200).x; label = only(unique(gdf[j].shock)))
         end
         ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])   
     end
@@ -423,7 +423,7 @@ function by_type(fig::Figure, axes, gdf::GroupedDataFrame, var::Symbol)
         for j in 1:length(gdf)
             sdf = filter(r -> r.type == BANKS_TYPE[i], gdf[j])
             _, trend = hp_filter(sdf[!, var][100:end], 129600)
-            lines!(trend; label = only(unique(gdf[j].shock)))
+            lines!(movavg(trend, 200).x; label = only(unique(gdf[j].shock)))
         end
         ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])   
     end

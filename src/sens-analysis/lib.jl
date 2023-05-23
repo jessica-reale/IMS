@@ -6,7 +6,7 @@ function credit_loans(df::DataFrame, param::Symbol; f::Bool = true)
 
     for (key, subdf) in pairs(gdf)
         _, trend = hp_filter((subdf.loans[100:end]), 129600)
-        lines!(trend; 
+        lines!(movavg(trend, 200).x; 
             label = "$(param) = $(key[1])")
     end
     ax.xticks = 100:200:1200
@@ -32,7 +32,7 @@ function output(df::DataFrame, param::Symbol)
 
     for (key, subdf) in pairs(gdf)
         _, trend = hp_filter((subdf.output[100:end]), 129600)
-        lines!(trend; 
+        lines!(movavg(trend, 200).x; 
             label = "$(param) = $(key[1])")
     end
     ax.xticks = 100:200:1200
@@ -59,7 +59,7 @@ function big_ib_plots_sens(df, param)
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
         for (key, subdf) in pairs(gdf)
             _, trend = hp_filter(subdf[!, vars.variables[i]][100:end], 129600)
-            lines!(trend; label = "$(param) = $(key[1])")
+            lines!(movavg(trend, 200).x; label = "$(param) = $(key[1])")
         end
         ax.xticks = 100:200:1200
     end
