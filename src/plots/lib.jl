@@ -3,12 +3,23 @@ const BANKS_TYPE_LABELS = ("Business", "Commercial")
 const IB_STATUS = ("deficit", "surplus")
 const IB_LABELS = ("Deficit", "Surplus")
 
-function plots_variables(fig, axes, gdf, vars)
+function plots_variables_growth(fig, axes, gdf, vars)
     for i in 1:length(vars.variables)   
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
         for j in 2:length(gdf)
             _, trend = hp_filter((((gdf[j][!, vars.variables[i]][100:end] .- gdf[1][!, vars.variables[i]][100:end])) ./ gdf[1][!, vars.variables[i]][100:end]) .* 100, 129600)
             lines!(movavg(trend, 200).x; color = Makie.wong_colors()[j] ,  label = only(unique(gdf[j].shock)))
+        end
+        ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
+    end
+end
+
+function plots_variables_levels(fig, axes, gdf, vars)
+    for i in 1:length(vars.variables)   
+        ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
+        for j in 1:length(gdf)
+            _, trend = hp_filter(gdf[j][!, vars.variables[i]][100:end], 129600)
+            lines!(movavg(trend, 200).x; label = only(unique(gdf[j].shock)))
         end
         ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
     end
@@ -24,7 +35,7 @@ function big_credit_firms_plots(df)
     vars = (variables = [:loans, :output], 
         labels = ["Loans", "Output"])   
             
-    plots_variables(fig, axes, gdf, vars)
+    plots_variables_growth(fig, axes, gdf, vars)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
 
@@ -50,7 +61,7 @@ function big_credit_hh_plots(df)
     vars = (variables = [:loans, :consumption], 
         labels = ["Loans", "Consumption"])   
             
-    plots_variables(fig, axes, gdf, vars)
+    plots_variables_growth(fig, axes, gdf, vars)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
     ax1.ylabel =  "Moving Average"
@@ -75,7 +86,7 @@ function big_ib_plots(df)
         labels = ["Overnight segment", "Term segment", "Deposit facility", "Lending Facility", "Margin of stability", "ASF", "RSF", 
             L"\Pi^{b}", L"\Pi^{l}"])   
             
-    plots_variables(fig, axes, gdf, vars)
+    plots_variables_growth(fig, axes, gdf, vars)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];
     ax4 = fig.content[4]; ax5 = fig.content[5]; ax6 = fig.content[6];
@@ -108,7 +119,7 @@ function big_ib_plots_levels(df)
         labels = ["Overnight segment", "Term segment", "Deposit facility", "Lending Facility", "Margin of stability", "ASF", "RSF", 
             L"\Pi^{b}", L"\Pi^{l}"])   
             
-    plots_variables(fig, axes, gdf, vars)
+    plots_variables_levels(fig, axes, gdf, vars)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];
     ax4 = fig.content[4]; ax5 = fig.content[5]; ax6 = fig.content[6];
@@ -140,7 +151,7 @@ function big_ib_baseline_plots(df)
     vars = (variables = [:ON_liabs, :Term_liabs, :deposit_facility, :lending_facility], 
         labels = ["Overnight segment", "Term segment", "Deposit facility", "Lending Facility"])   
             
-    plots_variables(fig, axes, gdf, vars)
+    plots_variables_growth(fig, axes, gdf, vars)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];  ax4 = fig.content[4]; 
    
@@ -166,7 +177,7 @@ function big_ib_baseline_plots_levels(df)
     vars = (variables = [:ON_liabs, :Term_liabs, :deposit_facility, :lending_facility], 
         labels = ["Overnight segment", "Term segment", "Deposit facility", "Lending Facility"])   
             
-    plots_variables(fig, axes, gdf, vars)
+    plots_variables_levels(fig, axes, gdf, vars)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];  ax4 = fig.content[4]; 
    
@@ -227,7 +238,7 @@ function big_ib_by_status(df)
     vars = (variables = [:margin_stability, :am, :bm], 
         labels = ["Margin of stability", "ASF", "RSF"])   
         
-    plots_variables(fig, axes, gdf, vars)
+    plots_variables_growth(fig, axes, gdf, vars)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];
 
@@ -252,7 +263,7 @@ function theta_lbw(df)
     vars = (variables = [:θ, :LbW], 
         labels = [L"θ", L"L_{b}W"])   
             
-    plots_variables(fig, axes, gdf, vars)
+    plots_variables_growth(fig, axes, gdf, vars)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
 
@@ -278,7 +289,7 @@ function interest_ib(df)
     vars = (variables = [:ion, :iterm], 
         labels = ["ON rate", "Term rate"])   
             
-    plots_variables(fig, axes, gdf, vars)
+    plots_variables_growth(fig, axes, gdf, vars)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
 
