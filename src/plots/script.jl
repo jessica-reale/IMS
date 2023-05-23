@@ -18,10 +18,10 @@ const vars_ib = [:lending_facility, :deposit_facility,
 
 function overviews_model(df::DataFrame)
     p = interest_ib(df)
-    save("ib_rates.pdf", p)
+    save("ib_rates.eps", p)
 
     p = theta_lbw(df)
-    save("theta_lbw.pdf", p)
+    save("theta_lbw.eps", p)
 end
 
 function overviews_ib_general(df::DataFrame; baseline::Bool = false)
@@ -29,16 +29,18 @@ function overviews_ib_general(df::DataFrame; baseline::Bool = false)
         groupby(_, [:step, :shock, :scenario]) |>
         combine(_, vars_ib .=> mean, renamecols = false)
 
-    if baseline 
-        p = big_ib_baseline_plots(df)
-        save("big_ib_plots.pdf", p)
-        p = big_ib_baseline_plots_levels(df)
-        save("big_ib_plots_levels.pdf", p)
-    else 
-        p = big_ib_plots(df)
-        save("big_ib_plots.pdf", p)
-        p = big_ib_plots_levels(df)
-        save("big_ib_plots_levels.pdf", p)
+    p = big_ib_plots(df)
+    save("big_ib_plots.eps", p)
+
+    p = big_ib_plots_levels(df)
+    save("big_ib_plots_levels.eps", p)
+
+    if !baseline
+        p = stability_ib_plots_levels(df)
+        save("stability_ib_plots_levels.eps", p)
+
+        p = stability_ib_plots(df)
+        save("stability_ib_plots.eps", p)
     end
 end
 
@@ -48,7 +50,7 @@ function rationing(df)
         combine(_, vars_ib .=> mean, renamecols = false)
 
     p = big_rationing_plot(df)
-    save("big_rationing_plot.pdf", p)
+    save("big_rationing_plot.eps", p)
 end
 
 function overviews_by_status(df)
@@ -57,10 +59,10 @@ function overviews_by_status(df)
         combine(_, vars_ib .=> mean, renamecols = false)
 
     p = flows_by_status_levels(df)
-    save("flows_by_status.pdf", p) 
+    save("flows_by_status.eps", p) 
 
     p = stability_by_status_levels(df)
-    save("stability_by_status.pdf", p) 
+    save("stability_by_status.eps", p) 
 
 end
 
@@ -70,13 +72,13 @@ function overviews_by_type(df)
         combine(_, vars_ib .=> mean, renamecols = false)
 
     p = flows_by_type_levels(df)
-    save("flows_by_type.pdf", p) 
+    save("flows_by_type.eps", p) 
 
     p = stability_by_type_levels(df)
-    save("stability_by_type.pdf", p) 
+    save("stability_by_type.eps", p) 
 
     p = credit_rates_by_type_levels(df)
-    save("credit_rates_by_type.pdf", p) 
+    save("credit_rates_by_type.eps", p) 
 end
 
 function overviews_hh(df, m)
@@ -87,7 +89,7 @@ function overviews_hh(df, m)
             combine(_, vars .=> mean, renamecols = false)
 
     p = big_credit_hh_plots(df)
-    save("big_credit_hh_plots.pdf", p)
+    save("big_credit_hh_plots.eps", p)
 end
 
 function overviews_firms(df, m)
@@ -97,7 +99,7 @@ function overviews_firms(df, m)
             combine(_, vars .=> mean, renamecols = false)
 
     p = big_credit_firms_plots(df)
-    save("big_credit_firms_plots.pdf", p)
+    save("big_credit_firms_plots.eps", p)
 end
 
 function load_data()

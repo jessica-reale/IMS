@@ -38,7 +38,6 @@ function big_credit_firms_plots(df)
     plots_variables_growth(fig, axes, gdf, vars)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
-
     ax1.ylabel =  "Growth rates (%)"
     ax1.xlabel = ax2.xlabel = "Steps"
 
@@ -76,31 +75,28 @@ function big_credit_hh_plots(df)
     return fig 
 end
 
-function big_ib_plots(df)
+function stability_ib_plots(df)
     fig = Figure(resolution = (1200, 700), fontsize = 10)
-    axes = ((1,1), (1,2), (1,3), (2,1), (2,2), (2,3), (3,1), (3,2), (3,3))
+    axes = ((1,1:2), (2,1), (2,2), (3,1), (3,2))
     gdf = @pipe df |> 
         groupby(_, :shock)
     
-    vars = (variables = [:ON_liabs, :Term_liabs, :deposit_facility, :lending_facility, :margin_stability, :am, :bm, :pmb, :pml], 
-        labels = ["Overnight segment", "Term segment", "Deposit facility", "Lending Facility", "Margin of stability", "ASF", "RSF", 
+    vars = (variables = [:margin_stability, :am, :bm, :pmb, :pml], 
+        labels = ["Margin of stability", "ASF", "RSF", 
             L"\Pi^{b}", L"\Pi^{l}"])   
             
     plots_variables_growth(fig, axes, gdf, vars)
 
-    ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];
-    ax4 = fig.content[4]; ax5 = fig.content[5]; ax6 = fig.content[6];
-    ax7 = fig.content[7]; ax8 = fig.content[8]; ax9 = fig.content[9]
+    ax1 = fig.content[1]; 
+    ax2 = fig.content[2]; ax3 = fig.content[3];
+    ax4 = fig.content[4]; ax5 = fig.content[5];
+    ax1.ylabel = ax2.ylabel = ax4.ylabel = "Moving Average"
+    ax1.xlabel = ax4.xlabel = ax5.xlabel = "Steps"
+    ax2.xticklabelsvisible = ax3.xticklabelsvisible = false 
+    ax2.xticksvisible = ax3.xticksvisible = false
+    ax4.ytickformat = "{:.1f}"
 
-    ax1.ylabel = ax4.ylabel = ax7.ylabel = "Growth rate (%)"
-    ax7.xlabel = ax8.xlabel = ax9.xlabel = "Steps"
-    ax1.xticklabelsvisible = ax2.xticklabelsvisible = ax3.xticklabelsvisible = 
-        ax4.xticklabelsvisible = ax5.xticklabelsvisible = ax6.xticklabelsvisible = false
-    
-    ax1.xticksvisible = ax2.xticksvisible = ax3.xticksvisible =  
-        ax4.xticksvisible = ax5.xticksvisible = ax6.xticksvisible = false
-   
-    fig[end+1,1:3] = Legend(fig, 
+    fig[end+1,1:2] = Legend(fig, 
         ax1; 
         tellheight = true, 
         tellwidth = false,
@@ -109,31 +105,28 @@ function big_ib_plots(df)
     return fig 
 end
 
-function big_ib_plots_levels(df)
+function stability_ib_plots_levels(df)
     fig = Figure(resolution = (1200, 700), fontsize = 10)
-    axes = ((1,1), (1,2), (1,3), (2,1), (2,2), (2,3), (3,1), (3,2), (3,3))
+    axes = ((1,1:2), (2,1), (2,2), (3,1), (3,2))
     gdf = @pipe df |> 
         groupby(_, :shock)
     
-    vars = (variables = [:ON_liabs, :Term_liabs, :deposit_facility, :lending_facility, :margin_stability, :am, :bm, :pmb, :pml], 
-        labels = ["Overnight segment", "Term segment", "Deposit facility", "Lending Facility", "Margin of stability", "ASF", "RSF", 
+    vars = (variables = [:margin_stability, :am, :bm, :pmb, :pml], 
+        labels = ["Margin of stability", "ASF", "RSF",
             L"\Pi^{b}", L"\Pi^{l}"])   
             
     plots_variables_levels(fig, axes, gdf, vars)
 
-    ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];
-    ax4 = fig.content[4]; ax5 = fig.content[5]; ax6 = fig.content[6];
-    ax7 = fig.content[7]; ax8 = fig.content[8]; ax9 = fig.content[9]
+    ax1 = fig.content[1]; 
+    ax2 = fig.content[2]; ax3 = fig.content[3];
+    ax4 = fig.content[4]; ax5 = fig.content[5];
+    ax1.ylabel = ax2.ylabel = ax4.ylabel = "Moving Average"
+    ax1.xlabel = ax4.xlabel = ax5.xlabel = "Steps"
+    ax2.xticklabelsvisible = ax3.xticklabelsvisible = false
+    ax2.xticksvisible = ax3.xticksvisible = false
+    ax1.ytickformat = ax2.ytickformat = "{:.3f}"
 
-    ax1.ylabel = ax4.ylabel = ax7.ylabel = "Moving Average"
-    ax7.xlabel = ax8.xlabel = ax9.xlabel = "Steps"
-    ax1.xticklabelsvisible = ax2.xticklabelsvisible = ax3.xticklabelsvisible = 
-        ax4.xticklabelsvisible = ax5.xticklabelsvisible = ax6.xticklabelsvisible = false
-    
-    ax1.xticksvisible = ax2.xticksvisible = ax3.xticksvisible =  
-        ax4.xticksvisible = ax5.xticksvisible = ax6.xticksvisible = false
-   
-    fig[end+1,1:3] = Legend(fig, 
+    fig[end+1,1:2] = Legend(fig, 
         ax1; 
         tellheight = true, 
         tellwidth = false,
@@ -142,20 +135,18 @@ function big_ib_plots_levels(df)
     return fig 
 end
 
-function big_ib_baseline_plots(df)
+function big_ib_plots(df)
     fig = Figure(resolution = (1250, 250), fontsize = 10)
     axes = ((1,1), (1,2), (1,3), (1,4))
     gdf = @pipe df |> 
         groupby(_, :shock)   
 
-    vars = (variables = [:ON_liabs, :Term_liabs, :deposit_facility, :lending_facility], 
-        labels = ["Overnight segment", "Term segment", "Deposit facility", "Lending Facility"])   
+    vars = (variables = [:Term_liabs, :ON_liabs, :lending_facility, :deposit_facility], 
+        labels = ["Term segment", "Overnight segment", "Lending Facility", "Deposit facility"])   
             
     plots_variables_growth(fig, axes, gdf, vars)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];  ax4 = fig.content[4]; 
-   
-
     ax1.ylabel = "Growth rate (%)"
     ax1.xlabel = ax2.xlabel = ax3.xlabel = ax4.xlabel = "Steps"
    
@@ -168,23 +159,21 @@ function big_ib_baseline_plots(df)
     return fig 
 end
 
-function big_ib_baseline_plots_levels(df)
+function big_ib_plots_levels(df)
     fig = Figure(resolution = (1250, 250), fontsize = 10)
     axes = ((1,1), (1,2), (1,3), (1,4))
     gdf = @pipe df |> 
         groupby(_, :shock)
     
-    vars = (variables = [:ON_liabs, :Term_liabs, :deposit_facility, :lending_facility], 
-        labels = ["Overnight segment", "Term segment", "Deposit facility", "Lending Facility"])   
+    vars = (variables = [:Term_liabs, :ON_liabs, :lending_facility, :deposit_facility], 
+        labels = ["Term segment", "Overnight segment", "Lending Facility", "Deposit facility"])     
             
     plots_variables_levels(fig, axes, gdf, vars)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];  ax4 = fig.content[4]; 
-   
-
     ax1.ylabel = "Moving Average"
     ax1.xlabel = ax2.xlabel = ax3.xlabel = ax4.xlabel = "Steps"
-   
+
     fig[end+1,1:4] = Legend(fig, 
         ax1; 
         tellheight = true, 
@@ -213,7 +202,6 @@ function big_rationing_plot(df)
     end
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
-    
     ax1.ylabel = "Moving Average"
     ax1.xlabel = ax2.xlabel = "Steps"
     linkyaxes!(fig.content...)
@@ -241,7 +229,6 @@ function big_ib_by_status(df)
     plots_variables_growth(fig, axes, gdf, vars)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];
-
     ax1.ylabel =  "Moving Average"
     ax1.xlabel = ax2.xlabel = ax3.xlabel = "Steps"
 
@@ -266,7 +253,6 @@ function theta_lbw(df)
     plots_variables_growth(fig, axes, gdf, vars)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
-
     ax1.ylabel = ax2.ylabel = "Growth rate (%)"
     ax1.xlabel = ax2.xlabel  = "Steps"
 
@@ -292,7 +278,6 @@ function interest_ib(df)
     plots_variables_growth(fig, axes, gdf, vars)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
-
     ax1.ylabel = ax2.ylabel = "Growth rate (%)"
     ax1.xlabel = ax2.xlabel  = "Steps"
    

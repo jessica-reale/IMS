@@ -19,7 +19,10 @@ function interbank(df::DataFrame, param::Symbol)
         combine(_, vars .=> mean, renamecols = false)
 
     p = big_ib_plots_sens(df, param)
-    save("big_ib_plots_sens.pdf", p)
+    save("big_ib_plots_sens.eps", p)
+
+    p = stability_ib_plots_sens(df, param)
+    save("stability_ib_plots_sens.eps", p)
 end
 
 function credit(df::DataFrame, m::DataFrame, param::Symbol)
@@ -32,13 +35,13 @@ function credit(df::DataFrame, m::DataFrame, param::Symbol)
         combine(_, [:loans, :output] .=> mean, renamecols = false)
 
     p = credit_loans(df_firms, param)
-    save("loans_firms_sens.pdf", p)
+    save("loans_firms_sens.eps", p)
 
     p = output(df_firms, param)
-    save("output_sens.pdf", p)
+    save("output_sens.eps", p)
 
     p = credit_loans(df_hh, param; f = false)
-    save("loans_hh_sens.pdf", p)
+    save("loans_hh_sens.eps", p)
 end
 
 function load_data()

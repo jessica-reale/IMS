@@ -11,8 +11,8 @@ function credit_loans(df::DataFrame, param::Symbol; f::Bool = true)
         lines!(movavg(trend, 200).x; color = colors[i],
             label = "$(param) = $(only(unique(gdf[i][!, param])))")
     end
-    ax.xticks = 100:200:1200
-    
+
+    ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
     ax.title = if f 
         "Firms Loans"
         else
@@ -37,7 +37,8 @@ function output(df::DataFrame, param::Symbol)
         lines!(movavg(trend, 200).x; color = colors[i],
             label = "$(param) = $(only(unique(gdf[i][!, param])))")
     end
-    ax.xticks = 100:200:1200
+
+    ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
 
     fig[end + 1, 1:1] = Legend(fig, ax; 
         tellheight = true, 
@@ -46,43 +47,70 @@ function output(df::DataFrame, param::Symbol)
 
     return fig
 end
-
 function big_ib_plots_sens(df, param)
-    fig = Figure(resolution = (1200, 700), fontsize = 10)
-    axes = ((1,1), (1,2), (1,3), (2,1), (2,2), (2,3), (3,1), (3,2), (3,3))
+    fig = Figure(resolution = (1250, 250), fontsize = 10)
+    axes = ((1,1), (1,2), (1,3), (1,4))
     gdf = @pipe df |> 
         groupby(_, param)
     
-    vars = (variables = [:ON_liabs, :Term_liabs, :deposit_facility, :lending_facility, :margin_stability, :am, :bm, :pmb, :pml], 
-        labels = ["Overnight volumes", "Term volumes", "Deposit facility", "Lending Facility", "Margin of stability", "ASF", "RSF", 
-            L"\Pi^{b}", L"\Pi^{l}"])   
+    vars = (variables = [:Term_liabs, :ON_liabs, :lending_facility, :deposit_facility], 
+        labels = ["Term segment", "Overnight segment", "Lending Facility", "Deposit facility"])     
             
     for i in 1:length(vars.variables)   
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
-       for j in 1:length(gdf)
+        for j in 1:length(gdf)
             _, trend = hp_filter(gdf[j][!, vars.variables[i]][100:end], 129600)
             lines!(movavg(trend, 200).x; color = colors[j], label = "$(param) = $(only(unique(gdf[j][!, param])))")
         end
-        ax.xticks = 100:200:1200
+        ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
     end
 
-    ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];
-    ax4 = fig.content[4]; ax5 = fig.content[5]; ax6 = fig.content[6];
-    ax7 = fig.content[7]; ax8 = fig.content[8]; ax9 = fig.content[9]
+    ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];  ax4 = fig.content[4]; 
+    ax1.ylabel = "Moving Average"
+    ax1.xlabel = ax2.xlabel = ax3.xlabel = ax4.xlabel = "Steps"
 
-    ax1.ylabel = ax4.ylabel = ax7.ylabel = "Moving Average"
-    ax7.xlabel = ax8.xlabel = ax9.xlabel = "Steps"
-    ax1.xticklabelsvisible = ax2.xticklabelsvisible = ax3.xticklabelsvisible = 
-        ax4.xticklabelsvisible = ax5.xticklabelsvisible = ax6.xticklabelsvisible = false
-    
-    ax1.xticksvisible = ax2.xticksvisible = ax3.xticksvisible =  
-        ax4.xticksvisible = ax5.xticksvisible = ax6.xticksvisible = false
-   
-    fig[end+1,1:3] = Legend(fig, 
+    fig[end+1,1:4] = Legend(fig, 
         ax1; 
         tellheight = true, 
         tellwidth = false,
         orientation = :horizontal, 
         )
     return fig 
+end
+
+function stability_ib_plots_sens(df, param)
+    fig = Figure(resolution = (1200, 700), fontsize = 10)
+    axes = ((1,1:2), (2,1), (2,2), (3,1), (3,2))
+    gdf = @pipe df |> 
+        groupby(_, param)
+    
+    vars = (variables = [:margin_stability, :am, :bm, :pmb, :pml], 
+        labels = ["Margin of stability", "ASF", "RSF",
+            L"\Pi^{b}", L"\Pi^{l}"])   
+            
+    for i in 1:length(vars.variables)   
+        ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
+        for j in 1:length(gdf)
+            _, trend = hp_filter(gdf[j][!, vars.variables[i]][100:end], 129600)
+            lines!(movavg(trend, 200).x; color = colors[j], label = "$(param) = $(only(unique(gdf[j][!, param])))")
+        end
+        ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
+    end
+
+    ax1 = fig.content[1]; 
+    ax2 = fig.content[2]; ax3 = fig.content[3];
+    ax4 = fig.content[4]; ax5 = fig.content[5];
+    ax1.ylabel = ax2.ylabel = ax4.ylabel = "Moving Average"
+    ax1.xlabel = ax4.xlabel = ax5.xlabel = "Steps"
+    ax2.xticklabelsvisible = ax3.xticklabelsvisible = false
+    ax2.xticksvisible = ax3.xticksvisible = false
+    ax1.ytickformat = ax2.ytickformat = "{:.3f}"
+
+    fig[end+1,1:2] = Legend(fig, 
+        ax1; 
+        tellheight = true, 
+        tellwidth = false,
+        orientation = :horizontal, 
+        )
+    return fig
 end
