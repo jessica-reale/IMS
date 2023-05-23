@@ -59,9 +59,9 @@ function big_ib_plots_sens(df, param)
             
     for i in 1:length(vars.variables)   
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
-       for i in 1:length(gdf)
-            _, trend = hp_filter(gdf[i][!, vars.variables[i]][100:end], 129600)
-            lines!(movavg(trend, 200).x;  label = "$(param) = $(only(unique(gdf[i][!, param])))")
+       for j in 1:length(gdf)
+            _, trend = hp_filter(gdf[j][!, vars.variables[i]][100:end], 129600)
+            lines!(movavg(trend, 200).x; color = colors[j], label = "$(param) = $(only(unique(gdf[j][!, param])))")
         end
         ax.xticks = 100:200:1200
     end
