@@ -13,22 +13,8 @@ using EasyFit
 ##
 include("lib.jl")
 
-const vars_ib = [:lending_facility, :deposit_facility, :am, :bm, :pmb, :pml,
-    :margin_stability, :on_demand, :ON_liabs, :Term_liabs, :term_demand, :il_rate, :id_rate, :flow]
-
-function growth(df::DataFrame, var::Symbol)
-    name = "$(var)_growth"
-    df[!, name] = fill(0.0, nrow(df))
-    for i in 2:length(df.step)
-        df[!, name][1] = 0.0
-        if df[!, var][i] == 0.0 || df[!, var][i - 1] == 0.0
-            df[!, name][i] = 0.0
-        else
-            df[!, name][i] = ((df[!, var][i] - df[!, var][i-1]) / df[!, var][i-1]) * 100
-        end
-    end    
-    return df
-end    
+const vars_ib = [:lending_facility, :deposit_facility, 
+    :am, :bm, :pmb, :pml, :margin_stability, :on_demand, :ON_liabs, :Term_liabs, :term_demand, :il_rate, :id_rate, :flow]
 
 function overviews_model(df::DataFrame)
     p = interest_ib(df)
@@ -39,14 +25,9 @@ function overviews_model(df::DataFrame)
 end
 
 function overviews_ib_general(df::DataFrame; baseline::Bool = false)
-    df = @pipe df |> dropmissing(_, vars_ib) |> filter(:ib_flag => x -> x == true, _) |>
+    df = @pipe df |> dropmissing(_, vars_ib) |>
         groupby(_, [:step, :shock, :scenario]) |>
         combine(_, vars_ib .=> mean, renamecols = false)
-
-    # add growth columnsdf
-    for var in vars_ib
-        growth(df, var)
-    end
 
     if baseline 
         p = big_ib_baseline_plots(df)
@@ -59,7 +40,6 @@ function overviews_ib_general(df::DataFrame; baseline::Bool = false)
         p = big_ib_plots_levels(df)
         save("big_ib_plots_levels.pdf", p)
     end
-
 end
 
 function rationing(df)
