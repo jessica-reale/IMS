@@ -8,7 +8,6 @@ using Pipe
 using Statistics
 using CairoMakie
 using QuantEcon
-using EasyFit
 
 ##
 include("lib.jl")
