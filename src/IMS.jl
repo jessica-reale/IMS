@@ -257,7 +257,7 @@ function ib_matching!(model)
             potential_partners = 
                 if model.scenario == "Maturity"
                     # Select potential partners with the closest preferences for overnight funds
-                    filter(i -> model[i] isa Bank && model[i].status == :surplus && abs(model[i].pml - model[id].pmb) <= 1e-01, collect(allids(model)))   
+                    filter(i -> model[i] isa Bank && model[i].status == :surplus && abs(model[i].bm - model[id].am) <= 1e-06, collect(allids(model)))   
                 else
                     # Select potenital partners based only on interbank status and supply amount
                     filter(i -> model[i] isa Bank && model[i].status == :surplus && abs(model[i].tot_supply - model[id].tot_demand) <= 1e-06, collect(allids(model)))                          
