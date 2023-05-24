@@ -2,7 +2,7 @@ const colors = Makie.wong_colors()[5:end]
 
 
 function credit_loans(df::DataFrame, param::Symbol; f::Bool = true)
-    fig = Figure(resolution = (600, 300), fontsize = 10)
+    fig = Figure(resolution = (900, 450), fontsize = 12)
     ax = fig[1,1] = Axis(fig, xlabel = "Steps", ylabel = "Moving Average")
     gdf = groupby(df, param)
 
@@ -28,7 +28,7 @@ function credit_loans(df::DataFrame, param::Symbol; f::Bool = true)
 end
 
 function output(df::DataFrame, param::Symbol)
-    fig = Figure(resolution = (600, 300), fontsize = 10)
+    fig = Figure(resolution = (900, 450), fontsize = 12)
     ax = fig[1,1] = Axis(fig, title = "GDP", xlabel = "Steps", ylabel = "Moving Average")
     gdf = groupby(df, param)
 
@@ -47,8 +47,9 @@ function output(df::DataFrame, param::Symbol)
 
     return fig
 end
+
 function big_ib_plots_sens(df, param)
-    fig = Figure(resolution = (1250, 250), fontsize = 10)
+    fig = Figure(resolution = (1200, 400), fontsize = 12)
     axes = ((1,1), (1,2), (1,3), (1,4))
     gdf = @pipe df |> 
         groupby(_, param)
@@ -79,8 +80,8 @@ function big_ib_plots_sens(df, param)
 end
 
 function stability_ib_plots_sens(df, param)
-    fig = Figure(resolution = (1200, 700), fontsize = 10)
-    axes = ((1,1:2), (2,1), (2,2), (3,1), (3,2))
+    fig = Figure(resolution = (1200, 600), fontsize = 12)
+    axes = ((1:2,1), (1,2), (1,3), (2,2), (2,3))
     gdf = @pipe df |> 
         groupby(_, param)
     
