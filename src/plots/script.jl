@@ -63,6 +63,12 @@ function overviews_by_status(df)
     p = stability_by_status_levels(df)
     save("stability_by_status.eps", p) 
 
+    p = ASF_by_status_levels(df)
+    save("ASF_by_status.eps", p) 
+
+    p = RSF_by_status_levels(df)
+    save("RSF_by_status.eps", p) 
+
 end
 
 function overviews_by_type(df)
@@ -77,7 +83,13 @@ function overviews_by_type(df)
     save("stability_by_type.eps", p) 
 
     p = credit_rates_by_type_levels(df)
-    save("credit_rates_by_type.eps", p) 
+    save("credit_rates_by_type.eps", p)
+
+    p = ASF_by_type_levels(df)
+    save("ASF_by_type.eps", p) 
+
+    p = RSF_by_type_levels(df)
+    save("RSF_by_type.eps", p) 
 end
 
 function overviews_hh(df, m)
