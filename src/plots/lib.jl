@@ -1,7 +1,7 @@
 const BANKS_TYPE = ("business", "commercial")
-const BANKS_TYPE_LABELS = ("Business", "Commercial")
+const BANKS_TYPE_LABELS = (L"\text{Business}", L"\text{Commercial}")
 const IB_STATUS = ("deficit", "surplus")
-const IB_LABELS = ("Deficit", "Surplus")
+const IB_LABELS = (L"\text{Deficit}", L"\text{Surplus}")
 
 function plots_variables_growth(fig, axes, gdf, vars)
     for i in 1:length(vars.variables)   
@@ -27,19 +27,19 @@ end
 
 # Big plots 
 function big_credit_firms_plots(df)
-    fig = Figure(resolution = (800, 400), fontsize = 12)
+    fig = Figure(resolution = (800, 400), fontsize = 16)
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, :shock)
 
     vars = (variables = [:loans, :output], 
-        labels = ["Loans", "Output"])   
+        labels = [L"\text{Loans}", L"\text{Output}"])   
             
     plots_variables_growth(fig, axes, gdf, vars)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
-    ax1.ylabel =  "Growth rates (%)"
-    ax1.xlabel = ax2.xlabel = "Steps"
+    ax1.ylabel =  L"\text{Growth rates (%)}"
+    ax1.xlabel = ax2.xlabel = L"\text{Steps}"
 
     fig[end+1,1:2] = Legend(fig, 
         ax1; 
@@ -52,19 +52,19 @@ function big_credit_firms_plots(df)
 end
 
 function big_credit_hh_plots(df)
-    fig = Figure(resolution = (800, 400), fontsize = 12)
+    fig = Figure(resolution = (800, 400), fontsize = 16)
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, :shock)
 
     vars = (variables = [:loans, :consumption], 
-        labels = ["Loans", "Consumption"])   
+        labels = [L"\text{Loans}", L"\text{Consumption}"])   
             
     plots_variables_growth(fig, axes, gdf, vars)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
-    ax1.ylabel =  "Mean"
-    ax1.xlabel = ax2.xlabel = "Steps"
+    ax1.ylabel =  L"\text{Mean}"
+    ax1.xlabel = ax2.xlabel = L"\text{Steps}"
 
     fig[end+1,1:2] = Legend(fig, 
         ax1; 
@@ -76,13 +76,13 @@ function big_credit_hh_plots(df)
 end
 
 function stability_ib_plots(df)
-    fig = Figure(resolution = (1200, 600), fontsize = 12)
+    fig = Figure(resolution = (1200, 600), fontsize = 16)
     axes = ((1:2,1), (1,2), (1,3), (2,2), (2,3))
     gdf = @pipe df |> 
         groupby(_, :shock)
     
     vars = (variables = [:margin_stability, :am, :bm, :pmb, :pml], 
-        labels = ["Margin of stability", "ASF", "RSF", 
+        labels = [L"\text{Margin of stability}", L"\text{ASF} a_{m}", L"\text{RSF} b_{m}", 
             L"\Pi^{b}", L"\Pi^{l}"])   
             
     plots_variables_growth(fig, axes, gdf, vars)
@@ -90,8 +90,8 @@ function stability_ib_plots(df)
     ax1 = fig.content[1]; 
     ax2 = fig.content[2]; ax3 = fig.content[3];
     ax4 = fig.content[4]; ax5 = fig.content[5];
-    ax1.ylabel = ax2.ylabel = ax4.ylabel = "Growth rates (%)"
-    ax1.xlabel = ax4.xlabel = ax5.xlabel = "Steps"
+    ax1.ylabel = ax2.ylabel = ax4.ylabel = L"\text{Growth rates (%)}"
+    ax1.xlabel = ax4.xlabel = ax5.xlabel = L"\text{Steps}"
     ax2.xticklabelsvisible = ax3.xticklabelsvisible = false 
     ax2.xticksvisible = ax3.xticksvisible = false
     ax4.ytickformat = "{:.1f}"
@@ -106,22 +106,22 @@ function stability_ib_plots(df)
 end
 
 function stability_ib_plots_levels(df)
-    fig = Figure(resolution = (1200, 600), fontsize = 12)
+    fig = Figure(resolution = (1200, 600), fontsize = 16)
     axes = ((1:2,1), (1,2), (1,3), (2,2), (2,3))
     gdf = @pipe df |> 
         groupby(_, :shock)
     
     vars = (variables = [:margin_stability, :am, :bm, :pmb, :pml], 
-        labels = ["Margin of stability", "ASF", "RSF",
-            L"\Pi^{b}", L"\Pi^{l}"])   
+        labels = [L"\text{Margin of stability}", L"\text{ASF} a_{m}", L"\text{RSF} b_{m}",
+        L"\Pi^{b}", L"\Pi^{l}"])   
             
     plots_variables_levels(fig, axes, gdf, vars)
 
     ax1 = fig.content[1]; 
     ax2 = fig.content[2]; ax3 = fig.content[3];
     ax4 = fig.content[4]; ax5 = fig.content[5];
-    ax1.ylabel = ax2.ylabel = ax4.ylabel = "Mean"
-    ax1.xlabel = ax4.xlabel = ax5.xlabel = "Steps"
+    ax1.ylabel = ax2.ylabel = ax4.ylabel = L"\text{Mean}"
+    ax1.xlabel = ax4.xlabel = ax5.xlabel = L"\text{Steps}"
     ax2.xticklabelsvisible = ax3.xticklabelsvisible = false
     ax2.xticksvisible = ax3.xticksvisible = false
     ax1.ytickformat = ax2.ytickformat = "{:.3f}"
@@ -136,19 +136,19 @@ function stability_ib_plots_levels(df)
 end
 
 function big_ib_plots(df)
-    fig = Figure(resolution = (1200, 400), fontsize = 12)
+    fig = Figure(resolution = (1200, 400), fontsize = 16)
     axes = ((1,1), (1,2), (1,3), (1,4))
     gdf = @pipe df |> 
         groupby(_, :shock)   
 
     vars = (variables = [:Term_liabs, :ON_liabs, :lending_facility, :deposit_facility], 
-        labels = ["Term segment", "Overnight segment", "Lending Facility", "Deposit facility"])   
+        labels = [L"\text{Term segment}", L"\text{Overnight segment}", L"\text{Lending facility}", L"\text{Deposit facility}"])   
             
     plots_variables_growth(fig, axes, gdf, vars)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];  ax4 = fig.content[4]; 
-    ax1.ylabel = "Growth rate (%)"
-    ax1.xlabel = ax2.xlabel = ax3.xlabel = ax4.xlabel = "Steps"
+    ax1.ylabel = L"\text{Growth rate (%)}"
+    ax1.xlabel = ax2.xlabel = ax3.xlabel = ax4.xlabel = L"\text{Steps}"
    
     fig[end+1,1:4] = Legend(fig, 
         ax1; 
@@ -160,19 +160,19 @@ function big_ib_plots(df)
 end
 
 function big_ib_plots_levels(df)
-    fig = Figure(resolution = (1200, 400), fontsize = 12)
+    fig = Figure(resolution = (1200, 400), fontsize = 16)
     axes = ((1,1), (1,2), (1,3), (1,4))
     gdf = @pipe df |> 
         groupby(_, :shock)
     
     vars = (variables = [:Term_liabs, :ON_liabs, :lending_facility, :deposit_facility], 
-        labels = ["Term segment", "Overnight segment", "Lending Facility", "Deposit facility"])     
+        labels = [L"\text{Term segment}", L"\text{Overnight segment}", L"\text{Lending facility}", L"\text{Deposit facility}"])     
             
     plots_variables_levels(fig, axes, gdf, vars)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];  ax4 = fig.content[4]; 
-    ax1.ylabel = "Mean"
-    ax1.xlabel = ax2.xlabel = ax3.xlabel = ax4.xlabel = "Steps"
+    ax1.ylabel = L"\text{Mean}"
+    ax1.xlabel = ax2.xlabel = ax3.xlabel = ax4.xlabel = L"\text{Steps}"
 
     fig[end+1,1:4] = Legend(fig, 
         ax1; 
@@ -184,12 +184,12 @@ function big_ib_plots_levels(df)
 end
 
 function big_rationing_plot(df)
-    fig = Figure(resolution = (800, 400), fontsize = 12)
+    fig = Figure(resolution = (800, 400), fontsize = 16)
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, :shock)
            
-    vars = (variables_num = [:ON_liabs, :Term_liabs], variables_den = [:on_demand, :term_demand], labels = ["ON rationing", "Term rationing"])
+    vars = (variables_num = [:ON_liabs, :Term_liabs], variables_den = [:on_demand, :term_demand], labels = [L"\text{ON rationing}", L"\text{Term rationing}"])
 
     for i in 1:length(vars.variables_num)
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
@@ -201,8 +201,8 @@ function big_rationing_plot(df)
     end
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
-    ax1.ylabel = "Mean"
-    ax1.xlabel = ax2.xlabel = "Steps"
+    ax1.ylabel = L"\text{Mean}"
+    ax1.xlabel = ax2.xlabel = L"\text{Steps}"
     linkyaxes!(fig.content...)
     ax2.yticklabelsvisible = false
     ax2.yticksvisible = false
@@ -217,19 +217,19 @@ function big_rationing_plot(df)
 end
 
 function big_ib_by_status(df)
-    fig = Figure(resolution = (1200, 300), fontsize = 12)
+    fig = Figure(resolution = (1200, 300), fontsize = 16)
     axes = ((1,1), (1,2), (1,3))
     gdf = @pipe df |> 
         groupby(_, :shock)
 
     vars = (variables = [:margin_stability, :am, :bm], 
-        labels = ["Margin of stability", "ASF", "RSF"])   
+        labels = [L"\text{Margin of stability}", L"\text{ASF} a_{m}", L"\text{RSF} b_{m}"])   
         
     plots_variables_growth(fig, axes, gdf, vars)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];
-    ax1.ylabel =  "Mean"
-    ax1.xlabel = ax2.xlabel = ax3.xlabel = "Steps"
+    ax1.ylabel =  L"\text{Mean}"
+    ax1.xlabel = ax2.xlabel = ax3.xlabel = L"\text{Steps}"
 
     fig[end+1,1:3] = Legend(fig, 
         ax1; 
@@ -241,7 +241,7 @@ function big_ib_by_status(df)
 end
 
 function theta_lbw(df)
-    fig = Figure(resolution = (800, 400), fontsize = 12)
+    fig = Figure(resolution = (800, 400), fontsize = 16)
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, :shock)
@@ -252,8 +252,8 @@ function theta_lbw(df)
     plots_variables_growth(fig, axes, gdf, vars)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
-    ax1.ylabel = ax2.ylabel = "Growth rate (%)"
-    ax1.xlabel = ax2.xlabel  = "Steps"
+    ax1.ylabel = ax2.ylabel = L"\text{Growth rate (%)}"
+    ax1.xlabel = ax2.xlabel  = L"\text{Steps}"
 
     fig[end+1,1:2] = Legend(fig, 
         ax1; 
@@ -266,19 +266,19 @@ function theta_lbw(df)
 end
 
 function interest_ib(df)
-    fig = Figure(resolution = (800, 400), fontsize = 12)
+    fig = Figure(resolution = (800, 400), fontsize = 16)
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, :shock)
 
     vars = (variables = [:ion, :iterm], 
-        labels = ["ON rate", "Term rate"])   
+        labels = [L"\text{ON rate}", L"\text{Term rate}"])   
             
     plots_variables_growth(fig, axes, gdf, vars)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
-    ax1.ylabel = ax2.ylabel = "Growth rate (%)"
-    ax1.xlabel = ax2.xlabel  = "Steps"
+    ax1.ylabel = ax2.ylabel = L"\text{Growth rate (%)}"
+    ax1.xlabel = ax2.xlabel  = L"\text{Steps}"
    
     fig[end+1,1:2] = Legend(fig, 
         ax1; 
@@ -303,7 +303,7 @@ function by_status(fig::Figure, axes, gdf::GroupedDataFrame, var::Symbol)
 end
 
 function flows_by_status_levels(df)
-    fig = Figure(resolution = (800, 400), fontsize = 12)
+    fig = Figure(resolution = (800, 400), fontsize = 16)
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, [:shock])
@@ -311,8 +311,8 @@ function flows_by_status_levels(df)
     by_status(fig, axes, gdf, :flow)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
-    ax1.ylabel = ax2.ylabel = "Mean"
-    ax1.xlabel = ax2.xlabel  = "Steps"
+    ax1.ylabel = L"\text{Mean}"
+    ax1.xlabel = ax2.xlabel  = L"\text{Steps}"
 
     fig[end+1,1:2] = Legend(fig, 
         ax1; 
@@ -325,7 +325,7 @@ function flows_by_status_levels(df)
 end
 
 function stability_by_status_levels(df)
-    fig = Figure(resolution = (800, 400), fontsize = 12)
+    fig = Figure(resolution = (800, 400), fontsize = 16)
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, [:shock])
@@ -333,8 +333,52 @@ function stability_by_status_levels(df)
     by_status(fig, axes, gdf, :margin_stability)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
-    ax1.ylabel = ax2.ylabel = "Mean"
-    ax1.xlabel = ax2.xlabel  = "Steps"
+    ax1.ylabel = L"\text{Mean}"
+    ax1.xlabel = ax2.xlabel  = L"\text{Steps}"
+
+    fig[end+1,1:2] = Legend(fig, 
+        ax1; 
+        tellheight = true, 
+        tellwidth = false,
+        orientation = :horizontal, 
+        )
+
+    return fig
+end
+
+function ASF_by_status_levels(df)
+    fig = Figure(resolution = (800, 400), fontsize = 16)
+    axes = ((1,1), (1,2))
+    gdf = @pipe df |> 
+        groupby(_, [:shock])
+
+    by_status(fig, axes, gdf, :am)
+
+    ax1 = fig.content[1]; ax2 = fig.content[2]
+    ax1.ylabel = L"\text{Mean}"
+    ax1.xlabel = ax2.xlabel  = L"\text{Steps}"
+
+    fig[end+1,1:2] = Legend(fig, 
+        ax1; 
+        tellheight = true, 
+        tellwidth = false,
+        orientation = :horizontal, 
+        )
+
+    return fig
+end
+
+function RSF_by_status_levels(df)
+    fig = Figure(resolution = (800, 400), fontsize = 16)
+    axes = ((1,1), (1,2))
+    gdf = @pipe df |> 
+        groupby(_, [:shock])
+
+    by_status(fig, axes, gdf, :bm)
+
+    ax1 = fig.content[1]; ax2 = fig.content[2]
+    ax1.ylabel = L"\text{Mean}"
+    ax1.xlabel = ax2.xlabel  = L"\text{Steps}"
 
     fig[end+1,1:2] = Legend(fig, 
         ax1; 
@@ -359,7 +403,7 @@ function by_type(fig::Figure, axes, gdf::GroupedDataFrame, var::Symbol)
 end
 
 function flows_by_type_levels(df)
-    fig = Figure(resolution = (800, 400), fontsize = 12)
+    fig = Figure(resolution = (800, 400), fontsize = 16)
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, [:shock])
@@ -367,8 +411,8 @@ function flows_by_type_levels(df)
     by_type(fig, axes, gdf, :flow)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
-    ax1.ylabel = ax2.ylabel = "Mean"
-    ax1.xlabel = ax2.xlabel  = "Steps"
+    ax1.ylabel = L"\text{Mean}"
+    ax1.xlabel = ax2.xlabel  = L"\text{Steps}"
 
     fig[end+1,1:2] = Legend(fig, 
         ax1; 
@@ -381,7 +425,7 @@ function flows_by_type_levels(df)
 end
 
 function stability_by_type_levels(df)
-    fig = Figure(resolution = (800, 400), fontsize = 12)
+    fig = Figure(resolution = (800, 400), fontsize = 16)
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, [:shock])
@@ -389,8 +433,52 @@ function stability_by_type_levels(df)
     by_type(fig, axes, gdf, :margin_stability)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
-    ax1.ylabel = ax2.ylabel = "Mean"
-    ax1.xlabel = ax2.xlabel  = "Steps"
+    ax1.ylabel = L"\text{Mean}"
+    ax1.xlabel = ax2.xlabel  = L"\text{Steps}"
+
+    fig[end+1,1:2] = Legend(fig, 
+        ax1; 
+        tellheight = true, 
+        tellwidth = false,
+        orientation = :horizontal, 
+        )
+
+    return fig
+end
+
+function ASF_by_type_levels(df)
+    fig = Figure(resolution = (800, 400), fontsize = 16)
+    axes = ((1,1), (1,2))
+    gdf = @pipe df |> 
+        groupby(_, [:shock])
+
+    by_type(fig, axes, gdf, :am)
+
+    ax1 = fig.content[1]; ax2 = fig.content[2]
+    ax1.ylabel = L"\text{Mean}"
+    ax1.xlabel = ax2.xlabel  = L"\text{Steps}"
+
+    fig[end+1,1:2] = Legend(fig, 
+        ax1; 
+        tellheight = true, 
+        tellwidth = false,
+        orientation = :horizontal, 
+        )
+
+    return fig
+end
+
+function RSF_by_type_levels(df)
+    fig = Figure(resolution = (800, 400), fontsize = 16)
+    axes = ((1,1), (1,2))
+    gdf = @pipe df |> 
+        groupby(_, [:shock])
+
+    by_type(fig, axes, gdf, :bm)
+
+    ax1 = fig.content[1]; ax2 = fig.content[2]
+    ax1.ylabel = L"\text{Mean}"
+    ax1.xlabel = ax2.xlabel  = L"\text{Steps}"
 
     fig[end+1,1:2] = Legend(fig, 
         ax1; 
@@ -403,7 +491,7 @@ function stability_by_type_levels(df)
 end
 
 function credit_rates_by_type_levels(df)
-    fig = Figure(resolution = (800, 400), fontsize = 12)
+    fig = Figure(resolution = (800, 400), fontsize = 16)
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, [:shock])
@@ -411,8 +499,8 @@ function credit_rates_by_type_levels(df)
     by_type(fig, axes, gdf, :il_rate)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
-    ax1.ylabel = ax2.ylabel = "Mean"
-    ax1.xlabel = ax2.xlabel  = "Steps"
+    ax1.ylabel = L"\text{Mean}"
+    ax1.xlabel = ax2.xlabel  = L"\text{Steps}"
 
     fig[end+1,1:2] = Legend(fig, 
         ax1; 
