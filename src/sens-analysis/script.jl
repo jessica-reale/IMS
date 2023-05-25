@@ -8,13 +8,14 @@ using Pipe
 using Statistics
 using CairoMakie
 using QuantEcon
+using EasyFit
 
 include("lib.jl")
 
 function interbank(df::DataFrame, param::Symbol)
-    vars = [:ON_liabs, :Term_liabs, :deposit_facility, :lending_facility, :margin_stability, :am, :bm, :pmb, :pml]
+    vars = [:flow, :ON_liabs, :Term_liabs, :deposit_facility, :lending_facility, :margin_stability, :am, :bm, :pmb, :pml]
 
-    df = @pipe df |> dropmissing(_, vars) |> groupby(_, [:step, param]) |> 
+    df = @pipe df |> dropmissing(_, vars) |> groupby(_, [:step, param]) |>
         combine(_, vars .=> mean, renamecols = false)
 
     p = big_ib_plots_sens(df, param)
@@ -44,17 +45,15 @@ function credit(df::DataFrame, m::DataFrame, param::Symbol)
 end
 
 function load_data()
-    # parameter names as strings
-    params_strings = ["r", "δ", "m1", "m2", "m3", "m4", "m5"]
     # parameter ranges
     params_range = (
         ("0.9", "1.1", "1.3"),
         ("0.05", "0.5", "1.0"),
-        ("0.1", "0.5", "1.0")
+        (collect(0.0:0.1:1.0))
     )
 
     df = DataFrame()
-    for param in params_strings
+    for param in ["r", "δ", "m1", "m2", "m3", "m4", "m5"]
         if param == "r"
             for val in params_range[1]
                 append!(df, CSV.File("data/sensitivity_analysis/$(param)/$(val)/df.csv"); cols = :union)
@@ -64,7 +63,7 @@ function load_data()
                 append!(df, CSV.File("data/sensitivity_analysis/$(param)/$(val)/df.csv"); cols = :union)
             end
         else
-            for val in params_range[3]
+            for val in string.(params_range[3])
                 append!(df, CSV.File("data/sensitivity_analysis/$(param)/$(val)/df.csv"); cols = :union)
             end
         end
@@ -81,10 +80,8 @@ function create_sens_plots()
     df, mdf = load_data()
 
     # parameter names as symbols
-    param_symbols = [:r, :δ, :m1, :m2, :m3, :m4, :m5]
-
     cd(mkpath("img/pdf/sens-analysis")) do
-        for param in param_symbols
+        for param in [:r, :δ, :m1, :m2, :m3, :m4, :m5]
             cd(mkpath("$(param)")) do
                 interbank(filter(param => x -> !ismissing(x), df), param)
                 credit(filter(param => x -> !ismissing(x), df), mdf, param)
