@@ -12,8 +12,19 @@ using QuantEcon
 ##
 include("lib.jl")
 
-const vars_ib = [:lending_facility, :deposit_facility, 
+const vars_ib = [:lending_facility, :deposit_facility, :loans,
     :am, :bm, :pmb, :pml, :margin_stability, :on_demand, :ON_liabs, :Term_liabs, :term_demand, :il_rate, :id_rate, :flow]
+
+function overviews_ib(df::DataFrame)
+    overviews_deficit(df)
+    overviews_by_status(df)
+    overviews_by_type(df)
+end
+
+function overviews_real(df::DataFrame, m::DataFrame)
+    overviews_firms(df, m)
+    overviews_hh(df, m)
+end
 
 function overviews_model(df::DataFrame)
     p = interest_ib(df)
@@ -23,7 +34,7 @@ function overviews_model(df::DataFrame)
     save("theta_lbw.eps", p)
 end
 
-function overviews_ib_general(df::DataFrame; baseline::Bool = false)
+function overviews_ib_big(df::DataFrame; baseline::Bool = false)
     df = @pipe df |> dropmissing(_, vars_ib) |>
         groupby(_, [:step, :shock, :scenario]) |>
         combine(_, vars_ib .=> mean, renamecols = false)
@@ -43,13 +54,16 @@ function overviews_ib_general(df::DataFrame; baseline::Bool = false)
     end
 end
 
-function rationing(df)
+function overviews_deficit(df)
     df = @pipe df |> dropmissing(_, vars_ib) |> filter([:status, :ib_flag] => (x, y) -> x == "deficit" && y == true, _) |>
         groupby(_, [:step, :shock, :scenario]) |>
         combine(_, vars_ib .=> mean, renamecols = false)
 
     p = big_rationing_plot(df)
     save("big_rationing_plot.eps", p)
+
+    p = ib_demand_levels(df)
+    save("ib_demand_levels.eps", p)
 end
 
 function overviews_by_status(df)
@@ -61,7 +75,10 @@ function overviews_by_status(df)
     save("flows_by_status.eps", p) 
 
     p = stability_by_status_levels(df)
-    save("stability_by_status.eps", p) 
+    save("stability_by_status.eps", p)
+
+    p = loans_by_status_levels(df)
+    save("loans_by_status.eps", p)
 
     p = ASF_by_status_levels(df)
     save("ASF_by_status.eps", p) 
@@ -84,6 +101,9 @@ function overviews_by_type(df)
 
     p = credit_rates_by_type_levels(df)
     save("credit_rates_by_type.eps", p)
+
+    p = loans_by_type_levels(df)
+    save("loans_by_type.eps", p)
 
     p = ASF_by_type_levels(df)
     save("ASF_by_type.eps", p) 
@@ -134,21 +154,16 @@ function create_plots()
     cd(mkpath("img/pdf")) do
         cd(mkpath("Baseline")) do
             overviews_model(filter(:scenario => x -> x == "Baseline", mdf))
-            overviews_ib_general(filter(:scenario => x -> x == "Baseline", adf); baseline = true)
-            overviews_by_status(filter(:scenario => x -> x == "Baseline", adf))
-            overviews_by_type(filter(:scenario => x -> x == "Baseline", adf))
-            overviews_hh(filter(:scenario => x -> x == "Baseline", adf), filter(:scenario => x -> x == "Baseline", mdf))
-            overviews_firms(filter(:scenario => x -> x == "Baseline", adf), filter(:scenario => x -> x == "Baseline", mdf))
+            overviews_ib_big(filter(:scenario => x -> x == "Baseline", adf); baseline = true)
+            overviews_ib(filter(:scenario => x -> x == "Baseline", adf))
+            overviews_real(filter(:scenario => x -> x == "Baseline", adf), filter(:scenario => x -> x == "Baseline", mdf))
         end
 
         cd(mkpath("Maturity")) do
             overviews_model(filter(:scenario => x -> x == "Maturity", mdf))
-            overviews_ib_general(filter(:scenario => x -> x == "Maturity", adf))
-            rationing(filter(:scenario => x -> x == "Maturity", adf))
-            overviews_by_status(filter(:scenario => x -> x == "Maturity", adf))
-            overviews_by_type(filter(:scenario => x -> x == "Maturity", adf))
-            overviews_hh(filter(:scenario => x -> x == "Maturity", adf), filter(:scenario => x -> x == "Maturity", mdf))
-            overviews_firms(filter(:scenario => x -> x == "Maturity", adf), filter(:scenario => x -> x == "Maturity", mdf))
+            overviews_ib_big(filter(:scenario => x -> x == "Maturity", adf); baseline = true)
+            overviews_ib(filter(:scenario => x -> x == "Maturity", adf))
+            overviews_real(filter(:scenario => x -> x == "Maturity", adf), filter(:scenario => x -> x == "Maturity", mdf))
         end
     end
 

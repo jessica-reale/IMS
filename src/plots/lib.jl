@@ -240,55 +240,95 @@ function big_ib_by_status(df)
     return fig 
 end
 
-function theta_lbw(df)
-    fig = Figure(resolution = (800, 400), fontsize = 16)
-    axes = ((1,1), (1,2))
-    gdf = @pipe df |> 
-        groupby(_, :shock)
-
-    vars = (variables = [:θ, :LbW], 
-        labels = [L"θ", L"L_{b}W"])   
-            
-    plots_variables_growth(fig, axes, gdf, vars)
-
-    ax1 = fig.content[1]; ax2 = fig.content[2]
-    ax1.ylabel = ax2.ylabel = L"\text{Growth rate (%)}"
-    ax1.xlabel = ax2.xlabel  = L"\text{Steps}"
-
-    fig[end+1,1:2] = Legend(fig, 
-        ax1; 
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :horizontal, 
-        )
-
-    return fig
-end
-
 function interest_ib(df)
+    fig = Figure(resolution = (1200, 400), fontsize = 16)
+    axes = ((1, 1), (1,2), (1,3), (1,4))
+    gdf = @pipe df |>
+        groupby(_, :shock)
+
+    for i in 1:length(gdf)
+        ax = fig[axes[i]...] = Axis(fig, title = only(unique(gdf[i].shock)))
+        cycle_on, trend_on = hp_filter(gdf[i].ion[100:end], 1600)
+        cycle_term, trend_term = hp_filter(gdf[i].iterm[100:end], 1600)
+        lines!(trend_on; 
+             label = L"\text{ON rate}")
+        lines!(trend_term; 
+             label = L"\text{Term rate}")
+        lines!(gdf[i].icbt[100:end]; linestyle = :dot, color = :black)     
+        lines!(gdf[i].icbd[100:end];  linestyle = :dot, color = :black)
+        lines!(gdf[i].icbl[100:end];  linestyle = :dot, color = :black)
+        ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])   
+    end
+
+    ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];  ax4 = fig.content[4]; 
+    ax1.ylabel = L"\text{Mean}"
+    ax1.xlabel = ax2.xlabel = ax3.xlabel = ax4.xlabel = L"\text{Steps}"
+
+    fig[end+1,1:4] = Legend(fig, 
+        ax1; 
+        tellheight = true, 
+        tellwidth = false,
+        orientation = :horizontal, 
+    )
+
+    return fig
+end
+
+function theta_lbw(df)
+    fig = Figure(resolution = (1200, 400), fontsize = 16)
+    axes = ((1, 1), (1,2), (1,3), (1,4))
+    gdf = @pipe df |>
+        groupby(_, :shock)
+
+    for i in 1:length(gdf)
+        ax = fig[axes[i]...] = Axis(fig, title = only(unique(gdf[i].shock)))
+        cycle_on, trend_theta = hp_filter(gdf[i].θ[100:end], 1600)
+        cycle_term, trend_LbW = hp_filter(gdf[i].LbW[100:end], 1600)
+        lines!(trend_theta; 
+             label = "θ")
+        lines!(trend_LbW; 
+             label =  L"L_{b}W")
+        ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])   
+    end
+
+    ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];  ax4 = fig.content[4]; 
+    ax1.ylabel = L"\text{Mean}"
+    ax1.xlabel = ax2.xlabel = ax3.xlabel = ax4.xlabel = L"\text{Steps}"
+    
+    fig[end+1,1:4] = Legend(fig, 
+        ax1; 
+        tellheight = true, 
+        tellwidth = false,
+        orientation = :horizontal, 
+    )
+
+    return fig
+end
+
+function ib_demand_levels(df)
     fig = Figure(resolution = (800, 400), fontsize = 16)
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
-        groupby(_, :shock)
+        groupby(_, [:shock])
 
-    vars = (variables = [:ion, :iterm], 
-        labels = [L"\text{ON rate}", L"\text{Term rate}"])   
+    vars = (variables = [:on_demand, :term_demand], 
+        labels = [L"\text{Overnigth demand}", L"\text{Term demand}"])   
             
-    plots_variables_growth(fig, axes, gdf, vars)
+    plots_variables_levels(fig, axes, gdf, vars)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
-    ax1.ylabel = ax2.ylabel = L"\text{Growth rate (%)}"
+    ax1.ylabel = L"\text{Mean}"
     ax1.xlabel = ax2.xlabel  = L"\text{Steps}"
-   
+
     fig[end+1,1:2] = Legend(fig, 
         ax1; 
         tellheight = true, 
         tellwidth = false,
         orientation = :horizontal, 
         )
+
     return fig
 end
-
 
 function by_status(fig::Figure, axes, gdf::GroupedDataFrame, var::Symbol)
     for i in eachindex(IB_STATUS)
@@ -375,6 +415,28 @@ function RSF_by_status_levels(df)
         groupby(_, [:shock])
 
     by_status(fig, axes, gdf, :bm)
+
+    ax1 = fig.content[1]; ax2 = fig.content[2]
+    ax1.ylabel = L"\text{Mean}"
+    ax1.xlabel = ax2.xlabel  = L"\text{Steps}"
+
+    fig[end+1,1:2] = Legend(fig, 
+        ax1; 
+        tellheight = true, 
+        tellwidth = false,
+        orientation = :horizontal, 
+        )
+
+    return fig
+end
+
+function loans_by_status_levels(df)
+    fig = Figure(resolution = (800, 400), fontsize = 16)
+    axes = ((1,1), (1,2))
+    gdf = @pipe df |> 
+        groupby(_, [:shock])
+
+    by_status(fig, axes, gdf, :loans)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
     ax1.ylabel = L"\text{Mean}"
@@ -497,6 +559,28 @@ function credit_rates_by_type_levels(df)
         groupby(_, [:shock])
 
     by_type(fig, axes, gdf, :il_rate)
+
+    ax1 = fig.content[1]; ax2 = fig.content[2]
+    ax1.ylabel = L"\text{Mean}"
+    ax1.xlabel = ax2.xlabel  = L"\text{Steps}"
+
+    fig[end+1,1:2] = Legend(fig, 
+        ax1; 
+        tellheight = true, 
+        tellwidth = false,
+        orientation = :horizontal, 
+        )
+
+    return fig
+end
+
+function loans_by_type_levels(df)
+    fig = Figure(resolution = (800, 400), fontsize = 16)
+    axes = ((1,1), (1,2))
+    gdf = @pipe df |> 
+        groupby(_, [:shock])
+
+    by_type(fig, axes, gdf, :loans)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
     ax1.ylabel = L"\text{Mean}"
