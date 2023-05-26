@@ -2,6 +2,7 @@ const BANKS_TYPE = ("business", "commercial")
 const BANKS_TYPE_LABELS = (L"\text{Business}", L"\text{Commercial}")
 const IB_STATUS = ("deficit", "surplus")
 const IB_LABELS = (L"\text{Deficit}", L"\text{Surplus}")
+const SCENARIOS_LABELS = (L"\text{Missing}", L"\text{Corridor}", L"\text{Width}", L"\text{Uncertainty}")
 
 function plots_variables_growth(fig, axes, gdf, vars)
     for i in 1:length(vars.variables)   
@@ -194,7 +195,7 @@ function big_rationing_plot(df)
     for i in 1:length(vars.variables_num)
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
         for j in 1:length(gdf)
-            _, trend = hp_filter((1 .- gdf[j][!, vars.variables_num[i]][100:end] ./ gdf[j][!, vars.variables_den[i]][100:end]), 129600)
+            _, trend = hp_filter((gdf[j][!, vars.variables_den[i]][100:end] .- gdf[j][!, vars.variables_num[i]][100:end]), 129600)
             lines!(trend; label = only(unique(gdf[j].shock)))
         end
         ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
@@ -203,9 +204,9 @@ function big_rationing_plot(df)
     ax1 = fig.content[1]; ax2 = fig.content[2]
     ax1.ylabel = L"\text{Mean}"
     ax1.xlabel = ax2.xlabel = L"\text{Steps}"
-    linkyaxes!(fig.content...)
-    ax2.yticklabelsvisible = false
-    ax2.yticksvisible = false
+    #linkyaxes!(fig.content...)
+    #ax2.yticklabelsvisible = false
+    #ax2.yticksvisible = false
 
     fig[end+1,1:2] = Legend(fig, 
         ax1; 
@@ -247,7 +248,7 @@ function interest_ib(df)
         groupby(_, :shock)
 
     for i in 1:length(gdf)
-        ax = fig[axes[i]...] = Axis(fig, title = only(unique(gdf[i].shock)))
+        ax = fig[axes[i]...] = Axis(fig, title = SCENARIOS_LABELS[i])
         cycle_on, trend_on = hp_filter(gdf[i].ion[100:end], 1600)
         cycle_term, trend_term = hp_filter(gdf[i].iterm[100:end], 1600)
         lines!(trend_on; 
@@ -281,7 +282,7 @@ function theta_lbw(df)
         groupby(_, :shock)
 
     for i in 1:length(gdf)
-        ax = fig[axes[i]...] = Axis(fig, title = only(unique(gdf[i].shock)))
+        ax = fig[axes[i]...] = Axis(fig, title = SCENARIOS_LABELS[i])
         cycle_on, trend_theta = hp_filter(gdf[i].θ[100:end], 1600)
         cycle_term, trend_LbW = hp_filter(gdf[i].LbW[100:end], 1600)
         lines!(trend_theta; 

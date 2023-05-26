@@ -1,6 +1,6 @@
 function credit_loans(df::DataFrame, param::Symbol; f::Bool = true)
     fig = Figure(resolution = (900, 450), fontsize = 16)
-    ax = fig[1,1] = Axis(fig, xlabel = L"\text{Steps}", ylabel = L"\text{Mean}")
+    ax = fig[1,1] = Axis(fig, xlabel = L"\text{Steps}", ylabel = L"\text{Moving Average}")
     gdf = groupby(df, param)
 
     for i in 1:length(gdf)
@@ -32,7 +32,7 @@ end
 
 function output(df::DataFrame, param::Symbol)
     fig = Figure(resolution = (900, 450), fontsize = 16)
-    ax = fig[1,1] = Axis(fig, title = L"\text{GDP}", xlabel = L"\text{Steps}", ylabel = L"\text{Mean}")
+    ax = fig[1,1] = Axis(fig, title = L"\text{GDP}", xlabel = L"\text{Steps}", ylabel = L"\text{Moving Average}")
     gdf = groupby(df, param)
 
     for i in 1:length(gdf)
@@ -81,7 +81,7 @@ function big_ib_plots_sens(df::DataFrame, param::Symbol)
     end
 
     ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];  ax4 = fig.content[4]; 
-    ax1.ylabel = L"\text{Mean}"
+    ax1.ylabel = L"\text{Moving Average}"
     ax1.xlabel = ax2.xlabel = ax3.xlabel = ax4.xlabel = L"\text{Steps}"
 
     fig[end+1,1:4] = Legend(fig, ax1; 
@@ -120,7 +120,7 @@ function stability_ib_plots_sens(df::DataFrame, param::Symbol)
     ax1 = fig.content[1]; 
     ax2 = fig.content[2]; ax3 = fig.content[3];
     ax4 = fig.content[4]; ax5 = fig.content[5];
-    ax1.ylabel = ax2.ylabel = ax4.ylabel = L"\text{Mean}"
+    ax1.ylabel = ax2.ylabel = ax4.ylabel = L"\text{Moving Average}"
     ax1.xlabel = ax4.xlabel = ax5.xlabel = L"\text{Steps}"
     ax2.xticklabelsvisible = ax3.xticklabelsvisible = false
     ax2.xticksvisible = ax3.xticksvisible = false
