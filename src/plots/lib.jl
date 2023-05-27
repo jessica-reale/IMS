@@ -190,23 +190,23 @@ function big_rationing_plot(df)
     gdf = @pipe df |> 
         groupby(_, :shock)
            
-    vars = (variables_num = [:ON_liabs, :Term_liabs], variables_den = [:on_demand, :term_demand], labels = [L"\text{ON rationing}", L"\text{Term rationing}"])
+    vars = (variables_num = [:ON_liabs, :Term_liabs], variables_den = [:on_demand, :term_demand], labels = [L"\text{Overnight rationing}", L"\text{Term rationing}"])
 
     for i in 1:length(vars.variables_num)
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
         for j in 1:length(gdf)
-            _, trend = hp_filter((gdf[j][!, vars.variables_den[i]][100:end] .- gdf[j][!, vars.variables_num[i]][100:end]), 129600)
+            _, trend = hp_filter((1 .- gdf[j][!, vars.variables_num[i]][100:end] ./ gdf[j][!, vars.variables_den[i]][100:end]) .* 100, 129600)
             lines!(trend; label = only(unique(gdf[j].shock)))
         end
         ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
     end
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
-    ax1.ylabel = L"\text{Mean}"
+    ax1.ylabel = L"\text{%}"
     ax1.xlabel = ax2.xlabel = L"\text{Steps}"
-    #linkyaxes!(fig.content...)
-    #ax2.yticklabelsvisible = false
-    #ax2.yticksvisible = false
+    linkyaxes!(fig.content...)
+    ax2.yticklabelsvisible = false
+    ax2.yticksvisible = false
 
     fig[end+1,1:2] = Legend(fig, 
         ax1; 
