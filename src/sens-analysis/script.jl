@@ -80,7 +80,7 @@ function load_df()
 
     # take model variables from Baseline scenario
     mdf = DataFrame()
-    append!(mdf, CSV.File("df/shock=Missing/Baseline/mdf.csv"))
+    append!(mdf, CSV.File("data/shock=Missing/Baseline/mdf.csv"))
 
     return df, mdf
 end
@@ -101,4 +101,3 @@ function create_sens_plots()
 end
 
 create_sens_plots()
- 
