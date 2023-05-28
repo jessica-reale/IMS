@@ -1,3 +1,6 @@
+const IB_STATUS = ("deficit", "surplus")
+const IB_LABELS = (L"\text{Deficit}", L"\text{Surplus}")
+
 function credit_loans(df::DataFrame, param::Symbol; f::Bool = true)
     fig = Figure(resolution = (900, 450), fontsize = 16)
     ax = fig[1,1] = Axis(fig, xlabel = L"\text{Steps}", ylabel = L"\text{Moving Average}")
@@ -49,6 +52,80 @@ function output(df::DataFrame, param::Symbol)
     ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
 
     fig[end + 1, 1:1] = Legend(fig, ax; 
+        tellheight = true, 
+        tellwidth = false,
+        orientation = :vertical,
+        nbanks = 4)
+
+    return fig
+end
+
+function flow(df::DataFrame, param::Symbol)
+    fig = Figure(resolution = (900, 450), fontsize = 16)
+    axes = ((1,1), (1,2))
+    gdf = groupby(df, param)
+
+    for i in eachindex(IB_STATUS)
+        ax = fig[axes[i]...] = Axis(fig, title =  IB_LABELS[i])
+        for j in 1:length(gdf)
+            sdf = filter(r -> r.status == IB_STATUS[i], gdf[j])
+            _, trend = hp_filter(sdf[!, :flow][100:end], 129600)
+            lines!(movavg(trend, 200).x; 
+                label = "$(param) = $(only(unique(gdf[j][!, param])))", 
+                linestyle = 
+                    if j > length(Makie.wong_colors())
+                        :dash
+                    end
+            )
+        end
+        ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])   
+    end
+
+    ax1 = fig.content[1]; ax2 = fig.content[2]
+    ax1.ylabel = L"\text{Moving Average}"
+    ax1.xlabel = ax2.xlabel  = L"\text{Steps}"
+
+    fig[end + 1, 1:2] = Legend(fig, ax1; 
+        tellheight = true, 
+        tellwidth = false,
+        orientation = :vertical,
+        nbanks = 4)
+
+    return fig
+end
+
+function stability(df::DataFrame, param::Symbol)
+    fig = Figure(resolution = (900, 450), fontsize = 16)
+    axes = ((1,1), (1,2))
+    gdf = groupby(df, param)
+
+    for i in eachindex(IB_STATUS)
+        ax = fig[axes[i]...] = Axis(fig, title =  IB_LABELS[i])
+        for j in 1:length(gdf)
+            sdf = filter(r -> r.status == IB_STATUS[i], gdf[j])
+            _, trend = 
+                if sdf.status == IB_STATUS[1]
+                    hp_filter(sdf[!, :am][100:end], 129600)
+                else
+                    hp_filter(1 .- sdf[!, :margin_stability][100:end], 129600)
+                end
+                
+                lines!(movavg(trend, 200).x; 
+                    label = "$(param) = $(only(unique(gdf[j][!, param])))", 
+                    linestyle = 
+                        if j > length(Makie.wong_colors())
+                            :dash
+                        end
+                )
+        end
+        ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])   
+    end
+
+    ax1 = fig.content[1]; ax2 = fig.content[2]
+    ax1.ylabel = L"\text{Moving Average}"
+    ax1.xlabel = ax2.xlabel  = L"\text{Steps}"
+
+    fig[end + 1, 1:2] = Legend(fig, ax1; 
         tellheight = true, 
         tellwidth = false,
         orientation = :vertical,

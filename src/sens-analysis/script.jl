@@ -15,14 +15,23 @@ include("lib.jl")
 function interbank(df::DataFrame, param::Symbol)
     vars = [:flow, :ON_liabs, :Term_liabs, :deposit_facility, :lending_facility, :margin_stability, :am, :bm, :pmb, :pml]
 
-    df = @pipe df |> dropmissing(_, vars) |> groupby(_, [:step, param]) |>
+    df1 = @pipe df |> dropmissing(_, vars) |> groupby(_, [:step, param]) |>
         combine(_, vars .=> mean, renamecols = false)
 
-    p = big_ib_plots_sens(df, param)
+    p = big_ib_plots_sens(df1, param)
     save("big_ib_plots_sens.eps", p)
 
-    p = stability_ib_plots_sens(df, param)
+    p = stability_ib_plots_sens(df1, param)
     save("stability_ib_plots_sens.eps", p)
+
+    df2 = @pipe df |> dropmissing(_, vars) |> groupby(_, [:step, :status, param]) |>
+        combine(_, vars .=> mean, renamecols = false)
+
+    p = flow(df2, param)
+    save("flow.eps", p)
+
+    p = stability(df2, param)
+    save("stability.eps", p)
 end
 
 function credit(df::DataFrame, m::DataFrame, param::Symbol)
@@ -44,7 +53,7 @@ function credit(df::DataFrame, m::DataFrame, param::Symbol)
     save("loans_hh_sens.eps", p)
 end
 
-function load_data()
+function load_df()
     # parameter ranges
     params_range = (
         ("0.9", "1.1", "1.3"),
@@ -56,28 +65,28 @@ function load_data()
     for param in ["r", "δ", "m1", "m2", "m3", "m4", "m5"]
         if param == "r"
             for val in params_range[1]
-                append!(df, CSV.File("data/sensitivity_analysis/$(param)/$(val)/df.csv"); cols = :union)
+                append!(df, CSV.File("df/sensitivity_analysis/$(param)/$(val)/df.csv"); cols = :union)
             end
         elseif param == "δ"
             for val in params_range[2]
-                append!(df, CSV.File("data/sensitivity_analysis/$(param)/$(val)/df.csv"); cols = :union)
+                append!(df, CSV.File("df/sensitivity_analysis/$(param)/$(val)/df.csv"); cols = :union)
             end
         else
             for val in string.(params_range[3])
-                append!(df, CSV.File("data/sensitivity_analysis/$(param)/$(val)/df.csv"); cols = :union)
+                append!(df, CSV.File("df/sensitivity_analysis/$(param)/$(val)/df.csv"); cols = :union)
             end
         end
     end
 
     # take model variables from Baseline scenario
     mdf = DataFrame()
-    append!(mdf, CSV.File("data/shock=Missing/Baseline/mdf.csv"))
+    append!(mdf, CSV.File("df/shock=Missing/Baseline/mdf.csv"))
 
     return df, mdf
 end
 
 function create_sens_plots()
-    df, mdf = load_data()
+    df, mdf = load_df()
 
     # parameter names as symbols
     cd(mkpath("img/pdf/sens-analysis")) do
