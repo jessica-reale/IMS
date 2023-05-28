@@ -65,15 +65,15 @@ function load_df()
     for param in ["r", "δ", "m1", "m2", "m3", "m4", "m5"]
         if param == "r"
             for val in params_range[1]
-                append!(df, CSV.File("df/sensitivity_analysis/$(param)/$(val)/df.csv"); cols = :union)
+                append!(df, CSV.File("data/sensitivity_analysis/$(param)/$(val)/df.csv"); cols = :union)
             end
         elseif param == "δ"
             for val in params_range[2]
-                append!(df, CSV.File("df/sensitivity_analysis/$(param)/$(val)/df.csv"); cols = :union)
+                append!(df, CSV.File("data/sensitivity_analysis/$(param)/$(val)/df.csv"); cols = :union)
             end
         else
             for val in string.(params_range[3])
-                append!(df, CSV.File("df/sensitivity_analysis/$(param)/$(val)/df.csv"); cols = :union)
+                append!(df, CSV.File("data/sensitivity_analysis/$(param)/$(val)/df.csv"); cols = :union)
             end
         end
     end
