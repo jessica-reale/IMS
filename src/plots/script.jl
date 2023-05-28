@@ -86,6 +86,9 @@ function overviews_by_status(df)
     p = RSF_by_status_levels(df)
     save("RSF_by_status.eps", p) 
 
+    p = flows_area(df)
+    save("flows_area.eps", p) 
+
 end
 
 function overviews_by_type(df)

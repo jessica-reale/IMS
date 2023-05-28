@@ -2,7 +2,8 @@ const BANKS_TYPE = ("business", "commercial")
 const BANKS_TYPE_LABELS = (L"\text{Business}", L"\text{Commercial}")
 const IB_STATUS = ("deficit", "surplus")
 const IB_LABELS = (L"\text{Deficit}", L"\text{Surplus}")
-const SCENARIOS_LABELS = (L"\text{Missing}", L"\text{Corridor}", L"\text{Width}", L"\text{Uncertainty}")
+const SHOCKS = ("Missing", "Corridor", "Width", "Uncertainty")
+const SHOCKS_LABELS = (L"\text{Missing}", L"\text{Corridor}", L"\text{Width}", L"\text{Uncertainty}")
 
 function plots_variables_growth(fig, axes, gdf, vars)
     for i in 1:length(vars.variables)   
@@ -248,7 +249,7 @@ function interest_ib(df)
         groupby(_, :shock)
 
     for i in 1:length(gdf)
-        ax = fig[axes[i]...] = Axis(fig, title = SCENARIOS_LABELS[i])
+        ax = fig[axes[i]...] = Axis(fig, title = SHOCKS_LABELS[i])
         cycle_on, trend_on = hp_filter(gdf[i].ion[100:end], 1600)
         cycle_term, trend_term = hp_filter(gdf[i].iterm[100:end], 1600)
         lines!(trend_on; 
@@ -282,7 +283,7 @@ function theta_lbw(df)
         groupby(_, :shock)
 
     for i in 1:length(gdf)
-        ax = fig[axes[i]...] = Axis(fig, title = SCENARIOS_LABELS[i])
+        ax = fig[axes[i]...] = Axis(fig, title = SHOCKS_LABELS[i])
         cycle_on, trend_theta = hp_filter(gdf[i].θ[100:end], 1600)
         cycle_term, trend_LbW = hp_filter(gdf[i].LbW[100:end], 1600)
         lines!(trend_theta; 
@@ -594,5 +595,34 @@ function loans_by_type_levels(df)
         orientation = :horizontal, 
         )
 
+    return fig
+end
+
+function flows_area(df)
+    fig = Figure(resolution = (1300, 400), fontsize = 16)
+    axes = ((1,1), (1,2), (1,3), (1,4))   
+    df = filter(:status => x -> x != "neutral", df)
+    gdf = groupby(df, :status)
+
+    for i in eachindex(SHOCKS)
+        ax = fig[axes[i]...] = Axis(fig, title = SHOCKS_LABELS[i], ytickformat = "{:.1f}")
+        for j in 1:length(gdf)
+            sdf = filter(r -> r.shock == SHOCKS[i], gdf[j])
+            _, trend = hp_filter(sdf.flow[100:end], 129600)
+            band!(sdf.step[100:end] .- 100, min.(trend) .+ mean.(trend) .+ std(trend), max.(trend) .- mean.(trend) .- std(trend); label = IB_LABELS[j])   # plot stddev band
+        end
+        ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
+    end
+
+    ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];  ax4 = fig.content[4]; 
+    ax1.ylabel = L"\text{Mean}"
+    ax1.xlabel = ax2.xlabel = ax3.xlabel = ax4.xlabel = L"\text{Steps}"
+   
+    fig[end+1,1:4] = Legend(fig, 
+        ax1; 
+        tellheight = true, 
+        tellwidth = false,
+        orientation = :horizontal, 
+        )
     return fig
 end
