@@ -169,7 +169,6 @@ function big_ib_plots_sens(df::DataFrame, param::Symbol)
     return fig 
 end
 
-
 function stability_ib_plots_sens(df::DataFrame, param::Symbol)
     fig = Figure(resolution = (1200, 600), fontsize = 16)
     axes = ((1:2,1), (1,2), (1,3), (2,2), (2,3))
