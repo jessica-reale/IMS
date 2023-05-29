@@ -441,8 +441,12 @@ function loans_by_status_levels(df)
     by_status(fig, axes, gdf, :loans)
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
+    ax1.ytickformat = "{:.1f}"
     ax1.ylabel = L"\text{Mean}"
     ax1.xlabel = ax2.xlabel  = L"\text{Steps}"
+    linkyaxes!(fig.content...)
+    ax2.yticklabelsvisible = false
+    ax2.yticksvisible = false
 
     fig[end+1,1:2] = Legend(fig, 
         ax1; 
@@ -617,7 +621,10 @@ function flows_area(df)
     ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];  ax4 = fig.content[4]; 
     ax1.ylabel = L"\text{Mean}"
     ax1.xlabel = ax2.xlabel = ax3.xlabel = ax4.xlabel = L"\text{Steps}"
-   
+    linkyaxes!(fig.content...)
+    ax2.yticklabelsvisible =  ax3.yticklabelsvisible =  ax4.yticklabelsvisible = false
+    ax2.yticksvisible = ax3.yticksvisible = ax4.yticksvisible = false
+
     fig[end+1,1:4] = Legend(fig, 
         ax1; 
         tellheight = true, 
