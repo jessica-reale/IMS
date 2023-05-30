@@ -54,5 +54,6 @@ Base.@kwdef mutable struct Parameters
     iterm_prev::Float64 = 0.024
     θ::Float64 = 0.5
     LbW::Float64 = 0.5
+    σib::Float64 = 0.1
     a0::Float64 = 0.0 # set in init.jl
 end
