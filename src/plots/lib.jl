@@ -250,8 +250,8 @@ function interest_ib(df)
 
     for i in 1:length(gdf)
         ax = fig[axes[i]...] = Axis(fig, title = SHOCKS_LABELS[i])
-        cycle_on, trend_on = hp_filter(gdf[i].ion[100:end], 1600)
-        cycle_term, trend_term = hp_filter(gdf[i].iterm[100:end], 1600)
+        _, trend_on = hp_filter(gdf[i].ion[100:end], 1600)
+        _, trend_term = hp_filter(gdf[i].iterm[100:end], 1600)
         lines!(trend_on; 
              label = L"\text{ON rate}")
         lines!(trend_term; 
@@ -284,8 +284,8 @@ function theta_lbw(df)
 
     for i in 1:length(gdf)
         ax = fig[axes[i]...] = Axis(fig, title = SHOCKS_LABELS[i])
-        cycle_on, trend_theta = hp_filter(gdf[i].θ[100:end], 1600)
-        cycle_term, trend_LbW = hp_filter(gdf[i].LbW[100:end], 1600)
+        _, trend_theta = hp_filter(gdf[i].θ[100:end], 1600)
+        _, trend_LbW = hp_filter(gdf[i].LbW[100:end], 1600)
         lines!(trend_theta; 
              label = "θ")
         lines!(trend_LbW; 
@@ -613,7 +613,7 @@ function flows_area(df)
         for j in 1:length(gdf)
             sdf = filter(r -> r.shock == SHOCKS[i], gdf[j])
             _, trend = hp_filter(sdf.flow[100:end], 129600)
-            band!(sdf.step[100:end] .- 100, min.(trend) .+ mean.(trend) .+ std(trend), max.(trend) .- mean.(trend) .- std(trend); label = IB_LABELS[j])   # plot stddev band
+            band!(sdf.step[100:end] .- 100, min.(trend) .+ mean.(trend) .+ std(trend), max.(trend) .- mean.(trend) .- std(trend); label = IB_LABELS[j])
         end
         ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
     end
