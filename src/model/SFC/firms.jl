@@ -84,7 +84,7 @@ function consumption!(agent::Firm, model)
 end
 
 """
-    output!(agent::Firm, ϕ, σ) → agent.output
+    output!(agent::Firm, β, ϕ, σ) → agent.output
 
 Firms update their expectations on sales and inventories and produce output.
 """
@@ -113,7 +113,7 @@ function sales!(agent::Firm, g)
 end
 
 """
-    inventories!(agent::Firm, g) → agent.invent, agent.Invent
+    inventories!(agent::Firm) → agent.invent, agent.Invent
 
 Firms compute update their inventory holdings.
 """
@@ -178,7 +178,7 @@ function wages!(agent::Firm, model)
 end
 
 """
-    deposits!(agent::Firm, gd) → agent.deposits
+    deposits!(agent::Firm, model) → agent.deposits
 
 Firms update their deposit holdings at the bank as a proportion of previous period wages.
 """
@@ -254,7 +254,7 @@ function networth!(agent::Firm)
 end
 
 """
-    current_balance!(agent::Firm) → agent.balance_current
+    current_balance!(agent::Firm, spending) → agent.balance_current
 
 Update firms' current balances for SFC checks.
 """

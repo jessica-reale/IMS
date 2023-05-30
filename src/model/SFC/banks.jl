@@ -65,6 +65,11 @@ function reset_vars!(agent::Bank, scenario)
     return nothing
 end
 
+"""
+    reset_after_status!(agent::Bank) → nothing
+
+Reset banks' variables after interbank status.
+"""
 function reset_after_status!(agent::Bank)
     agent.ON_assets = 0.0
     agent.Term_assets = 0.0
@@ -137,10 +142,8 @@ end
 """
     NSFR!(agent::Bank, model) → model
 
-Update the elements of the Net Stable Funding Ratio (NSFR). The resulting `margin_stability` depends on the scenario implemented:
-1) Baseline scenario: NSFR weights are excluded from the calculations and the margin of stability depends on the ratio of total liabilities
-over total assets;
-2) Maturity scenario: the margin of stability is weighted for the residual maturities of the NSFR.
+Update the elements of the Net Stable Funding Ratio (NSFR). The function is called 
+when the scenario is "Maturity" and the margin of stability is weighted for the residual maturities of the NSFR.
 """
 function NSFR!(agent::Bank, model)
     # end function prematurely if agent is neutral
@@ -244,7 +247,7 @@ end
 
 Banks define their demand for overnight interbank loans dependent on money market rates (`Baseline` scenario) 
 and NSFR-based borrowing preferences (`Maturity` scenario). When the `Baseline` scenario is active, lenders accommodate borrowers' demand for funds 
-in the overnight segment. Otherwise, 
+in the overnight segment. Otherwise, see `on_supply!.
 """
 function on_demand!(agent::Bank, model)
     if agent.status == :deficit && agent.ib_flag
@@ -260,7 +263,7 @@ end
     term_demand!(agent::Bank, model) → agent.term_demand
 
 Banks define their demand for term interbank loans as a residual. When the `Baseline` scenario is active, lenders accommodate borrowers' demand for funds 
-in the term segment.
+in the term segment. Otherwise, see `term_supply!`.
 """
 function term_demand!(agent::Bank, model)
     if agent.status == :deficit && agent.ib_flag
@@ -275,7 +278,8 @@ end
 """
     on_supply!(agent::Bank, LbW) → agent.on_supply
 
-Banks define their supply for overnight interbank loans dependent on money market rates and NSFR-based lending preferences.
+Banks define their supply for overnight interbank loans dependent on money market rates and NSFR-based lending preferences when the scenario
+is "Maturity".
 """
 function on_supply!(agent::Bank, LbW)
     if agent.status == :surplus && agent.ib_flag
@@ -287,7 +291,7 @@ end
 """
     term_supply!(agent::Bank) → agent.term_supply
 
-Banks define their supply for term interbank loans as a residual.
+Banks define their supply for term interbank loans as a residual, when the scenario is "Maturity".
 """
 function term_supply!(agent::Bank)
     if agent.status == :surplus && agent.ib_flag
@@ -361,7 +365,7 @@ function deposit_facility!(agent::Bank)
 end
 
 """
-    funding_costs!(agent::Bank, icbt, ion, iterm) → agent.funding_costs
+    funding_costs!(agent::Bank, icbt, ion, iterm, icbl) → agent.funding_costs
 
 Banks compute their funding costs according to their recourse to the interbank market and/or the central bank's lending facility.
 """
