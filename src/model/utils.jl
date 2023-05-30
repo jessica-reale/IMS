@@ -41,6 +41,7 @@ Checks that the net worth of all sectors corresponds to the nominal value of tan
 function SFC_checks_net_worth!(model, GDP; tol::Float64 = 1e-06)
     networth = sum(a.networth for a in allagents(model) if a isa Government) - 
             sum(a.networth for a in allagents(model) if !isa(a, Government))
+
     if abs(networth) - abs(sum(a.capital + a.Invent for a in allagents(model) if a isa Firm)) > tol * GDP
         @warn """
         Stock-flow error at $(model.step) for $(tol * GDP) tolerance level - Net Worth!
