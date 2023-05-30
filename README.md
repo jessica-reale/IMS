@@ -37,7 +37,7 @@ The `src` folder contains the following elements:
 
 ## Simulations
 
-We run the simulations over two scenarios (`scenario`) diversified by the interbank matching protocol. Each scenario is shocked by three experiments. The table below summarises the shocks we implement.
+We run the simulations over two scenarios (`scenario`) diversified by the interbank matching protocol. Each scenario is shocked with three experiments. The table below summarises the shocks we implement.
 
 Shocks `shock`      | Variables                     | Step `shock_incr` 
 -------------       | -------------                 | -------------
