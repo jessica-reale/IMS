@@ -9,6 +9,3 @@ data/
 
 # Ignore plots
 img/
-
-# Ignore dev folder
-dev/
