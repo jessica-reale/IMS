@@ -105,7 +105,7 @@ function model_step!(model)
     # begin: Interbank Market
     IMS.update_willingenss_ON!(model)
     for id in ids_by_type(Bank, model)
-        IMS.update_status!(model[id]) # updates IB status
+        IMS.update_status!(model[id])
         if model.scenario == "Maturity"
             IMS.NSFR!(model[id], model)
             IMS.borrowing_targets!(model[id], model.rng)
@@ -145,7 +145,8 @@ function model_step!(model)
         IMS.SFC!(model[id], model)
     end
 
-    IMS.SFC_checks!(model) # check for Stock-Flow consistency
+    # SFC checks
+    IMS.SFC_checks!(model)
     return model
 end
 
@@ -190,6 +191,7 @@ end
 
 """
     firms_matching!(model) → model
+
 Updates firms' matching in the credit market.
 """
 function firms_matching!(model)
@@ -217,6 +219,7 @@ end
 
 """
     hhs_matching!(model) → model
+
 Updates households' matching in the credit market.
 """
 function hhs_matching!(model)
