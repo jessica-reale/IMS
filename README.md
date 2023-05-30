@@ -39,12 +39,12 @@ The `src` folder contains the following elements:
 
 We run the simulations over two scenarios (`scenario`) diversified by the interbank matching protocol. Each scenario is shocked by three experiments. The table below summarises the shocks we implement.
 
-Shocks `shock`  | Variables | Step `shock_incr`
-------------- | -------------
-Missing-shock | – | – 
-Corridor-shock      | `icbl, icbd, icbt += 0.005` | [300, 1200] \cup 300 \mathbb{Z}
-Width-shock      | `icbl, icbt += 0.005` | [300, 1200] \cup 300 \mathbb{Z}
-Uncertainty-shock      | `PDU += 0.2` | [300, 1200] \cup 300 \mathbb{Z}
+Shocks `shock`      | Variables                     | Step `shock_incr` 
+-------------       | -------------                 | -------------
+Missing-shock       | –                             | – 
+Corridor-shock      | `icbl, icbd, icbt += 0.005`   | [300, 1200] \cup 300 \mathbb{Z}
+Width-shock         | `icbl, icbt += 0.005`         | [300, 1200] \cup 300 \mathbb{Z}
+Uncertainty-shock   | `PDU += 0.2`                  | [300, 1200] \cup 300 \mathbb{Z}
 
 ## Sensitivity analysis
 
