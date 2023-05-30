@@ -23,16 +23,16 @@ Base.@kwdef mutable struct Parameters
     σ::Int = 3
     μ::Float64 = 0.25
     v::Float64 = 0.1
-    ω::Float64 = 0.2 # can be changed
+    ω::Float64 = 0.2
     l::Float64 = 0.03
     pr::Float64 = 1.0
     τ::Float64 = 0.18
     γ::Float64 = 0.1
     ib::Float64 = 0.024
     iblr::Float64 = 0.0219
-    icbt::Float64 = 0.024 # target
-    icbl::Float64 = 0.02875 # lending fac
-    icbd::Float64 = 0.01925 # deposit fac
+    icbt::Float64 = 0.024
+    icbl::Float64 = 0.02875
+    icbd::Float64 = 0.01925
     gk::Float64 = 0.1
     ρ::Float64 = 0.4
     α1::Float64 = 0.8
@@ -41,7 +41,7 @@ Base.@kwdef mutable struct Parameters
     χ1::Float64 = 0.0085
     λ::Float64 = 2.00687
     gd::Float64 = 0.1
-    # margin of stability - banks_NSFR
+    # margin of stability - NSFR
     m1::Float64 = 0.1
     m2::Float64 = 0.5
     m3::Float64 = 0.05
@@ -54,7 +54,5 @@ Base.@kwdef mutable struct Parameters
     iterm_prev::Float64 = 0.024
     θ::Float64 = 0.5
     LbW::Float64 = 0.5
-    σib::Float64 = 0.1
-    # params set in init.jl
-    a0::Float64 = 0.0
+    a0::Float64 = 0.0 # set in init.jl
 end
