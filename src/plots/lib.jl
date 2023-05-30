@@ -203,7 +203,7 @@ function big_rationing_plot(df)
     end
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
-    ax1.ylabel = L"\text{%}"
+    ax1.ylabel = L"\text{Rate (%)}"
     ax1.xlabel = ax2.xlabel = L"\text{Steps}"
     linkyaxes!(fig.content...)
     ax2.yticklabelsvisible = false
