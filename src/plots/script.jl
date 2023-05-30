@@ -9,7 +9,6 @@ using Statistics
 using CairoMakie
 using QuantEcon
 
-##
 include("lib.jl")
 
 const vars_ib = [:lending_facility, :deposit_facility, :loans,
@@ -116,7 +115,6 @@ function overviews_by_type(df)
 end
 
 function overviews_hh(df, m)
-    # credit market
     vars =  [:loans, :consumption]
     df = @pipe df |> filter(:id => x -> x >= 1 && x <= mean(m[!, :n_hh]), _) |>
             groupby(_, [:step, :shock, :scenario]) |> 
