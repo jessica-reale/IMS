@@ -139,17 +139,15 @@ function SFC_checks_aggregate!(model, GDP; tol::Float64 = 1e-06)
         else
             0.0
         end
+    
+    all_aggregate_vars = (Df, Dh, Lf, Lh, B, iB, C, W, IB, iLf, Rl, iRl, Rd, iRd, iLh, iDf, iDh, H, iH, A, iA, Blr, iBlr, c)
 
-    if abs(Df) > tol * GDP || abs(Dh) > tol * GDP || abs(Lf) > tol * GDP || abs(Lh) > tol * GDP || abs(B) > tol * GDP || abs(iB) > tol * GDP ||  abs(C) > tol * GDP ||  
-        abs(W) > tol * GDP || abs(H) > tol * GDP || abs(IB) > tol * GDP || abs(iLf) > tol * GDP || abs(Rl) > tol * GDP || abs(iRl) > tol * GDP || abs(Rd) > tol * GDP ||
-        abs(iRd) > tol * GDP || abs(iLh) > tol * GDP || abs(iDf) > tol * GDP ||  abs(iDh) > tol * GDP || abs(iH) > tol * GDP || abs(A) > tol * GDP || abs(iA) > tol * GDP ||
-        abs(Blr) > tol * GDP || abs(iBlr) > tol * GDP || abs(c) > tol * GDP
-        @warn """ 
+    any(>(tol * GDP), all_aggregate_vars) && @warn """ 
             Stock-flow error at $(model.step) for $(tol * GDP) tolerance level - Aggregation!
             Check whether the model explodes. To do so, modify in the `model_step` function the keyword of `SFC_checks!` as 
             `SFC_checks!(model; explosive = true)` and run the model checks again. If the problem persists, check the model or 
             initial values and sequence of events again.
             """
-    end
+
     return nothing
 end
