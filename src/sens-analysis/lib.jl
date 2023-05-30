@@ -14,7 +14,7 @@ function credit_loans(df::DataFrame, param::Symbol; f::Bool = true)
                 if i > length(Makie.wong_colors())
                     :dash
                 end             
-            )
+        )
     end
 
     ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
@@ -46,7 +46,7 @@ function output(df::DataFrame, param::Symbol)
                 if i > length(Makie.wong_colors())
                     :dash
                 end
-            )
+        )
     end
 
     ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
@@ -110,13 +110,13 @@ function stability(df::DataFrame, param::Symbol)
                     hp_filter(1 .- sdf[!, :margin_stability][100:end], 129600)
                 end
                 
-                lines!(movavg(trend, 200).x; 
-                    label = "$(param) = $(only(unique(gdf[j][!, param])))", 
-                    linestyle = 
-                        if j > length(Makie.wong_colors())
-                            :dash
-                        end
-                )
+            lines!(movavg(trend, 200).x; 
+                label = "$(param) = $(only(unique(gdf[j][!, param])))", 
+                linestyle = 
+                    if j > length(Makie.wong_colors())
+                        :dash
+                    end
+            )
         end
         ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])   
     end
@@ -152,7 +152,7 @@ function big_ib_plots_sens(df::DataFrame, param::Symbol)
                     if j > length(Makie.wong_colors())
                         :dash
                     end
-                )
+            )
         end
         ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
     end
@@ -188,7 +188,7 @@ function stability_ib_plots_sens(df::DataFrame, param::Symbol)
                     if j > length(Makie.wong_colors())
                         :dash
                     end
-                )
+            )
         end
         ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
     end
