@@ -51,14 +51,19 @@ function run_sens(param::Symbol, param_range::Vector{Float64}; scenario::String 
 end
 
 function run()
+    # general params
     run_sens(:r, [0.9, 1.1, 1.3])
     run_sens(:δ, [0.05, 0.5, 1.0])
+    run_sens(:l , [0.03, 0.5, 1.0])
+    run_sens(:γ, [0.1, 0.5, 1.0])
+    run_sens(:gd, [0.1, 0.5, 1.0])
+    # NSFR params
     run_sens(:m1, collect(0.0:0.1:1.0); scenario = "Maturity")
     run_sens(:m2, collect(0.0:0.1:1.0); scenario = "Maturity")
     run_sens(:m3, collect(0.0:0.1:1.0); scenario = "Maturity")
     run_sens(:m4, collect(0.0:0.1:1.0); scenario = "Maturity")
     run_sens(:m5, collect(0.0:0.1:1.0); scenario = "Maturity")
-
+   
     printstyled("Paramascan and data collection finished."; color = :blue)
     return nothing
 end
