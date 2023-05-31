@@ -40,7 +40,7 @@ end
 """
     loans!(agent::Household, model) → agent.loans
 
-Households receive loans from the corresponding bank based on their demand for loans and the bank's liquidity preference.
+Households receive loans from the corresponding bank based on their demand for loans.
 """
 function loans!(agent::Household, model)
     agent.loans = model.γ * (agent.networth_prev + agent.nominal_consumption)
