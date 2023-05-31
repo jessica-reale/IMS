@@ -209,3 +209,39 @@ function stability_ib_plots_sens(df::DataFrame, param::Symbol)
         nbanks = 4)
     return fig
 end
+
+function big_output_params(df::DataFrame, params::Vector{Symbol})
+    fig = Figure(resolution = (1200, 600), fontsize = 16)
+    axes = ((1:2,1), (1,2), (1,3), (2,2), (2,3))
+            
+    for i in 1:length(params[2:end])
+        ax = fig[axes[i]...] = Axis(fig, title = string.(params[2:end][i]))
+        gdf = @pipe df |> filter(params[2:end][i] => x -> !ismissing(x), _) |>
+            groupby(_, params[2:end][i])
+        for j in 1:length(gdf)
+            _, trend = hp_filter((gdf[j][!, :output][100:end]), 129600)
+            lines!(movavg(trend, 200).x; label = "$(string.(params[2:end][i])) = $(only(unique(gdf[j][!, params[2:end][i]])))", 
+                linestyle = 
+                    if j > length(Makie.wong_colors())
+                        :dash
+                    end
+            )
+        end
+        ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
+    end
+
+    ax1 = fig.content[1]; 
+    ax2 = fig.content[2]; ax3 = fig.content[3];
+    ax4 = fig.content[4]; ax5 = fig.content[5];
+    ax1.ylabel = ax2.ylabel = ax4.ylabel = L"\text{Moving Average}"
+    ax1.xlabel = ax4.xlabel = ax5.xlabel = L"\text{Steps}"
+    ax2.xticklabelsvisible = ax3.xticklabelsvisible = false
+    ax2.xticksvisible = ax3.xticksvisible = false
+    
+    axislegend(ax1; position = (1.0, 0.93))
+    axislegend(ax2; position = (1.0, 0.93))
+    axislegend(ax3; position = (1.0, 0.93))
+    axislegend(ax4; position = (1.0, 0.93))
+    axislegend(ax5; position = (1.0, 0.93))
+    return fig
+end
