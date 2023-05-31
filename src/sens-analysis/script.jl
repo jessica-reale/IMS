@@ -12,9 +12,9 @@ using EasyFit
 
 include("lib.jl")
 
-function interbank(df::DataFrame, param::Symbol)
-    vars = [:flow, :ON_liabs, :Term_liabs, :deposit_facility, :lending_facility, :margin_stability, :am, :bm, :pmb, :pml]
+const vars = [:flow, :ON_liabs, :Term_liabs, :deposit_facility, :lending_facility, :margin_stability, :am, :bm, :pmb, :pml]
 
+function interbank(df::DataFrame, param::Symbol)
     df1 = @pipe df |> dropmissing(_, vars) |> groupby(_, [:step, param]) |>
         combine(_, vars .=> mean, renamecols = false)
 
@@ -56,11 +56,18 @@ end
 function big_general_params(df::DataFrame, m::DataFrame, params::Vector{Symbol})
     pushfirst!(params, :step)
 
+    df1 = @pipe df |> dropmissing(_, vars) |> 
+        groupby(_, params) |>
+        combine(_, vars .=> mean, renamecols = false)
+
+    p = big_params(df1, :ON_liabs, params)
+    save("big_ON_params.eps", p)
+
     df_firms = @pipe df |>  filter(:id => x -> x > mean(m[!, :n_hh]) && x <= mean(m[!, :n_hh]) + mean(m[!, :n_f]), _) |>
         groupby(_, params) |> 
         combine(_, :output .=> mean, renamecols = false)
 
-    p = big_output_params(df_firms, params)
+    p = big_params(df_firms, :output, params)
     save("big_output_params.eps", p)
 end
 
@@ -124,7 +131,6 @@ end
 function create_sens_maturity_plots()
     df, mdf = load_df_mat()
 
-    # parameter names as symbols
     cd(mkpath("img/pdf/sens-analysis")) do
         for param in [:m1, :m2, :m3, :m4, :m5]
             cd(mkpath("$(param)")) do
@@ -143,7 +149,6 @@ function create_sens_general_plots()
 
     params = [:r, :l, :δ, :γ, :gd]
 
-    # parameter names as symbols
     cd(mkpath("img/pdf/sens-analysis")) do
             cd(mkpath("genearal")) do
                 big_general_params(df, mdf, params)
