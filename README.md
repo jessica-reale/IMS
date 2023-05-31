@@ -50,9 +50,15 @@ Uncertainty-shock   | `PDU += 0.2`                  | every 300 steps
 
 We perform sensitivity tests on six parameters:
 
-1. government debt-to-GDP ratio: `model.r = {0.9, 1.1, 1.3}`;
-2. RSF risk factor on short-term loans:  `model.m1 = [0.0:0.1:1.0]`;
-3. RSF risk factor on medium-term loans: `model.m2 = [0.0:0.1:1.0]`;
-4. RSF risk factor on long-term government bonds: `model.m3 = [0.0:0.1:1.0]`;
-5. ASF risk factor on deposits: `model.m4 = [0.0:0.1:1.0]`;
-6. ASF risk factor on term interbank loans `model.m5 = [0.0:0.1:1.0]`.
+Parameter           | Range                         | Description
+-------------       | -------------                 | -------------
+`model.r`           | {0.9, 1.1, 1.3}               | government debt-to-GDP ratio
+`model.δ`           | {0.05, 0.5, 1.0}              | capital depreciation
+`model.l`           | {0.03, 0.5, 1.0}              | share of non-performing loans 
+`model.γ`           | {0.1, 0.5, 1.0}               | households’ leverage
+`model.gd`          | {0.1, 0.5, 1.0}               | proportion of wages deposited
+`model.m1`          | [0.0:0.1:1.0]                 | RSF risk factor on short-term loans
+`model.m2`          | [0.0:0.1:1.0]                 | RSF risk factor on medium-term loans
+`model.m3`          | [0.0:0.1:1.0]                 | RSF risk factor on long-term government bonds
+`model.m4`          | [0.0:0.1:1.0]                 | ASF risk factor on deposits
+`model.m5`          | [0.0:0.1:1.0]                 | ASF risk factor on term interbank loans
