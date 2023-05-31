@@ -210,7 +210,7 @@ function stability_ib_plots_sens(df::DataFrame, param::Symbol)
     return fig
 end
 
-function big_output_params(df::DataFrame, params::Vector{Symbol})
+function big_params(df::DataFrame, var::Symbol, params::Vector{Symbol})
     fig = Figure(resolution = (1200, 600), fontsize = 16)
     axes = ((1:2,1), (1,2), (1,3), (2,2), (2,3))
             
@@ -219,7 +219,7 @@ function big_output_params(df::DataFrame, params::Vector{Symbol})
         gdf = @pipe df |> filter(params[2:end][i] => x -> !ismissing(x), _) |>
             groupby(_, params[2:end][i])
         for j in 1:length(gdf)
-            _, trend = hp_filter((gdf[j][!, :output][100:end]), 129600)
+            _, trend = hp_filter((gdf[j][!, var][100:end]), 129600)
             lines!(movavg(trend, 200).x; label = "$(string.(params[2:end][i])) = $(only(unique(gdf[j][!, params[2:end][i]])))", 
                 linestyle = 
                     if j > length(Makie.wong_colors())
