@@ -15,7 +15,7 @@ The `src` folder contains the following elements:
     1. the script to execute the model without data saving nor parallel replications [`run.jl`](src/run.jl);
     2. the script to execute the model with parallelised replications and data saving [`run_complex.jl`](src/run_complex.jl).
 
-3. the model characteristics within [`model`](src/model) folder that includes:
+3. the model characteristics within the [`model`](src/model) folder that includes:
     1. the model initialisation file [`init.jl`](src/model/init.jl);
     2. the set of exogenous parameters and corresponding value [`params.jl`](src/model/params.jl);
     3. the mutable structs of each agent type that defines properties and variables [`structs.jl`](src/model/structs.jl);
@@ -48,7 +48,7 @@ Uncertainty-shock   | `PDU += 0.2`                  | every 300 steps
 
 ## Sensitivity analysis
 
-We perform sensitivity tests on six parameters:
+We perform sensitivity tests on ten parameters:
 
 Parameter           | Range                         | Description
 -------------       | -------------                 | -------------
