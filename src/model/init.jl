@@ -178,7 +178,8 @@ function SS_SFC_checks(GD, NWh, NWcb, NWbj, NWbk, NWf, K, Invent; tol::Float64 =
     if abs((GD - (NWh + NWcb + NWbj + NWbk + NWf))) - abs((K + Invent)) > tol
         @warn "Initial values calculation does not respect stock-flow consistency - Net Worth!
             Check equations and parameters and try again."
-    elseif abs(NWcb) > tol
+    end
+    if abs(NWcb) > tol
         @warn "Initial values calculation does not respect stock-flow consistency - Hidden Equation!
             Check equations and parameters and try again."
     end
