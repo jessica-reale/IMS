@@ -5,10 +5,10 @@ This repository contains the files to replicate the simulations of "Interbank De
 To contact me: [Jessica Reale](mailto:jessica.reale@ruhr-uni-bochum.de)
 ## What you can find in this repository
 
-The `src` folder contains the following elements:
+The [`src`](src) folder contains the following elements:
 
 1. the main module of this project [`IMS.jl`](src/IMS.jl) which includes:
-    1. what happens at each simulation step (*model_step!(model)* function) ;
+    1. what happens at each simulation step (*model_step!* function);
     2. several model-based functions that update credit and interbank market matching and interbank interest rates.
 
 2. the scripts to run the model:
