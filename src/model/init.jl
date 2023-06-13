@@ -170,7 +170,7 @@ function SS_initial(model)
 end
 
 """
-    SS_SFC_checks(GD, NWh, NWcb, NWbj, NWbk, NWf, K; tol::Float64 = 1e-06) → nothing
+    SS_SFC_checks(GD, NWh, NWcb, NWbj, NWbk, NWf, K, Invent; tol::Float64 = 1e-06) → nothing
 
 Perform SFC checks for initial values calculation at the Steady State.
 """
@@ -178,8 +178,7 @@ function SS_SFC_checks(GD, NWh, NWcb, NWbj, NWbk, NWf, K, Invent; tol::Float64 =
     if abs((GD - (NWh + NWcb + NWbj + NWbk + NWf))) - abs((K + Invent)) > tol
         @warn "Initial values calculation does not respect stock-flow consistency - Net Worth!
             Check equations and parameters and try again."
-    end
-    if abs(NWcb) > tol
+    elseif abs(NWcb) > tol
         @warn "Initial values calculation does not respect stock-flow consistency - Hidden Equation!
             Check equations and parameters and try again."
     end

@@ -34,7 +34,7 @@ function SFC_checks!(model; explosive::Bool = false)
 end
 
 """
-    SFC_checks_net_worth!(model; tol::Float64 = 1e-06) → nothing
+    SFC_checks_net_worth!(model, GDP; tol::Float64 = 1e-06) → nothing
 
 Checks that the net worth of all sectors corresponds to the nominal value of tangible assets, i.e. capital.
 """
@@ -54,7 +54,7 @@ function SFC_checks_net_worth!(model, GDP; tol::Float64 = 1e-06)
 end
 
 """
-    SFC_checks_balance!(model; tol::Float64 = 1e-06) → nothing
+    SFC_checks_balance!(model, GDP; tol::Float64 = 1e-06) → nothing
 
 Checks that net lending/borrowing positions of all sectors sum to zero.
 """
