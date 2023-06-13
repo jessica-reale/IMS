@@ -42,7 +42,7 @@ function unit_costs!(agent::Firm)
 end
 
 """
-    investments!(agent::Firm) → agent.investments, agent.nominal_investments
+    investments!(agent::Firm, gk) → agent.investments, agent.nominal_investments
 
 Firms make their investments decisions.
 """
@@ -91,7 +91,7 @@ function output!(agent::Firm, β, ϕ, σ)
 end
 
 """
-    sales!(agent::Firm) → agent.sales
+    sales!(agent::Firm, g) → agent.sales
 
 Firms compute their real sales.
 """

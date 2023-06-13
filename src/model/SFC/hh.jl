@@ -96,7 +96,7 @@ function interests_payments!(agent::Household, model)
 end
 
 """
-    deposits!(agent::Household) → agent.deposits
+    deposits!(agent::Household, model) → agent.deposits
 
 Households decide the amount of deposits they wish to hold (buffer variable).
 """

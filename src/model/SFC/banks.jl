@@ -175,7 +175,7 @@ function portfolio!(agent::Bank)
 end
 
 """
-    lending_targets!(agent::Bank, scenario, rng) → agent.pml
+    lending_targets!(agent::Bank, rng) → agent.pml
 
 Update lenders' preferences for overnight interbank assets: banks' are assumed to be indifferent to maturity considerations in 
 the `Baseline` scenario. When the `Maturity` scenario is active, preferences depend on NSFR weights.
