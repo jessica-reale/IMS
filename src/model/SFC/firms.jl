@@ -63,7 +63,7 @@ function capital!(agent::Firm, δ)
 end
 
 """
-    consumption!(agent::Firm, model) → agent.consumption
+    consumption!(agent::Firm, model) → agent.consumption, agent.nominal_consumption
 
 Firms update their customers' consumption. The inflow of consumption is then updated for the matching bank.
 """

@@ -46,6 +46,11 @@ function advances!(agent::CentralBank, tot_advances)
     return agent.advances
 end
 
+"""
+    facilities!(agent::CentralBank, tot_l_fac, tot_d_fac) → agent.lending_facility, agent.deposit_facility
+
+The central bank allows banks to access its standing facilitites.
+"""
 function facilities!(agent::CentralBank, tot_l_fac, tot_d_fac)
     agent.lending_facility = tot_l_fac
     agent.deposit_facility = tot_d_fac
