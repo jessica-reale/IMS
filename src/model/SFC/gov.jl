@@ -22,12 +22,6 @@ The government issues treasury bills.
 function bills!(agent::Government, model)
     agent.bills += agent.spending + model.ib * agent.bills_prev + model.iblr * agent.bonds_prev + (agent.npl - agent.npl_prev) - 
         agent.taxes - sum(a.profits for a in allagents(model) if a isa CentralBank) - (agent.bonds - agent.bonds_prev)
-
-    if agent.bills < 0 
-        println("negative B")
-    elseif isnan(agent.bills)
-        println("NaN B")
-    end
     return agent.bills
 end
 

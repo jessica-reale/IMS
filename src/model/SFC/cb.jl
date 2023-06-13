@@ -33,11 +33,6 @@ The central bank issues reserves on demand.
 """
 function hpm!(agent::CentralBank, tot_hpm)
     agent.hpm = tot_hpm
-    if agent.hpm < 0
-        println("negative H")
-    elseif isnan(agent.hpm)
-        println("NaN H")
-    end
     return agent.hpm
 end
 

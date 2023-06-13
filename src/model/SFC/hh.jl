@@ -28,12 +28,6 @@ function consumption!(agent::Household, model)
     if !ismissing(agent.belongToBank)
         model[agent.belongToBank].flow -= agent.nominal_consumption
     end
-
-    if agent.consumption < 0
-        println("negative C")
-    elseif isnan(agent.consumption)
-        println("NaN C")
-    end
     return agent.consumption, agent.nominal_consumption
 end
 
@@ -85,11 +79,6 @@ Households compute their available income.
 """
 function income!(agent::Household, profits)
     agent.income = agent.wages + agent.deposits_interests + profits - agent.taxes - agent.loans_interests
-    if agent.income < 0
-        println("negative Yd")
-    elseif isnan(agent.income) 
-        println("NaN Yd")
-    end
     return agent.income
 end
 
@@ -114,11 +103,6 @@ Households decide the amount of deposits they wish to hold (buffer variable).
 function deposits!(agent::Household, model) # id
     agent.deposits += (agent.loans - agent.loans_prev) + agent.income - agent.nominal_consumption
     model[agent.belongToBank].deposits += agent.deposits 
-    if agent.deposits < 0
-        println("negative Dh")
-    elseif isnan(agent.income) 
-        println("NaN Dh")
-    end
     return agent.deposits
 end
 

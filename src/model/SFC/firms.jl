@@ -74,12 +74,6 @@ function consumption!(agent::Firm, model)
     if !ismissing(agent.belongToBank)
         model[agent.belongToBank].flow += agent.nominal_consumption
     end
-
-    if agent.consumption < 0
-        println("negative cons")
-    elseif isnan(agent.consumption)
-        println("NaN cons")
-    end
     return agent.consumption, agent.nominal_consumption
 end
 
@@ -93,12 +87,6 @@ function output!(agent::Firm, β, ϕ, σ)
     agent.invent_target =  σ * agent.sales_exp
     agent.invent_exp = agent.invent_exp_prev + ϕ * (agent.invent_target - agent.invent_exp_prev)
     agent.output = agent.sales_exp + agent.invent_exp - agent.invent_prev
-
-    if agent.output < 0
-        println("negative Y")
-    elseif isnan(agent.output)
-        println("NaN Y")
-    end
     return agent.output
 end
 
@@ -120,12 +108,6 @@ Firms compute update their inventory holdings.
 function inventories!(agent::Firm)
     agent.invent += agent.output - agent.sales
     agent.Invent = agent.invent * agent.unit_costs
-
-    if agent.sales < 0
-        println("negative s")
-    elseif isnan(agent.sales)
-        println("NaN s")
-    end
     return agent.invent, agent.Invent
 end
 
@@ -168,12 +150,6 @@ function wages!(agent::Firm, model)
     if !ismissing(agent.belongToBank)
         model[agent.belongToBank].flow -= agent.wages
     end
-
-    if agent.wages < 0
-        println("negative W")
-    elseif isnan(agent.wages)
-        println("NaN W")
-    end
     return agent.wages
 end
 
@@ -185,11 +161,6 @@ Firms update their deposit holdings at the bank as a proportion of previous peri
 function deposits!(agent::Firm, model)
     agent.deposits = model.gd * agent.wages_prev
     model[agent.belongToBank].deposits += agent.deposits
-    if agent.deposits < 0
-        println("negative Df")
-    elseif isnan(agent.deposits)
-        println("NaN Df")
-    end
     return agent.deposits
 end
 
@@ -201,11 +172,6 @@ Firms compute their profits which are then distributed to households.
 function profits!(agent::Firm, spending) # id
     agent.profits = agent.nominal_consumption + agent.nominal_investments + spending + (agent.Invent - agent.Invent_prev) - 
         agent.wages + agent.deposits_interests - agent.loans_interests
-    if agent.profits < 0 
-        println("negative Pf")
-    elseif isnan(agent.profits)
-        println("NaN Pf")
-    end
     return agent.profits
 end
 
