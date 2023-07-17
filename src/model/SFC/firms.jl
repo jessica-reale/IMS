@@ -95,8 +95,8 @@ end
 
 Firms compute their real sales.
 """
-function sales!(agent::Firm, g)
-    agent.sales = agent.consumption + agent.investments + g
+function sales!(agent::Firm, model)
+    agent.sales = agent.consumption + agent.investments + model.g / model.n_f
     return agent.sales 
 end
 

@@ -73,7 +73,7 @@ function model_step!(model)
     spending = sum(a.spending for a in allagents(model) if a isa Government) / model.n_f
     for id in ids_by_type(Firm, model)
         IMS.consumption!(model[id], model)
-        IMS.sales!(model[id], model.g)
+        IMS.sales!(model[id], model)
         IMS.rationing!(model[id], model)
         IMS.inventories!(model[id])
         IMS.profits!(model[id], spending)
@@ -147,6 +147,8 @@ function model_step!(model)
 
     # SFC checks
     IMS.SFC_checks!(model)
+
+    println(mean(a.output for a in allagents(model) if a isa IMS.Firm))
     return model
 end
 
