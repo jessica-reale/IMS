@@ -73,7 +73,7 @@ function SFC_checks_balance!(model, GDP; tol::Float64 = 1e-06)
     return nothing
 end
 """
-    SFC_explosive!(model, GDP; tol::Float64 = 1e-06) → nothing
+    SFC_explosive!(model, GDP; tol::Float64 = 1e-05) → nothing
 
 Checks that the SFC structure holds despite explosive dynamics.
 """
