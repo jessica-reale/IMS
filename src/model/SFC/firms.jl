@@ -91,7 +91,7 @@ function output!(agent::Firm, β, ϕ, σ)
 end
 
 """
-    sales!(agent::Firm, g) → agent.sales
+    sales!(agent::Firm, model) → agent.sales
 
 Firms compute their real sales.
 """
