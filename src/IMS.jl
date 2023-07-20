@@ -147,8 +147,6 @@ function model_step!(model)
 
     # SFC checks
     IMS.SFC_checks!(model)
-
-    println(mean(a.output for a in allagents(model) if a isa IMS.Firm))
     return model
 end
 

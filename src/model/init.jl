@@ -99,7 +99,7 @@ function SS_initial(model)
     K = 3038.0
     # eqs
     Pcb = 0.0
-    y = ((model.g  * model.ω) / model.pr - Pcb) / (((model.τ * model.ω) / model.pr) - model.ib * model.r)
+    y = ((model.g  * model.ω * (1 + model.ρ)) / model.pr - Pcb) / (((model.τ * model.ω) / model.pr) - model.ib * model.r)
     N = y / model.pr
     W = model.ω * N
     T = model.τ * W
