@@ -1,6 +1,6 @@
 name = "IMS"
 uuid = "010193bd-53a9-4d7a-bf55-3a99b3bbc604"
-authors = ["jessica-reale <jessicareale3@gmail.com>"]
+authors = ["jessica-reale <jessica.reale@ruhr-uni-bochum.de>"]
 version = "0.1.0"
 
 [deps]
