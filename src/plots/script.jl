@@ -1,5 +1,6 @@
 using Pkg
 Pkg.activate("src/plots")
+Pkg.instantiate()
 
 # Load packages & code libraries
 using DataFrames
