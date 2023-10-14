@@ -45,12 +45,18 @@ function overviews_ib_big(df::DataFrame; baseline::Bool = false)
     p = big_ib_plots_levels(df)
     save("big_ib_plots_levels.eps", p)
 
+    p = big_ib_plots_levels_slides(df)
+    save("big_ib_plots_levels_slides.eps", p)
+
     if !baseline
         p = stability_ib_plots_levels(df)
         save("stability_ib_plots_levels.eps", p)
 
         p = stability_ib_plots(df)
         save("stability_ib_plots.eps", p)
+
+        p = stability_ib_plots_slides(filter(r -> r.scenario == "Maturity", df))
+        save("stability_ib_plots_slides_new.eps", p)
     end
 end
 

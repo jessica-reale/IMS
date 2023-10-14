@@ -29,7 +29,7 @@ end
 
 # Big plots 
 function big_credit_firms_plots(df)
-    fig = Figure(resolution = (800, 400), fontsize = 16)
+    fig = Figure(resolution = (1200, 400), fontsize = 16, font = "DroidSerif-Regular.ttf")
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, :shock)
@@ -54,7 +54,7 @@ function big_credit_firms_plots(df)
 end
 
 function big_credit_hh_plots(df)
-    fig = Figure(resolution = (800, 400), fontsize = 16)
+    fig = Figure(resolution = (1200, 400), fontsize = 16, font = "DroidSerif-Regular.ttf")
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, :shock)
@@ -78,7 +78,7 @@ function big_credit_hh_plots(df)
 end
 
 function stability_ib_plots(df)
-    fig = Figure(resolution = (1200, 600), fontsize = 16)
+    fig = Figure(resolution = (1200, 400), fontsize = 16, font = "DroidSerif-Regular.ttf")
     axes = ((1:2,1), (1,2), (1,3), (2,2), (2,3))
     gdf = @pipe df |> 
         groupby(_, :shock)
@@ -108,7 +108,7 @@ function stability_ib_plots(df)
 end
 
 function stability_ib_plots_levels(df)
-    fig = Figure(resolution = (1200, 600), fontsize = 16)
+    fig = Figure(resolution = (1200, 400), fontsize = 16, font = "DroidSerif-Regular.ttf")
     axes = ((1:2,1), (1,2), (1,3), (2,2), (2,3))
     gdf = @pipe df |> 
         groupby(_, :shock)
@@ -138,7 +138,7 @@ function stability_ib_plots_levels(df)
 end
 
 function big_ib_plots(df)
-    fig = Figure(resolution = (1200, 400), fontsize = 16)
+    fig = Figure(resolution = (1200, 400), fontsize = 16, font = "DroidSerif-Regular.ttf")
     axes = ((1,1), (1,2), (1,3), (1,4))
     gdf = @pipe df |> 
         groupby(_, :shock)   
@@ -162,7 +162,7 @@ function big_ib_plots(df)
 end
 
 function big_ib_plots_levels(df)
-    fig = Figure(resolution = (1200, 400), fontsize = 16)
+    fig = Figure(resolution = (1200, 400), fontsize = 16, font = "DroidSerif-Regular.ttf")
     axes = ((1,1), (1,2), (1,3), (1,4))
     gdf = @pipe df |> 
         groupby(_, :shock)
@@ -186,7 +186,7 @@ function big_ib_plots_levels(df)
 end
 
 function big_rationing_plot(df)
-    fig = Figure(resolution = (800, 400), fontsize = 16)
+    fig = Figure(resolution = (1200, 400), fontsize = 16, font = "DroidSerif-Regular.ttf")
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, :shock)
@@ -219,7 +219,7 @@ function big_rationing_plot(df)
 end
 
 function big_ib_by_status(df)
-    fig = Figure(resolution = (1200, 300), fontsize = 16)
+    fig = Figure(resolution = (1200, 400), fontsize = 16, font = "DroidSerif-Regular.ttf")
     axes = ((1,1), (1,2), (1,3))
     gdf = @pipe df |> 
         groupby(_, :shock)
@@ -243,7 +243,7 @@ function big_ib_by_status(df)
 end
 
 function interest_ib(df)
-    fig = Figure(resolution = (1200, 400), fontsize = 16)
+    fig = Figure(resolution = (1200, 400), fontsize = 16, font = "DroidSerif-Regular.ttf")
     axes = ((1, 1), (1,2), (1,3), (1,4))
     gdf = @pipe df |>
         groupby(_, :shock)
@@ -277,7 +277,7 @@ function interest_ib(df)
 end
 
 function theta_lbw(df)
-    fig = Figure(resolution = (1200, 400), fontsize = 16)
+    fig = Figure(resolution = (1200, 400), fontsize = 16, font = "DroidSerif-Regular.ttf")
     axes = ((1, 1), (1,2), (1,3), (1,4))
     gdf = @pipe df |>
         groupby(_, :shock)
@@ -308,7 +308,7 @@ function theta_lbw(df)
 end
 
 function ib_demand_levels(df)
-    fig = Figure(resolution = (800, 400), fontsize = 16)
+    fig = Figure(resolution = (1200, 400), fontsize = 16, font = "DroidSerif-Regular.ttf")
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, [:shock])
@@ -345,7 +345,7 @@ function by_status(fig::Figure, axes, gdf::GroupedDataFrame, var::Symbol)
 end
 
 function flows_by_status_levels(df)
-    fig = Figure(resolution = (800, 400), fontsize = 16)
+    fig = Figure(resolution = (1200, 400), fontsize = 16, font = "DroidSerif-Regular.ttf")
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, [:shock])
@@ -367,7 +367,7 @@ function flows_by_status_levels(df)
 end
 
 function stability_by_status_levels(df)
-    fig = Figure(resolution = (800, 400), fontsize = 16)
+    fig = Figure(resolution = (1200, 400), fontsize = 16, font = "DroidSerif-Regular.ttf")
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, [:shock])
@@ -389,7 +389,7 @@ function stability_by_status_levels(df)
 end
 
 function ASF_by_status_levels(df)
-    fig = Figure(resolution = (800, 400), fontsize = 16)
+    fig = Figure(resolution = (1200, 400), fontsize = 16, font = "DroidSerif-Regular.ttf")
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, [:shock])
@@ -411,7 +411,7 @@ function ASF_by_status_levels(df)
 end
 
 function RSF_by_status_levels(df)
-    fig = Figure(resolution = (800, 400), fontsize = 16)
+    fig = Figure(resolution = (1200, 400), fontsize = 16, font = "DroidSerif-Regular.ttf")
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, [:shock])
@@ -433,7 +433,7 @@ function RSF_by_status_levels(df)
 end
 
 function loans_by_status_levels(df)
-    fig = Figure(resolution = (800, 400), fontsize = 16)
+    fig = Figure(resolution = (1200, 400), fontsize = 16, font = "DroidSerif-Regular.ttf")
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, [:shock])
@@ -471,7 +471,7 @@ function by_type(fig::Figure, axes, gdf::GroupedDataFrame, var::Symbol)
 end
 
 function flows_by_type_levels(df)
-    fig = Figure(resolution = (800, 400), fontsize = 16)
+    fig = Figure(resolution = (1200, 400), fontsize = 16, font = "DroidSerif-Regular.ttf")
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, [:shock])
@@ -493,7 +493,7 @@ function flows_by_type_levels(df)
 end
 
 function stability_by_type_levels(df)
-    fig = Figure(resolution = (800, 400), fontsize = 16)
+    fig = Figure(resolution = (1200, 400), fontsize = 16, font = "DroidSerif-Regular.ttf")
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, [:shock])
@@ -515,7 +515,7 @@ function stability_by_type_levels(df)
 end
 
 function ASF_by_type_levels(df)
-    fig = Figure(resolution = (800, 400), fontsize = 16)
+    fig = Figure(resolution = (1200, 400), fontsize = 16, font = "DroidSerif-Regular.ttf")
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, [:shock])
@@ -537,7 +537,7 @@ function ASF_by_type_levels(df)
 end
 
 function RSF_by_type_levels(df)
-    fig = Figure(resolution = (800, 400), fontsize = 16)
+    fig = Figure(resolution = (1200, 400), fontsize = 16, font = "DroidSerif-Regular.ttf")
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, [:shock])
@@ -559,7 +559,7 @@ function RSF_by_type_levels(df)
 end
 
 function credit_rates_by_type_levels(df)
-    fig = Figure(resolution = (800, 400), fontsize = 16)
+    fig = Figure(resolution = (1200, 400), fontsize = 16, font = "DroidSerif-Regular.ttf")
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, [:shock])
@@ -581,7 +581,7 @@ function credit_rates_by_type_levels(df)
 end
 
 function loans_by_type_levels(df)
-    fig = Figure(resolution = (800, 400), fontsize = 16)
+    fig = Figure(resolution = (1200, 400), fontsize = 16, font = "DroidSerif-Regular.ttf")
     axes = ((1,1), (1,2))
     gdf = @pipe df |> 
         groupby(_, [:shock])
@@ -603,7 +603,7 @@ function loans_by_type_levels(df)
 end
 
 function flows_area(df)
-    fig = Figure(resolution = (1300, 400), fontsize = 16)
+    fig = Figure(resolution = (1200, 400), fontsize = 16, font = "DroidSerif-Regular.ttf")
     axes = ((1,1), (1,2), (1,3), (1,4))   
     df = filter(:status => x -> x != "neutral", df)
     gdf = groupby(df, :status)
@@ -613,7 +613,8 @@ function flows_area(df)
         for j in 1:length(gdf)
             sdf = filter(r -> r.shock == SHOCKS[i], gdf[j])
             _, trend = hp_filter(sdf.flow[100:end], 129600)
-            band!(sdf.step[100:end] .- 100, min.(trend) .+ mean.(trend) .+ std(trend), max.(trend) .- mean.(trend) .- std(trend); label = IB_LABELS[j])
+            band!(sdf.step[100:end] .- 100, min.(trend) .+ mean.(trend) .+ std(trend), max.(trend) .- mean.(trend) .- std(trend); label = IB_LABELS[j],
+                color = j == 1 ? Makie.wong_colors()[end] : Makie.wong_colors()[1])
         end
         ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
     end
@@ -632,4 +633,53 @@ function flows_area(df)
         orientation = :horizontal, 
         )
     return fig
+end
+
+function big_ib_plots_levels_slides(df)
+    fig = Figure(resolution = (1200, 400), fontsize = 16, font = "DroidSerif-Regular.ttf")
+    axes = ((1,1), (1,2))
+    gdf = @pipe df |> 
+        groupby(_, :shock)   
+
+    vars = (variables = [:Term_liabs, :ON_liabs], 
+        labels = [L"\text{Term segment}", L"\text{Overnight segment}"])   
+            
+    plots_variables_levels(fig, axes, gdf, vars)
+
+    ax1 = fig.content[1]; ax2 = fig.content[2]
+    ax1.ylabel = L"\text{Mean}"
+    ax1.xlabel = ax2.xlabel = L"\text{Steps}"
+   
+    fig[end+1,1:2] = Legend(fig, 
+        ax1; 
+        tellheight = true, 
+        tellwidth = false,
+        orientation = :horizontal, 
+        )
+    return fig 
+end
+
+function stability_ib_plots_slides(df)
+    fig = Figure(resolution = (1200, 400), fontsize = 16)
+    ax = Axis(fig[1, 1], title = L"\text{Margin of stability}")
+    gdf = @pipe df |> 
+        groupby(_, :shock)
+            
+    for j in 1:length(gdf)
+        _, trend = hp_filter(gdf[j][!, :margin_stability][100:end], 129600)
+        lines!(trend; label = only(unique(gdf[j].shock)))
+    end
+    ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
+
+    ax = fig.content[1]; 
+    ax.ylabel = L"\text{Mean}"
+    ax.xlabel =  L"\text{Steps}"
+
+    fig[end+1,1:1] = Legend(fig, 
+        ax; 
+        tellheight = true, 
+        tellwidth = false,
+        orientation = :horizontal, 
+        )
+    return fig 
 end
