@@ -32,7 +32,7 @@ function run_model()
     scenarios = ("Baseline", "Maturity")
     shocks = ("Missing", "Corridor" , "Width", "Uncertainty")
 
-    sample_sizes = collect(10:10:100)
+    sample_sizes = collect(25:25:100)
 
     # collect agent variables
     adata = [:type, :status, :ib_flag, :margin_stability, :am, :bm, :flow,
@@ -51,19 +51,19 @@ function run_model()
                 properties = (scenario = scenario,
                     shock = shock) 
                 
-                println("Creating $sample_size seeded $(properties.shock)-shock and $(properties.scenario)-scenario models and running...")
+                println("Creating $(sample_size) seeded $(properties.shock)-shock and $(properties.scenario)-scenario models and running...")
 
                 models = [IMS.init_model(; seed, properties...) for seed in seeds]
                 
                 adf, mdf, _ =  ensemblerun!(models, dummystep, IMS.model_step!, 1200;
                     adata, mdata, parallel = true, showprogress = true)
                     
-                println("Collecting data for $(properties.shock)-shock and $(properties.scenario)-scenario...")
+                println("Collecting data for $(properties.shock)-shock and $(properties.scenario)-scenario and sample size $(sample_size)...")
 
                 # Aggregate model data over replicates
                 mdf = @pipe mdf |>
                     groupby(_, :step) |>
-                    combine(_, mdata[1:2] .=> unique, mdata[3:end] .=> mean, mdata[3:end] .=> std; renamecols = false)
+                    combine(_, mdata[1:2] .=> unique, mdata[3:end] .=> mean, mdata[3:end] .=> std; renamecols = true)
                 mdf[!, :shock] = fill(properties.shock, nrow(mdf))
                 mdf[!, :scenario] = fill(properties.scenario, nrow(mdf))
                 mdf[!, :sample_size] = fill(sample_size, nrow(mdf))
@@ -71,7 +71,7 @@ function run_model()
                 # Aggregate agent data over replicates
                 adf = @pipe adf |>
                     groupby(_, [:step, :id, :status, :type, :ib_flag]) |>
-                    combine(_, adata[1:3] .=> unique, adata[4:end] .=> mean, adata[4:end] .=> std; renamecols = false)
+                    combine(_, adata[1:3] .=> unique, adata[4:end] .=> mean, adata[4:end] .=> std; renamecols = true)
                 adf[!, :shock] = fill(properties.shock, nrow(adf))
                 adf[!, :scenario] = fill(properties.scenario, nrow(adf))
                 adf[!, :sample_size] = fill(sample_size, nrow(adf))
