@@ -1,5 +1,5 @@
 # base theme settings
-fontsize_theme = Theme(fontsize = 25, font = "DroidSerif-Regular.ttf")
+fontsize_theme = Theme(fontsize = 16, font = "DroidSerif-Regular.ttf")
 set_theme!(fontsize_theme)
 
 # define constants to be used in plots generation
