@@ -28,7 +28,7 @@ using IMS
 end
 
 # runs the model, transforms and saves data
-function run_model()
+function run_model(sample_size::Int)
     scenarios = ("Baseline", "Maturity")
     shocks = ("Missing", "Corridor" , "Width", "Uncertainty")
 
@@ -44,49 +44,47 @@ function run_model()
     mdata = [:n_hh, :n_f, :ion, :iterm, :icbl, :icbd, :icbt, :θ, :LbW, :g]
 
     for scenario in scenarios
-        for sample_size in sample_sizes
-            seeds = rand(UInt32, sample_size)
+        seeds = rand(UInt32, sample_size)
             
-            for shock in shocks
-                properties = (scenario = scenario,
-                    shock = shock) 
+        for shock in shocks
+            properties = (scenario = scenario,
+                shock = shock) 
+            
+            println("Creating $(sample_size) seeded $(properties.shock)-shock and $(properties.scenario)-scenario models and running...")
+
+            models = [IMS.init_model(; seed, properties...) for seed in seeds]
+            
+            adf, mdf, _ =  ensemblerun!(models, dummystep, IMS.model_step!, 1200;
+                adata, mdata, parallel = true, showprogress = true)
                 
-                println("Creating $(sample_size) seeded $(properties.shock)-shock and $(properties.scenario)-scenario models and running...")
+            println("Collecting data for $(properties.shock)-shock and $(properties.scenario)-scenario and sample size $(sample_size)...")
 
-                models = [IMS.init_model(; seed, properties...) for seed in seeds]
-                
-                adf, mdf, _ =  ensemblerun!(models, dummystep, IMS.model_step!, 1200;
-                    adata, mdata, parallel = true, showprogress = true)
-                    
-                println("Collecting data for $(properties.shock)-shock and $(properties.scenario)-scenario and sample size $(sample_size)...")
+            # Aggregate model data over replicates
+            mdf = @pipe mdf |>
+                groupby(_, :step) |>
+                combine(_, mdata[1:2] .=> unique, mdata[3:end] .=> mean, mdata[3:end] .=> std; renamecols = true)
+            mdf[!, :shock] = fill(properties.shock, nrow(mdf))
+            mdf[!, :scenario] = fill(properties.scenario, nrow(mdf))
+            mdf[!, :sample_size] = fill(sample_size, nrow(mdf))
 
-                # Aggregate model data over replicates
-                mdf = @pipe mdf |>
-                    groupby(_, :step) |>
-                    combine(_, mdata[1:2] .=> unique, mdata[3:end] .=> mean, mdata[3:end] .=> std; renamecols = true)
-                mdf[!, :shock] = fill(properties.shock, nrow(mdf))
-                mdf[!, :scenario] = fill(properties.scenario, nrow(mdf))
-                mdf[!, :sample_size] = fill(sample_size, nrow(mdf))
+            # Aggregate agent data over replicates
+            adf = @pipe adf |>
+                groupby(_, [:step, :id, :status, :type, :ib_flag]) |>
+                combine(_, adata[1:3] .=> unique, adata[4:end] .=> mean, adata[4:end] .=> std; renamecols = true)
+            adf[!, :shock] = fill(properties.shock, nrow(adf))
+            adf[!, :scenario] = fill(properties.scenario, nrow(adf))
+            adf[!, :sample_size] = fill(sample_size, nrow(adf))
 
-                # Aggregate agent data over replicates
-                adf = @pipe adf |>
-                    groupby(_, [:step, :id, :status, :type, :ib_flag]) |>
-                    combine(_, adata[1:3] .=> unique, adata[4:end] .=> mean, adata[4:end] .=> std; renamecols = true)
-                adf[!, :shock] = fill(properties.shock, nrow(adf))
-                adf[!, :scenario] = fill(properties.scenario, nrow(adf))
-                adf[!, :sample_size] = fill(sample_size, nrow(adf))
-
-                # Write data to disk
-                println("Saving to disk for $(properties.shock)-shock and $(properties.scenario)-scenario and sample size $(sample_size)...")
-                datapath = mkpath("data/size=$(sample_size)/shock=$(properties.shock)/$(properties.scenario)")
-                filepath = "$datapath/adf.csv"
-                isfile(filepath) && rm(filepath)
-                CSV.write(filepath, adf)
-                filepath = "$datapath/mdf.csv"
-                isfile(filepath) && rm(filepath)
-                CSV.write(filepath, mdf)
-                println("Finished for $(properties.shock) shock and $(properties.scenario) scenario and sample size $(sample_size).")
-            end
+            # Write data to disk
+            println("Saving to disk for $(properties.shock)-shock and $(properties.scenario)-scenario and sample size $(sample_size)...")
+            datapath = mkpath("data/size=$(sample_size)/shock=$(properties.shock)/$(properties.scenario)")
+            filepath = "$datapath/adf.csv"
+            isfile(filepath) && rm(filepath)
+            CSV.write(filepath, adf)
+            filepath = "$datapath/mdf.csv"
+            isfile(filepath) && rm(filepath)
+            CSV.write(filepath, mdf)
+            println("Finished for $(properties.shock) shock and $(properties.scenario) scenario and sample size $(sample_size).")
         end
     end
 
@@ -95,4 +93,4 @@ function run_model()
 end
 
 Random.seed!(96100)
-run_model()
+run_model(75)
