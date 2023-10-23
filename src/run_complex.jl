@@ -32,8 +32,6 @@ function run_model(sample_size::Int)
     scenarios = ("Baseline", "Maturity")
     shocks = ("Missing", "Corridor" , "Width", "Uncertainty")
 
-    sample_sizes = collect(25:25:100)
-
     # collect agent variables
     adata = [:type, :status, :ib_flag, :margin_stability, :am, :bm, :flow,
         :lending_facility, :deposit_facility, :on_demand, :term_demand,
