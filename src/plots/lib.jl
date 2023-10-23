@@ -114,7 +114,7 @@ function generate_plots(df::DataFrame,
 
     fig = Figure(resolution = (1200, 400))
 
-    # group df by status or shock depending on the plot type
+    # group df by shock
     gdf = groupby(df, :shock)
     # define custom length of axes according to type of plot
     custom_length() = (by_vars || rationing) ? length(vars) : (status ? length(BY_STATUS) : length(gdf))
