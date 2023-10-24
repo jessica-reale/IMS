@@ -72,6 +72,7 @@ function SFC_checks_balance!(model, GDP; tol::Float64 = 1e-06)
     end
     return nothing
 end
+
 """
     SFC_explosive!(model, GDP; tol::Float64 = 1e-05) → nothing
 
