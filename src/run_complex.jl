@@ -83,6 +83,8 @@ function run_model(sample_size::Int)
             isfile(filepath) && rm(filepath)
             CSV.write(filepath, mdf)
             println("Finished for $(properties.shock) shock and $(properties.scenario) scenario and sample size $(sample_size).")
+            empty!(adf)
+            empty!(mdf)
         end
     end
 
