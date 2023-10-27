@@ -56,4 +56,7 @@ Base.@kwdef mutable struct Parameters
     LbW::Float64 = 0.5
     σib::Float64 = 0.1
     a0::Float64 = 0.0 # set in init.jl
+    cleared_demand::Bool = false
+    cleared_supply::Bool = false
+    ib_flag::Bool = false
 end
