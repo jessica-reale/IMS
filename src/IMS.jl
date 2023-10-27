@@ -315,7 +315,6 @@ function ib_rates!(model)
 
     check_corridor!(model)
 
-    
     return model.ion, model.iterm
 end
 
