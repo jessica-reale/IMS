@@ -50,6 +50,8 @@ function reset_vars!(agent::Bank, scenario)
     agent.tot_supply = 0.0
     agent.tot_assets = 0.0
     agent.tot_liabilities = 0.0
+    agent.lending_facility = 0.0
+    agent.deposit_facility = 0.0
     empty!(agent.ib_customers)
     if scenario == "Maturity"
         agent.am = 0.0
@@ -308,13 +310,19 @@ in the overnight segment. Otherwise, borrowers receive funds according to the sh
 """
 function ib_on!(agent::Bank, model)
     if agent.status == :deficit && agent.ib_flag
+        # If the deficit bank's overnight demand exceeds available overnight supply of matching partner
         if agent.on_demand > model[agent.belongToBank].on_supply
+            # Deficit bank's overnight liabilities are set to the available overnight supply
             agent.ON_liabs = model[agent.belongToBank].on_supply
-            model[agent.belongToBank].ON_assets += agent.ON_liabs
+        # Or else if the deficit bank's overnight demand is less than or equal to available overnight supply of partner
         elseif agent.on_demand <= model[agent.belongToBank].on_supply
+            # Deficit bank's overnight liabilities are set to the available overnight demand
             agent.ON_liabs = agent.on_demand
-            model[agent.belongToBank].ON_assets += agent.ON_liabs
         end
+        # Increase the partner bank's overnight assets
+        model[agent.belongToBank].ON_assets += agent.ON_liabs
+        # Decrease available term supply for matching surplus bank
+        model[agent.belongToBank].on_supply -= agent.ON_liabs
     end
     return model
 end
@@ -327,12 +335,48 @@ in the term segment. Otherwise, borrowers receive funds according to the short-s
 """
 function ib_term!(agent::Bank, model)
     if agent.status == :deficit && agent.ib_flag
+        # If the deficit bank's term demand exceeds available term supply of matching partner
         if agent.term_demand > model[agent.belongToBank].term_supply
+            # Deficit bank's term liabilities are set to the available term supply
             agent.Term_liabs = model[agent.belongToBank].term_supply
-            model[agent.belongToBank].Term_assets += agent.Term_liabs
+        # Or else if the bank's term demand is less than or equal to available term supply
         elseif agent.term_demand <= model[agent.belongToBank].term_supply
+            # Deficit bank's term liabilities are set to the available term demand
             agent.Term_liabs = agent.term_demand
-            model[agent.belongToBank].Term_assets += agent.Term_liabs
+        end
+        # Increase the partner bank's term assets
+        model[agent.belongToBank].Term_assets += agent.Term_liabs
+        # Decrease available term supply for matching surplus bank
+        model[agent.belongToBank].term_supply -= agent.Term_liabs
+    end
+    return model
+end
+
+"""
+    restore_supply!(agent::Bank) → agent.term_supply, agent.on_supply
+
+Restore overnight and term supply to its original value for computing interbank interest rates. Supply in both segments
+was previously reduced to account for multiple partners for lending banks and a decreasing avaialability of loanable funds.
+"""
+function restore_supply!(agent::Bank)
+    if agent.status == :surplus && agent.ib_flag
+        agent.term_supply += agent.Term_assets
+        agent.on_supply += agent.ON_assets
+    end
+    return agent.term_supply, agent.on_supply
+end
+
+"""
+    check_ib_stocks!(agent::Bank, model) → model
+
+Check whether interbank stocks in the overnight and term segment match between deficit and surplus banks
+"""
+function check_ib_stocks!(agent::Bank, model; tol::Float64 = 1e-06)
+    if agent.status == :surplus && agent.ib_flag
+        if agent.ON_assets - sum(model[id].ON_liabs for id in agent.ib_customers) > tol
+            @warn "ON assets do not correspond to ON liabilities!"
+        elseif agent.Term_assets - sum(model[id].Term_liabs for id in agent.ib_customers) > tol
+            @warn "Term assets do not correspond to Term liabilities!"
         end
     end
     return model
@@ -345,9 +389,14 @@ Deficit banks that do not find a suitable partner in the interbank market access
 to cover their outflows.    
 """
 function lending_facility!(agent::Bank)
-    if agent.status == :deficit && !agent.ib_flag
-        agent.lending_facility = agent.tot_demand
-    end
+    if agent.status == :deficit
+        agent.lending_facility = 
+            if !agent.ib_flag
+                agent.tot_demand
+            else
+                agent.tot_demand - agent.ON_liabs - agent.Term_liabs
+            end
+        end
     return agent.lending_facility
 end
 
@@ -358,9 +407,14 @@ Surplus banks that do not find a suitable partner in the interbank market access
 to deposit their excess reserves deriving from payment inflows.    
 """
 function deposit_facility!(agent::Bank)
-    if agent.status == :surplus && !agent.ib_flag
-        agent.deposit_facility = agent.tot_supply
-    end
+    if agent.status == :surplus
+        agent.deposit_facility = 
+            if !agent.ib_flag
+                agent.tot_supply
+            else
+                agent.tot_supply - agent.ON_assets - agent.Term_assets
+            end
+        end
     return agent.deposit_facility
 end
 
