@@ -367,6 +367,20 @@ function restore_supply!(agent::Bank)
 end
 
 """
+    restore_total_supply!(agent::Bank, model) → agent.total_supply
+
+Restore total supply to its original value for computing clearing of the interbank market. Total supply
+was previously reduced to account for multiple partners for lending banks and a decreasing avaialability of loanable funds in the matching
+mechanism for the `Baseline` scenario.
+"""
+function restore_total_supply!(agent::Bank, model)
+    if agent.status == :surplus && agent.ib_flag
+        agent.tot_supply = sum(model[id].tot_demand for id in agent.ib_customers)
+    end
+    return agent.tot_supply
+end
+
+"""
     check_ib_stocks!(agent::Bank, model) → model
 
 Check whether interbank stocks in the overnight and term segment match between deficit and surplus banks
@@ -394,9 +408,9 @@ function lending_facility!(agent::Bank)
             if !agent.ib_flag
                 agent.tot_demand
             else
-                agent.tot_demand - agent.ON_liabs - agent.Term_liabs
+                max(0.0, agent.tot_demand - agent.ON_liabs - agent.Term_liabs)
             end
-        end
+    end
     return agent.lending_facility
 end
 
@@ -411,10 +425,10 @@ function deposit_facility!(agent::Bank)
         agent.deposit_facility = 
             if !agent.ib_flag
                 agent.tot_supply
-            else
-                agent.tot_supply - agent.ON_assets - agent.Term_assets
+            else 
+               max(0.0, agent.tot_supply - agent.ON_assets - agent.Term_assets)
             end
-        end
+    end
     return agent.deposit_facility
 end
 

@@ -128,6 +128,7 @@ function model_step!(model)
     end
     # do other stuff
     for id in ids_by_type(Bank, model)
+        model.scenario == "Baseline" && IMS.restore_total_supply!(model[id], model)
         IMS.lending_facility!(model[id])
         IMS.deposit_facility!(model[id])
         IMS.funding_costs!(model[id], model.icbt, model.ion, model.iterm, model.icbl)
@@ -138,7 +139,7 @@ function model_step!(model)
         IMS.restore_supply!(model[id])
     end
     IMS.ib_rates!(model)
-    IMS.check_clearing!(model)
+    model.scenario == "Maturity" && IMS.check_clearing!(model)
     # end: Interbank Market
 
     for id in ids_by_type(Government, model)
@@ -281,6 +282,9 @@ function ib_matching!(model)
                 model[id].ib_flag = true
                 model[new_partner].ib_flag = true
                 model.ib_flag = true
+                if model.scenario == "Baseline"  # because matching is based on total supply
+                    model[new_partner].tot_supply -= model[id].tot_demand
+                end
             end
         end
     end
@@ -345,16 +349,12 @@ function check_clearing!(model; tol::Float64 = 1e-06)
             if model[id].status == :surplus
                 if model[id].deposit_facility + model[id].ON_assets + model[id].Term_assets - model[id].tot_supply > tol
                     @warn "Supply does not clear at step $(model.step)!"
-                else
-                    model.cleared_supply = true
                 end
             end
             # demand side
             if model[id].status == :deficit
                 if model[id].lending_facility + model[id].ON_liabs + model[id].Term_liabs - model[id].tot_demand > tol
                     @warn "Demand does not clear at step $(model.step)!"
-                else
-                    model.cleared_demand = true
                 end
             end
         end
@@ -369,8 +369,6 @@ Updates model paramaters: overnight interbank rate `model.ion` and term interban
 """
 function update_vars!(model)
     model.ib_flag = false
-    model.cleared_supply = false
-    model.cleared_demand = false
     model.ion_prev = model.ion
     model.iterm_prev = model.iterm
     return model
