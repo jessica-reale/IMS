@@ -28,7 +28,7 @@ using IMS
 end
 
 # runs the model, transforms and saves data
-function run_model(sample_size::Int, seeds::Vector{UInt32}; scenario = "Baseline", shock = "Missing")
+function run_model(scenario::String, shock::String; sample_size::Int = 100)
     # collect agent variables
     adata = [:type, :status, :ib_flag, :margin_stability, :am, :bm, :flow,
         :lending_facility, :deposit_facility, :on_demand, :term_demand,
@@ -44,6 +44,9 @@ function run_model(sample_size::Int, seeds::Vector{UInt32}; scenario = "Baseline
 
     println("Creating $(sample_size) seeded $(properties.shock)-shock and $(properties.scenario)-scenario models and running...")
 
+    # define vector of seeds
+    seeds = rand(UInt32, sample_size)
+
     # generate models
     models = [IMS.init_model(; seed, properties...) for seed in seeds]
 
@@ -54,17 +57,17 @@ function run_model(sample_size::Int, seeds::Vector{UInt32}; scenario = "Baseline
     println("Collecting data for $(properties.shock)-shock and $(properties.scenario)-scenario and sample size $(sample_size)...")
 
     # Aggregate model data over replicates
-    mdf = @pipe mdf |>
+    #= mdf = @pipe mdf |>
         groupby(_, :step) |>
-        combine(_, mdata[1:2] .=> unique, mdata[3:end] .=> mean, mdata[3:end] .=> std; renamecols = true)
-    mdf[!, :shock] = fill(properties.shock, nrow(mdf))
+        combine(_, mdata[1:2] .=> unique, mdata[3:end] .=> mean, mdata[3:end] .=> std; renamecols = true) =#
+    mdf[!, :shock] = fill(properties.shock, nrow(mdf)) 
     mdf[!, :scenario] = fill(properties.scenario, nrow(mdf))
     mdf[!, :sample_size] = fill(sample_size, nrow(mdf))
 
     # Aggregate agent data over replicates
-    adf = @pipe adf |>
+    #= adf = @pipe adf |>
         groupby(_, [:step, :id, :status, :type, :ib_flag]) |>
-        combine(_, adata[1:3] .=> unique, adata[4:end] .=> mean, adata[4:end] .=> std; renamecols = true)
+        combine(_, adata[1:3] .=> unique, adata[4:end] .=> mean, adata[4:end] .=> std; renamecols = true) =#
     adf[!, :shock] = fill(properties.shock, nrow(adf))
     adf[!, :scenario] = fill(properties.scenario, nrow(adf))
     adf[!, :sample_size] = fill(sample_size, nrow(adf))
@@ -78,23 +81,23 @@ function run_model(sample_size::Int, seeds::Vector{UInt32}; scenario = "Baseline
     filepath = "$datapath/mdf.csv"
     isfile(filepath) && rm(filepath)
     CSV.write(filepath, mdf)
-    println("Finished for $(properties.shock) shock and $(properties.scenario) scenario and sample size $(sample_size).")
     empty!(adf)
     empty!(mdf)
     return nothing
 end
 
-# define sample size, i.e. number of runs
-sample_size = 25 # the code is run for sample_size = 25, 50, 75, 100
-
-# define vector of seeds
-seeds = rand(UInt32, sample_size)
+const SCENARIOS = ["Baseline", "Maturity"]
+const SHOCKS = ["Missing", "Corridor", "Width", "Uncertainty"]
 
 begin 
     Random.seed!(96100)
     # possible scenarios: "Baseline" or "Maturity"
     # possible shocks: "Missing" or "Corridor" or "Width" or "Uncertainty"
     # if keywords for scenario and shock are not inlcuded, a "Missing" shock and "Baseline" scenario is performed.
-    run_model(sample_size, seeds; scenario = "Baseline", shock = "Missing")
+    for scenario in SCENARIOS
+        for shock in SHOCKS
+            run_model(scenario, shock)
+        end
+    end
     printstyled("Simulations finished and data saved!"; color = :blue)
 end
