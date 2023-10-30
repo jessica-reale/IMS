@@ -62,7 +62,6 @@ function run_model(scenario::String, shock::String; sample_size::Int = 100)
         combine(_, mdata[1:2] .=> unique, mdata[3:end] .=> mean, mdata[3:end] .=> std; renamecols = true) =#
     mdf[!, :shock] = fill(properties.shock, nrow(mdf)) 
     mdf[!, :scenario] = fill(properties.scenario, nrow(mdf))
-    mdf[!, :sample_size] = fill(sample_size, nrow(mdf))
 
     # Aggregate agent data over replicates
     #= adf = @pipe adf |>
@@ -70,7 +69,6 @@ function run_model(scenario::String, shock::String; sample_size::Int = 100)
         combine(_, adata[1:3] .=> unique, adata[4:end] .=> mean, adata[4:end] .=> std; renamecols = true) =#
     adf[!, :shock] = fill(properties.shock, nrow(adf))
     adf[!, :scenario] = fill(properties.scenario, nrow(adf))
-    adf[!, :sample_size] = fill(sample_size, nrow(adf))
 
     # Write data to disk
     println("Saving to disk for $(properties.shock)-shock and $(properties.scenario)-scenario and sample size $(sample_size)...")
