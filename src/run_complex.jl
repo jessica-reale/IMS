@@ -28,24 +28,25 @@ using IMS
 end
 
 # runs the model, transforms and saves data
-function run_model(sample_size::Int, scenario::String, shock::String)
+function run_model(sample_size::Int, seeds::Vector{UInt32}; scenario = "Baseline", shock = "Missing")
     # collect agent variables
     adata = [:type, :status, :ib_flag, :margin_stability, :am, :bm, :flow,
         :lending_facility, :deposit_facility, :on_demand, :term_demand,
         :loans, :output, :pmb, :pml, :il_rate, :id_rate, :ON_liabs, :Term_liabs,
-        :consumption, :on_supply, :term_supply]
+        :consumption, :on_supply, :term_supply, :ON_assets, :Term_assets]
 
     # collect model variables
     mdata = [:n_hh, :n_f, :ion, :iterm, :icbl, :icbd, :icbt, :θ, :LbW, :g]
-    # generate seeds according to sample size, i.e. number of parallel runs
-    seeds = rand(UInt32, sample_size)
+   
     # set properties based on scenario and shock
     properties = (scenario = scenario,
-        shock = shock) 
+        shock = shock)
 
     println("Creating $(sample_size) seeded $(properties.shock)-shock and $(properties.scenario)-scenario models and running...")
+
     # generate models
     models = [IMS.init_model(; seed, properties...) for seed in seeds]
+
     # run parallel models
     adf, mdf, _ =  ensemblerun!(models, dummystep, IMS.model_step!, 1200;
         adata, mdata, parallel = true, showprogress = true)
@@ -83,14 +84,17 @@ function run_model(sample_size::Int, scenario::String, shock::String)
     return nothing
 end
 
-const SCENARIOS = ["Baseline", "Maturity"]
-const SHOCKS = ["Missing", "Corridor", "Width", "Uncertainty"]
-const SAMPLE_SIZE = collect(25:25:100)
+# define sample size, i.e. number of runs
+sample_size = 25 # the code is run for sample_size = 25, 50, 75, 100
+
+# define vector of seeds
+seeds = rand(UInt32, sample_size)
 
 begin 
     Random.seed!(96100)
-    for scenario in SCENARIOS, shock in SHOCKS, sample_size in SAMPLE_SIZE  
-        run_model(sample_size, scenario, shock)
-    end
+    # possible scenarios: "Baseline" or "Maturity"
+    # possible shocks: "Missing" or "Corridor" or "Width" or "Uncertainty"
+    # if keywords for scenario and shock are not inlcuded, a "Missing" shock and "Baseline" scenario is performed.
+    run_model(sample_size, seeds; scenario = "Baseline", shock = "Missing")
     printstyled("Simulations finished and data saved!"; color = :blue)
 end
