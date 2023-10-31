@@ -4,7 +4,7 @@ Pkg.instantiate()
 
 # Start workers
 using Distributed
-addprocs(5)    
+addprocs()
 
 # Set up package environment on workers
 @everywhere begin
@@ -28,7 +28,7 @@ using IMS
 end
 
 # runs the model, transforms and saves data
-function run_model(scenario::String, shock::String; sample_size::Int = 100)
+function run_model(scenario::String, shock::String, sample_size::Int)
     # collect agent variables
     adata = [:type, :status, :ib_flag, :margin_stability, :am, :bm, :flow,
         :lending_facility, :deposit_facility, :on_demand, :term_demand,
@@ -57,18 +57,20 @@ function run_model(scenario::String, shock::String; sample_size::Int = 100)
     println("Collecting data for $(properties.shock)-shock and $(properties.scenario)-scenario and sample size $(sample_size)...")
 
     # Aggregate model data over replicates
-    #= mdf = @pipe mdf |>
+    mdf = @pipe mdf |>
         groupby(_, :step) |>
-        combine(_, mdata[1:2] .=> unique, mdata[3:end] .=> mean, mdata[3:end] .=> std; renamecols = true) =#
+        combine(_, mdata[1:2] .=> unique, mdata[3:end] .=> mean, mdata[3:end] .=> std; renamecols = true)
     mdf[!, :shock] = fill(properties.shock, nrow(mdf)) 
     mdf[!, :scenario] = fill(properties.scenario, nrow(mdf))
+    mdf[!, :sample_size] = fill(sample_size, nrow(mdf))
 
     # Aggregate agent data over replicates
-    #= adf = @pipe adf |>
+    adf = @pipe adf |>
         groupby(_, [:step, :id, :status, :type, :ib_flag]) |>
-        combine(_, adata[1:3] .=> unique, adata[4:end] .=> mean, adata[4:end] .=> std; renamecols = true) =#
+        combine(_, adata[1:3] .=> unique, adata[4:end] .=> mean, adata[4:end] .=> std; renamecols = true)
     adf[!, :shock] = fill(properties.shock, nrow(adf))
     adf[!, :scenario] = fill(properties.scenario, nrow(adf))
+    adf[!, :sample_size] = fill(sample_size, nrow(adf))
 
     # Write data to disk
     println("Saving to disk for $(properties.shock)-shock and $(properties.scenario)-scenario and sample size $(sample_size)...")
@@ -86,15 +88,18 @@ end
 
 const SCENARIOS = ["Baseline", "Maturity"]
 const SHOCKS = ["Missing", "Corridor", "Width", "Uncertainty"]
+const SAMPLE_SIZES = collect(25:25:100)
 
 begin 
     Random.seed!(96100)
     # possible scenarios: "Baseline" or "Maturity"
     # possible shocks: "Missing" or "Corridor" or "Width" or "Uncertainty"
     # if keywords for scenario and shock are not inlcuded, a "Missing" shock and "Baseline" scenario is performed.
-    for scenario in SCENARIOS
-        for shock in SHOCKS
-            run_model(scenario, shock)
+    for sample_size in SAMPLE_SIZES[end - 1]
+        for scenario in SCENARIOS
+            for shock in SHOCKS
+                run_model(scenario, shock, sample_size)
+            end
         end
     end
     printstyled("Simulations finished and data saved!"; color = :blue)
