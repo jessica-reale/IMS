@@ -4,7 +4,7 @@ Pkg.instantiate()
 
 # Start workers
 using Distributed
-addprocs()
+addprocs(5)
 
 # Set up package environment on workers
 @everywhere begin
@@ -44,7 +44,7 @@ function run_model(scenario::String, shock::String, sample_size::Int)
 
     println("Creating $(sample_size) seeded $(properties.shock)-shock and $(properties.scenario)-scenario models and running...")
 
-    # define vector of seeds
+    # generate seeds vector
     seeds = rand(UInt32, sample_size)
 
     # generate models
@@ -94,8 +94,7 @@ begin
     Random.seed!(96100)
     # possible scenarios: "Baseline" or "Maturity"
     # possible shocks: "Missing" or "Corridor" or "Width" or "Uncertainty"
-    # if keywords for scenario and shock are not inlcuded, a "Missing" shock and "Baseline" scenario is performed.
-    for sample_size in SAMPLE_SIZES[end - 1]
+    for sample_size in SAMPLE_SIZES
         for scenario in SCENARIOS
             for shock in SHOCKS
                 run_model(scenario, shock, sample_size)
