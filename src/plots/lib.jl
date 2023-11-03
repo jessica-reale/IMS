@@ -184,33 +184,3 @@ function plots_group(fig, gdf, vars, ylabels)
     # Set axes features
     set_axes!(fig, gdf, vars, ylabels; status = true)
 end
-
-function plots_vars_shocks_2(fig, gdf, vars, ylabels; 
-    double::NamedTuple{(:rationing, :vars_den), Tuple{Bool, Vector{Symbol}}} = (rationing = false, vars_den = Symbol[]))
-
-    for i in 1:length(vars)
-        for j in 1:length(gdf)
-            axes = (i, j)
-            ax = fig[axes...] = Axis(fig)
-    
-            # Apply HP filter to the selected variable
-            _, trend = if !double.rationing
-                    hp_filter(gdf[j][!, vars[i]][SHIFT:end], 129600)
-                else
-                    hp_filter((1 .- gdf[j][!, vars[i]][SHIFT:end] ./ gdf[j][!, double.vars_den[i]][SHIFT:end]) .* 100, 129600)
-                end
-
-            # Plot the main trend line
-            lines!(trend; color = :black, linewidth = 2)
-
-            # Add standard deviation lines
-            standard_deviation_bands!(gdf[j], trend)
-            
-            # Set ticks x-axys
-            ax.xticks = SHIFT:300:1200
-        end
-    end
-
-    # Set axes features
-    set_axes!(fig, gdf, vars, ylabels)
-end
