@@ -1,5 +1,5 @@
 # base theme settings
-fontsize_theme = Theme(fontsize = 16, font = "DroidSerif-Regular.ttf")
+fontsize_theme = Theme(fontsize = 16, font = :bold_italic)
 attributes = Attributes(
     Axis = (
         xgridvisible = false,
@@ -22,9 +22,9 @@ function standard_deviation_bands!(gdf, trend)
     # Define the lower and upper bounds for the shaded region using std
     lower_bound = trend .- std(trend)
     upper_bound = trend .+ std(trend)
-    # Plot the standard deviations as dashed lines
+
+    # Plot the standard deviations as shaded area
     band!(gdf.step[SHIFT:end] .- SHIFT, upper_bound, lower_bound; color = (:grey, 0.1))
-    #lines!(upper_bound; linestyle = :dash, color = :black,  linewidth = 1)
 end
 
 function invisible_yaxis!(fig, index)
@@ -53,9 +53,9 @@ function set_axes!(fig, gdf, vars, ylabels; status::Bool = false)
 
         # Write ylabels for each variable only in the first plots of each row
         fig.content[start_idx].ylabel = ylabels[index]
-
+       
         # Set up the alignment of ylabels
-        #fig.content[start_idx].ylabelpadding = 50
+        # fig.content[i].ylabelpadding = 30
 
         # Apply invisible_yaxis! only on specific plots
         for j in start_idx:end_idx
@@ -68,7 +68,7 @@ function set_axes!(fig, gdf, vars, ylabels; status::Bool = false)
         # Set the x-label for the last group of subplots
         if i == length(vars)
             for k in (length(fig.content) - length(gdf) + 1):length(fig.content)
-                fig.content[k].xlabel = L"\text{Steps}"
+                fig.content[k].xlabel = "Steps"
             end
         end
     end
@@ -77,4 +77,5 @@ function set_axes!(fig, gdf, vars, ylabels; status::Bool = false)
     for i in 1:length(gdf)
         fig.content[i].title = only(unique(gdf[i].shock))
     end
+
 end

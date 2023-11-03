@@ -8,8 +8,8 @@ using CSV
 using Pipe
 using Statistics
 using CairoMakie
+using CairoMakie.Colors
 using QuantEcon
-using LaTeXStrings
 
 include("lib.jl")
 
@@ -21,7 +21,7 @@ const SHOCKS_ = ["Missing", "Corridor", "Width", "Uncertainty"]
 const vars_ib = [:lending_facility_mean, :deposit_facility_mean, :loans_mean,
     :am_mean, :bm_mean, :pmb_mean, :pml_mean, :margin_stability_mean, :on_demand_mean, 
     :ON_liabs_mean, :Term_liabs_mean, :term_demand_mean, :il_rate_mean, :id_rate_mean, :flow_mean, 
-    :on_supply_mean, :term_supply_mean]
+    :on_supply_mean, :term_supply_mean, :ON_assets_mean, :Term_assets_mean]
 
 # Helper function to save LaTeX tables
 function save_to_tex(filename, latex_string)
@@ -42,32 +42,32 @@ end
 # Define functions to generate plots
 function overviews_ib(df::DataFrame)
     overviews_deficit(df)
+    overviews_surplus(df)
     overviews_by_status(df)
 end
 
 function overviews_model(df::DataFrame)
     p = generate_plots(df, [:ion_mean, :iterm_mean]; 
-        labels = [L"\text{ON rate}", L"\text{Term rate}"])
+        labels = ["ON rate", "Term rate"])
     save("ib_rates.eps", p)
 end
 
 function overviews_ib_big(df::DataFrame)
-    df = @pipe df |> dropmissing(_, vars_ib) |> filter(r -> r.ib_flag == true, _) |>
+    df = @pipe df |> dropmissing(_, vars_ib) |> #filter(r -> r.status != "neutral", _) |> #filter(r -> r.ib_flag == true, _) |>
         groupby(_, [:sample_size, :step, :shock, :scenario]) |>
         combine(_, vars_ib .=> mean, renamecols = false)
 
     p = generate_plots(df, [:Term_liabs_mean, :ON_liabs_mean, :lending_facility_mean, :deposit_facility_mean]; 
-        ylabels = [L"\text{Term segment}", L"\text{Overnight segment}", L"\text{Lending facility}", L"\text{Deposit facility}"],
+        ylabels = ["Term segment", "Overnight segment", "Lending facility", "Deposit facility"],
         by_vars = true)
     save("big_ib_plots_levels.eps", p)
 
-    p = generate_plots(df, [:am_mean, :bm_mean, :pmb_mean, :pml_mean];
-        ylabels = [L"\text{ASF} a_{m}", L"\text{RSF} b_{m}",
-            L"\Pi^{b}", L"\Pi^{l}"], by_vars = true)
+    p = generate_plots(df, [:am_mean, :bm_mean];
+        ylabels = ["ASF", "RSF"], by_vars = true)
     save("stability_ib_plots_levels.eps", p)
 
     p = generate_plots(df, [:margin_stability_mean];
-        ylabels = [L"\text{Margin of Stability}"], by_vars = true)
+        ylabels = ["Margin of Stability"], by_vars = true)
     save("margin_stability_levels.eps", p)
 end
 
@@ -78,30 +78,42 @@ function overviews_deficit(df)
         combine(_, vars_ib .=> mean, renamecols = false)
 
     p = generate_plots(df, [:ON_liabs_mean, :Term_liabs_mean]; vars_den =  [:on_demand_mean, :term_demand_mean], 
-        titles = [L"\text{Overnight rationing}", L"\text{Term rationing}"], rationing = true)
+        ylabels = ["Overnight rationing", "Term rationing"], rationing = true)
     save("big_rationing_plot.eps", p)
 
     p = generate_plots(df, [:on_demand_mean, :term_demand_mean];
-        ylabels = [L"\text{Overnigth demand}", L"\text{Term demand}"], by_vars = true )
+        ylabels = ["Overnigth demand", "Term demand"], by_vars = true )
     save("ib_demand_levels.eps", p)
 
-    df[!, :clearing] .= df.on_demand_mean + df.term_demand_mean .- (df.ON_liabs_mean .+ df.Term_liabs_mean .+ df.lending_facility_mean) 
-    p = generate_plots(df, [:clearing]; ylabels = [L"\text{Clearing}"], by_vars = true)
+    df[!, :clearing_demand] .= df.on_demand_mean + df.term_demand_mean .- (df.ON_liabs_mean .+ df.Term_liabs_mean .+ df.lending_facility_mean) 
+    p = generate_plots(df, [:clearing_demand]; ylabels = ["Clearing Interbank Demand"], by_vars = true)
     save("clearing_demand.eps", p)
 end
 
+function overviews_surplus(df)
+    df = @pipe df |> dropmissing(_, vars_ib) |> 
+        filter([:status_unique, :ib_flag] => (x, y) -> x == "surplus" && y == true, _) |>
+        groupby(_, [:sample_size, :step, :shock, :scenario]) |>
+        combine(_, vars_ib .=> mean, renamecols = false)
+
+    df[!, :clearing_supply] .= df.on_supply_mean + df.term_supply_mean .- (df.ON_assets_mean .+ df.Term_assets_mean .+ df.deposit_facility_mean) 
+    p = generate_plots(df, [:clearing_supply]; ylabels = ["Clearing Interbank Supply"], by_vars = true)
+    save("clearing_supply.eps", p)
+end
+
 function overviews_by_status(df)
-    df = @pipe df |> dropmissing(_, vars_ib) |> filter(r -> r.ib_flag == true, _) |>
+    df = @pipe df |> dropmissing(_, vars_ib) |> #filter(r -> r.ib_flag == true, _) |>
         groupby(_, [:sample_size, :step, :shock, :status_unique, :scenario]) |>
         combine(_, vars_ib .=> mean, renamecols = false)
 
-    p = generate_plots(df, [:margin_stability_mean]; status = true)
+    p = generate_plots(df, [:margin_stability_mean]; 
+        ylabels = ["Deficit", "Surplus"], status = true)
     save("stability_by_status.eps", p)
 
-    p = generate_plots(df, [:loans_mean]; status = true)
+    p = generate_plots(df, [:loans_mean];  ylabels = ["Deficit", "Surplus"], status = true)
     save("loans_by_status.eps", p)
 
-    p = generate_plots(df, [:flow_mean]; area = true)
+    p = generate_plots(df, [:flow_mean]; labels = ["Deficit", "Surplus"], area = true)
     save("flows_area.eps", p)
 end
 
@@ -140,15 +152,15 @@ end
 # Create LaTeX table for the Appendix - standard deviations
 function create_table(df::DataFrame, var::Symbol, scenario::String, var_name::String)
     gdf = @pipe df |> 
-        #filter([:shock, :scenario, :status_unique, :sample_size] => (x, y, z, k) -> x == "Missing" && y == scenario && z != "neutral" && k != 25, _) |> 
         filter([:shock, :scenario, :status_unique] => (x, y, z) -> x == "Missing" && y == scenario && z != "neutral", _) |> 
         groupby(_, :sample_size)
 
     # Calculate mean, standard deviation, and standard error for each group
     results = DataFrame(sample_size = Int[], mean_var = Float64[], std_var = Float64[], se_var = Float64[])
     for sdf in gdf
-        mean_val = mean(sdf[!, var])
-        std_val = std(sdf[!, var])
+        _, trend = hp_filter(sdf[!, var], 129600)
+        mean_val = mean(trend)
+        std_val = std(trend)
         current_sample_size = unique(sdf.sample_size)[1]
         se_val = std_val / sqrt(current_sample_size)
 
@@ -169,7 +181,7 @@ function create_table(df::DataFrame, var::Symbol, scenario::String, var_name::St
         latex_table *= "$(row.sample_size) & $(row.mean_var) & $(row.std_var) & $(row.se_var) \\\\\\hline\n"
     end
 
-    latex_table *= "\\end{tabular}\n\\caption{Mean, Standard Deviation, and Standard Error of $(var_name) for Different Numbers of Runs -  $(scenario)-scenario.}\n\\end{table}" 
+    latex_table *= "\\end{tabular}\n\\caption{Mean, Standard Deviation, and Standard Error of $(var_name) for Different Numbers of Runs -  $(scenario)-scenario.}\n\\end{table" 
     return latex_table
 end
 
@@ -189,7 +201,7 @@ function create_plots_tables(adf, mdf)
             end
         end
     end
-    printstyled("Plots generated."; color = :blue)
+    printstyled("Plots and tables generated."; color = :blue)
 end
 
 adf, mdf = load_data()

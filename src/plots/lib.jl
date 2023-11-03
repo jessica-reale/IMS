@@ -1,144 +1,216 @@
-# base theme settings
-fontsize_theme = Theme(fontsize = 16, font = "DroidSerif-Regular.ttf")
-set_theme!(fontsize_theme)
+include("utils.jl")
 
 # define constants to be used in plots generation
 const SHIFT = 100
 const BY_STATUS = ("deficit", "surplus")
 const SHOCKS = ("Missing", "Corridor", "Width", "Uncertainty")
 
-# helper functions
-function add_lines!(gdf)
-    lines!(gdf.icbt[SHIFT:end]; linestyle = :dot, color = :black, linewidth = 3)
-    lines!(gdf.icbd[SHIFT:end];  linestyle = :dot, color = :black, linewidth = 3)
-    lines!(gdf.icbl[SHIFT:end];  linestyle = :dot, color = :black, linewidth = 3)
-end
+# generate plots
+function generate_plots(df::DataFrame, vars::Vector{Symbol};
+    # keywords arguments
+    vars_den = Symbol[],
+    ylabels = String[], 
+    labels = String[],
+    rationing = false, 
+    area = false, 
+    status = false, 
+    by_vars = false)
 
-function invisible_yaxis!(fig, i)
-    if i > 1
-        fig.content[i].yticklabelsvisible = false
-        fig.content[i].yticksvisible = false
+    # Set resolution based on number of row plots 
+    resolution = length(vars) > 2 ? (1200, 800) : (1200, 400)
+
+    # Group df by shock
+    gdf = groupby(df, :shock)
+    
+    # Define custom length of axes according to type of plot
+    custom_length() = (by_vars || rationing) ? length(vars) : (status ? length(BY_STATUS) : length(gdf))
+
+    # Define figure and allow for super title space above each subfigure with gridsize
+    fig = Figure(resolution = resolution)
+
+    # Generate Plots
+    if rationing
+        plots_vars_shocks(fig, gdf, vars, ylabels; double = (rationing = rationing, vars_den = vars_den))
+    elseif status
+        plots_group(fig, gdf, vars, ylabels)
+    elseif area
+        plots_area(fig, df, vars, labels) # groupby within plots_area function
+    elseif by_vars
+        plots_vars_shocks(fig, gdf, vars, ylabels)
+    else
+        plots_shock_vars(fig, gdf, vars, labels)
     end
-end
 
-function plots_levels_vars(fig, axes, gdf, vars, titles)
-    for i in 1:length(vars)
-        xaxis, yaxis = i == 1 && length(vars) > 4 ? (1:2, 1) : axes[i]
-        ax = fig[xaxis..., yaxis] = Axis(fig, title = titles[i])
-        for j in 1:length(gdf)
-            _, trend = hp_filter(gdf[j][!, vars[i]][SHIFT:end], 129600)
-            lines!(trend; label = only(unique(gdf[j].shock)), linewidth = 3)
-            fig.content[1].ylabel =  L"\text{Mean}"
-            fig.content[i].xlabel = L"\text{Steps}"
-        end
-        ax.xticks = SHIFT:300:1200            
+    # Add Legend for labels
+    if !isempty(labels)
+        fig[end+1,1:custom_length()] = Legend(
+            fig,
+            fig.content[1];
+            tellheight = true,
+            tellwidth = false,
+            orientation = :horizontal
+        )
     end
+    return fig
 end
 
-function plots_levels_shock(fig, axes, gdf, vars, labels) 
+function plots_shock_vars(fig, gdf, vars, labels)
+    linestyles = [:solid, :dash]
+
+    # Iterate over each gdf
     for i in 1:length(gdf)
+        # Define axes positions
+        axes = tuple(collect((1, i) for i in 1:length(gdf))...)
         ax = fig[axes[i]...] = Axis(fig, title = SHOCKS[i])
+        
         for j in 1:length(vars)
-        _, trend = hp_filter(gdf[i][!, vars[j]][SHIFT:end], 129600)
-            lines!(trend; label = labels[j], linewidth = 3)
-            fig.content[1].ylabel =  L"\text{Mean}"
-            fig.content[i].xlabel = L"\text{Steps}"
+            # Apply HP filter to the selected variable
+            _, trend = hp_filter(gdf[i][!, vars[j]][SHIFT:end], 129600)
+
+            # Plot the main trend line with labels
+            lines!(trend; label = labels[j], linewidth = 2, linestyle = linestyles[j])
+
+            # Plot standard deviation bands
+            standard_deviation_bands!(gdf[i], trend)
+
+            fig.content[1].ylabel =  "Mean"
+            fig.content[i].xlabel = "Steps"
+
+            # Add dotted lines to the plot
             add_lines!(gdf[i])
         end
+       
+        # Set x-axis ticks
         ax.xticks = SHIFT:300:1200
     end
 end
 
-function plots_group(fig, axes, gdf, vars)
-    for i in eachindex(BY_STATUS)
-        ax = fig[axes[i]...] = Axis(fig, title =  BY_STATUS[i])
-        for j in 1:length(gdf)
-            sdf = filter(r -> r.status == BY_STATUS[i], gdf[j])
-            _, trend = hp_filter(sdf[!, vars[1]][SHIFT:end], 129600)
-            lines!(trend; label = only(unique(gdf[j].shock)), linewidth = 3)
-            fig.content[1].ylabel =  L"\text{Mean}"
-            fig.content[i].xlabel = L"\text{Steps}"
-        end
-        invisible_yaxis!(fig, i)
-        ax.xticks = SHIFT:300:1200 
-    end
-    linkyaxes!(fig.content...)
-end
+function plots_area(fig, df, vars, labels)
+    # Filter out "neutral" status in the DataFrame
+    df = filter(:status_unique => x -> x != "neutral", df)
+    
+    # Group the filtered DataFrame by "status"
+    gdf = groupby(df, :status_unique)
 
-function plots_rationing(fig, axes, gdf, vars, vars_den, titles)
-    for i in 1:length(vars)
-        ax = fig[axes[i]...] = Axis(fig, title = titles[i])
-        for j in 1:length(gdf)
-            _, trend = hp_filter((1 .- gdf[j][!, vars[i]][SHIFT:end] ./ gdf[j][!, vars_den[i]][SHIFT:end]) .* 100, 129600)
-            lines!(trend; label = only(unique(gdf[j].shock)), linewidth = 3)
-            fig.content[1].ylabel =  L"\text{Rate (%)}"
-            fig.content[i].xlabel = L"\text{Steps}"
-        end
-        invisible_yaxis!(fig, i)
-        ax.xticks = SHIFT:300:1200
-    end
-    linkyaxes!(fig.content...)
-end
-
-function plots_area(fig, axes, df, vars)
-    df = filter(:status => x -> x != "neutral", df)
-    gdf = groupby(df, :status)
-
+    # Iterate over each shock in SHOCKS
     for i in eachindex(SHOCKS)
+        # Define axes positions
+        axes = tuple(collect((1, i) for i in 1:length(SHOCKS))...)
+        # Create an axis for the current shock
         ax = fig[axes[i]...] = Axis(fig, title = SHOCKS[i], ytickformat = "{:.1f}")
+        
+        # Iterate over each group of data in gdf
         for j in 1:length(gdf)
+            # Filter the data for the current shock
             sdf = filter(r -> r.shock == SHOCKS[i], gdf[j])
+            
+            # Apply HP filter to the selected variable
             _, trend = hp_filter(sdf[!, vars[1]][SHIFT:end], 129600)
-            band!(sdf.step[SHIFT:end] .- 100, min.(trend) .+ mean.(trend) .+ std(trend), 
-                max.(trend) .- mean.(trend) .- std(trend); label = BY_STATUS[j],
-                color = j == 1 ? Makie.wong_colors()[end] : Makie.wong_colors()[1])
-            fig.content[1].ylabel =  L"\text{Mean}"
-            fig.content[i].xlabel = L"\text{Steps}"
+            
+            # Create a shaded band for the area
+            band!(sdf.step[SHIFT:end] .- SHIFT, min.(trend) .+ mean.(trend) .+ std(trend), 
+                max.(trend) .- mean.(trend) .- std(trend); label = labels[j],
+                color = j == 1 ? :black : :grey)
+            
+            # Set axis labels
+            fig.content[1].ylabel = "Mean"
+            fig.content[i].xlabel = "Steps"
         end
+        
+        # Hide y-axis labels
         invisible_yaxis!(fig, i)
+        
+        # Set x-axis ticks
         ax.xticks = SHIFT:300:1200
     end
+    
+    # Link the y-axes for all subplots
     linkyaxes!(fig.content...)
 end
 
-# generate plots
-function generate_plots(df::DataFrame, 
-    vars::Vector{Symbol}, 
-    vars_den::Union{Missing, Vector{Symbol}},
-    titles::Union{Missing, Vector{LaTeXStrings.LaTeXString}}, 
-    labels::Union{Missing, Vector{LaTeXStrings.LaTeXString}}; 
-    rationing::Bool = false, 
-    area::Bool = false, 
-    status::Bool = false, 
-    by_vars::Bool = false)
+function plots_vars_shocks(fig, gdf, vars, ylabels; 
+    double::NamedTuple{(:rationing, :vars_den), Tuple{Bool, Vector{Symbol}}} = (rationing = false, vars_den = Symbol[]))
 
-    fig = Figure(resolution = (1200, 400))
+    for i in 1:length(vars)
+        for j in 1:length(gdf)
+            axes = (i, j)
+            ax = fig[axes...] = Axis(fig)
+    
+            # Apply HP filter to the selected variable
+            _, trend = if !double.rationing
+                    hp_filter(gdf[j][!, vars[i]][SHIFT:end], 129600)
+                else
+                    hp_filter((1 .- gdf[j][!, vars[i]][SHIFT:end] ./ gdf[j][!, double.vars_den[i]][SHIFT:end]) .* 100, 129600)
+                end
 
-    # group df by shock
-    gdf = groupby(df, :shock)
-    # define custom length of axes according to type of plot
-    custom_length() = (by_vars || rationing) ? length(vars) : (status ? length(BY_STATUS) : length(gdf))
-    # define axes positions
-    axes = tuple(collect((1, i) for i in 1:custom_length())...)
+            # Plot the main trend line
+            lines!(trend; color = :black, linewidth = 2)
 
-    if rationing
-        plots_rationing(fig, axes, gdf, vars, vars_den, titles)
-    elseif status
-        plots_group(fig, axes, gdf, vars)
-    elseif area
-        plots_area(fig, axes, df, vars) # groupby within plots_area function
-    elseif by_vars
-        plots_levels_vars(fig, axes, gdf, vars, titles)
-    else
-        plots_levels_shock(fig, axes, gdf, vars, labels)
+            # Add standard deviation lines
+            standard_deviation_bands!(gdf[j], trend)
+            
+            # Set ticks x-axys
+            ax.xticks = SHIFT:300:1200
+        end
     end
 
-    fig[end+1, 1:custom_length()] = Legend(fig, 
-        fig.content[1];
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :horizontal, 
-        )
+    # Set axes features
+    set_axes!(fig, gdf, vars, ylabels)
+end
 
-    return fig
+function plots_group(fig, gdf, vars, ylabels)
+    for i in eachindex(BY_STATUS)
+        for j in 1:length(gdf)
+            xaxis = (i, j)  # Position in the grid
+            ax = fig[xaxis...] = Axis(fig)
+            
+            # Filter the data for the current status
+            sdf = filter(r -> r.status_unique == BY_STATUS[i], gdf[j])
+
+            # Apply HP filter to the selected variable
+            _, trend = hp_filter(sdf[!, vars[length(vars)]][SHIFT:end], 129600)
+
+            # Plot the main trend line
+            lines!(trend; color = :black, linewidth = 2)
+
+            # Add standard deviation lines
+            standard_deviation_bands!(sdf, trend)
+
+            # Set ticks x-axys
+            ax.xticks = SHIFT:300:1200
+        end
+    end
+
+    # Set axes features
+    set_axes!(fig, gdf, vars, ylabels; status = true)
+end
+
+function plots_vars_shocks_2(fig, gdf, vars, ylabels; 
+    double::NamedTuple{(:rationing, :vars_den), Tuple{Bool, Vector{Symbol}}} = (rationing = false, vars_den = Symbol[]))
+
+    for i in 1:length(vars)
+        for j in 1:length(gdf)
+            axes = (i, j)
+            ax = fig[axes...] = Axis(fig)
+    
+            # Apply HP filter to the selected variable
+            _, trend = if !double.rationing
+                    hp_filter(gdf[j][!, vars[i]][SHIFT:end], 129600)
+                else
+                    hp_filter((1 .- gdf[j][!, vars[i]][SHIFT:end] ./ gdf[j][!, double.vars_den[i]][SHIFT:end]) .* 100, 129600)
+                end
+
+            # Plot the main trend line
+            lines!(trend; color = :black, linewidth = 2)
+
+            # Add standard deviation lines
+            standard_deviation_bands!(gdf[j], trend)
+            
+            # Set ticks x-axys
+            ax.xticks = SHIFT:300:1200
+        end
+    end
+
+    # Set axes features
+    set_axes!(fig, gdf, vars, ylabels)
 end
