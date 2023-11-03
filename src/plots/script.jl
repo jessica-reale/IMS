@@ -8,8 +8,8 @@ using CSV
 using Pipe
 using Statistics
 using CairoMakie
-using CairoMakie.Colors
 using QuantEcon
+using Distributions
 
 include("lib.jl")
 
@@ -35,15 +35,16 @@ function generate_scenario_plots(adf::DataFrame, mdf::DataFrame, scenario::Strin
     df = filter([:scenario, :sample_size] => (x, y) -> x == scenario && y == sample_size, adf)
     df_model = filter([:scenario, :sample_size] => (x, y) -> x == scenario && y == sample_size, mdf)
     overviews_model(df_model)
-    overviews_ib_big(df)
     overviews_ib(df)
 end
 
 # Define functions to generate plots
 function overviews_ib(df::DataFrame)
+    overviews_ib_big(df)
     overviews_deficit(df)
-    overviews_surplus(df)
+    overviews_neutral(df)
     overviews_by_status(df)
+    overviews_clearing(df)
 end
 
 function overviews_model(df::DataFrame)
@@ -53,12 +54,12 @@ function overviews_model(df::DataFrame)
 end
 
 function overviews_ib_big(df::DataFrame)
-    df = @pipe df |> dropmissing(_, vars_ib) |> #filter(r -> r.status != "neutral", _) |> #filter(r -> r.ib_flag == true, _) |>
+    df = @pipe df |> dropmissing(_, vars_ib) |> filter(r -> r.status_unique != "neutral", _) |>
         groupby(_, [:sample_size, :step, :shock, :scenario]) |>
         combine(_, vars_ib .=> mean, renamecols = false)
 
-    p = generate_plots(df, [:Term_liabs_mean, :ON_liabs_mean, :lending_facility_mean, :deposit_facility_mean]; 
-        ylabels = ["Term segment", "Overnight segment", "Lending facility", "Deposit facility"],
+    p = generate_plots(df, [:ON_liabs_mean, :Term_liabs_mean, :lending_facility_mean, :deposit_facility_mean]; 
+        ylabels = ["Overnight segment", "Term segment", "Lending facility", "Deposit facility"],
         by_vars = true)
     save("big_ib_plots_levels.eps", p)
 
@@ -69,6 +70,17 @@ function overviews_ib_big(df::DataFrame)
     p = generate_plots(df, [:margin_stability_mean];
         ylabels = ["Margin of Stability"], by_vars = true)
     save("margin_stability_levels.eps", p)
+end
+
+function overviews_neutral(df::DataFrame)
+    df = @pipe df |> dropmissing(_, vars_ib) |> filter(r -> r.status_unique == "neutral", _) |>
+    groupby(_, [:sample_size, :step, :shock, :scenario]) |>
+    combine(_, vars_ib .=> mean, renamecols = false)
+
+    p = generate_plots(df, [:lending_facility_mean, :deposit_facility_mean]; 
+        ylabels = ["Lending facility", "Deposit facility"],
+        by_vars = true)
+    save("big_ib_plots_levels_neutral.eps", p)
 end
 
 function overviews_deficit(df)
@@ -84,25 +96,20 @@ function overviews_deficit(df)
     p = generate_plots(df, [:on_demand_mean, :term_demand_mean];
         ylabels = ["Overnigth demand", "Term demand"], by_vars = true )
     save("ib_demand_levels.eps", p)
-
-    df[!, :clearing_demand] .= df.on_demand_mean + df.term_demand_mean .- (df.ON_liabs_mean .+ df.Term_liabs_mean .+ df.lending_facility_mean) 
-    p = generate_plots(df, [:clearing_demand]; ylabels = ["Clearing Interbank Demand"], by_vars = true)
-    save("clearing_demand.eps", p)
 end
 
-function overviews_surplus(df)
+function overviews_clearing(df)
     df = @pipe df |> dropmissing(_, vars_ib) |> 
-        filter([:status_unique, :ib_flag] => (x, y) -> x == "surplus" && y == true, _) |>
+        filter([:status_unique, :ib_flag] => (x, y) -> x != "neutral" && y == true, _) |>
         groupby(_, [:sample_size, :step, :shock, :scenario]) |>
         combine(_, vars_ib .=> mean, renamecols = false)
 
-    df[!, :clearing_supply] .= df.on_supply_mean + df.term_supply_mean .- (df.ON_assets_mean .+ df.Term_assets_mean .+ df.deposit_facility_mean) 
-    p = generate_plots(df, [:clearing_supply]; ylabels = ["Clearing Interbank Supply"], by_vars = true)
-    save("clearing_supply.eps", p)
+    p = generate_plots(df, [:clearing_supply, :clearing_demand]; ylabels = ["Supply", "Demand"], by_vars = true)
+    save("clearing_ib_market.eps", p)
 end
 
 function overviews_by_status(df)
-    df = @pipe df |> dropmissing(_, vars_ib) |> #filter(r -> r.ib_flag == true, _) |>
+    df = @pipe df |> dropmissing(_, vars_ib) |>
         groupby(_, [:sample_size, :step, :shock, :status_unique, :scenario]) |>
         combine(_, vars_ib .=> mean, renamecols = false)
 
@@ -129,7 +136,11 @@ function load_data()
         append!(adf, CSV.File("data/size=$(sample_size)/shock=$(shock)/$(scenario)/adf.csv"); promote = true)
         append!(mdf, CSV.File("data/size=$(sample_size)/shock=$(shock)/$(scenario)/mdf.csv"); promote = true)
     end
-    
+
+    # add vars
+    adf[!, :clearing_supply] .= adf.on_supply_mean + adf.term_supply_mean .- (adf.ON_assets_mean .+ adf.Term_assets_mean .+ adf.deposit_facility_mean)
+    adf[!, :clearing_demand] .= adf.on_demand_mean + adf.term_demand_mean .- (adf.ON_liabs_mean .+ adf.Term_liabs_mean .+ adf.lending_facility_mean) 
+
     return adf, mdf
 end
 
@@ -156,15 +167,31 @@ function create_table(df::DataFrame, var::Symbol, scenario::String, var_name::St
         groupby(_, :sample_size)
 
     # Calculate mean, standard deviation, and standard error for each group
-    results = DataFrame(sample_size = Int[], mean_var = Float64[], std_var = Float64[], se_var = Float64[])
+    results = DataFrame(sample_size = Int[], mean_var = String[], std_var = Float64[], se_var = Float64[])
     for sdf in gdf
         _, trend = hp_filter(sdf[!, var], 129600)
         mean_val = mean(trend)
         std_val = std(trend)
         current_sample_size = unique(sdf.sample_size)[1]
         se_val = std_val / sqrt(current_sample_size)
+        t_value = abs(mean_val / se_val)
 
-        push!(results, (sample_size=current_sample_size, mean_var=mean_val, std_var=std_val, se_var=se_val))
+        # compute significance using the t-distribution
+        degrees_freedom = current_sample_size - 1  # degrees of freedom
+        t_critical_1_percent = quantile(TDist(degrees_freedom), 0.995)  # two-tailed test at 0.01 level
+        t_critical_5_percent = quantile(TDist(degrees_freedom), 0.975)  # two-tailed test at 0.05 level
+
+        # Determine significance and asterisks
+        if t_value > t_critical_1_percent
+            significance = "***"
+        elseif t_value > t_critical_5_percent
+            significance = "**"
+        else
+            significance = ""
+        end
+
+        mean_str = "$(round(mean_val, digits=2))$(significance)" # Formatting mean value with significance asterisks
+        push!(results, (sample_size=current_sample_size, mean_var=mean_str, std_var=std_val, se_var=se_val))
     end
 
     # Create the LaTeX table
@@ -173,12 +200,12 @@ function create_table(df::DataFrame, var::Symbol, scenario::String, var_name::St
     \\centering
     \\begin{tabular}{|c|c|c|c|}
     \\hline
-    Number of Runs & Mean & Standard Deviation & Standard Error \\\\
+    Number of Runs & Mean & Standard Deviation & Standard Error\\\\
     \\hline
     """
 
     for row in eachrow(results)
-        latex_table *= "$(row.sample_size) & $(row.mean_var) & $(row.std_var) & $(row.se_var) \\\\\\hline\n"
+        latex_table *= "$(row.sample_size) & $(row.mean_var) & $(row.std_var) & $(row.se_var)\\\\\\hline\n"
     end
 
     latex_table *= "\\end{tabular}\n\\caption{Mean, Standard Deviation, and Standard Error of $(var_name) for Different Numbers of Runs -  $(scenario)-scenario.}\n\\end{table" 
