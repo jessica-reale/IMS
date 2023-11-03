@@ -42,7 +42,6 @@ end
 function overviews_ib(df::DataFrame)
     overviews_ib_big(df)
     overviews_deficit(df)
-    overviews_neutral(df)
     overviews_by_status(df)
     overviews_clearing(df)
 end
@@ -72,17 +71,6 @@ function overviews_ib_big(df::DataFrame)
     save("margin_stability_levels.eps", p)
 end
 
-function overviews_neutral(df::DataFrame)
-    df = @pipe df |> dropmissing(_, vars_ib) |> filter(r -> r.status_unique == "neutral", _) |>
-    groupby(_, [:sample_size, :step, :shock, :scenario]) |>
-    combine(_, vars_ib .=> mean, renamecols = false)
-
-    p = generate_plots(df, [:lending_facility_mean, :deposit_facility_mean]; 
-        ylabels = ["Lending facility", "Deposit facility"],
-        by_vars = true)
-    save("big_ib_plots_levels_neutral.eps", p)
-end
-
 function overviews_deficit(df)
     df = @pipe df |> dropmissing(_, vars_ib) |> 
         filter([:status_unique, :ib_flag] => (x, y) -> x == "deficit" && y == true, _) |>
@@ -102,7 +90,7 @@ function overviews_clearing(df)
     df = @pipe df |> dropmissing(_, vars_ib) |> 
         filter([:status_unique, :ib_flag] => (x, y) -> x != "neutral" && y == true, _) |>
         groupby(_, [:sample_size, :step, :shock, :scenario]) |>
-        combine(_, vars_ib .=> mean, renamecols = false)
+        combine(_, [:clearing_supply, :clearing_demand] .=> mean, renamecols = false)
 
     p = generate_plots(df, [:clearing_supply, :clearing_demand]; ylabels = ["Supply", "Demand"], by_vars = true)
     save("clearing_ib_market.eps", p)
