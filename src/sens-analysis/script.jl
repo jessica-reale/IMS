@@ -14,6 +14,13 @@ include("lib.jl")
 
 const vars = [:flow, :ON_liabs, :Term_liabs, :deposit_facility, :lending_facility, :margin_stability, :am, :bm, :pmb, :pml]
 
+# Helper function to save LaTeX tables
+function save_to_tex(filename, latex_string)
+    open(filename, "w") do f
+        write(f, latex_string)
+    end
+end
+
 function interbank(df::DataFrame, param::Symbol)
     df1 = @pipe df |> dropmissing(_, vars) |> groupby(_, [:step, param]) |>
         combine(_, vars .=> mean, renamecols = false)
@@ -71,6 +78,11 @@ function big_general_params(df::DataFrame, m::DataFrame, params::Vector{Symbol})
     save("big_output_params.eps", p)
 end
 
+function tables(df, param)
+    latex_table = create_tables(df, param)
+    save_to_tex("table_$(param).tex", latex_table)
+end
+
 function load_df()
     # parameter ranges
     params_range = (
@@ -103,7 +115,7 @@ function load_df()
 
     # take model variables from Baseline scenario
     mdf = DataFrame()
-    append!(mdf, CSV.File("data/shock=Missing/Baseline/mdf.csv"))
+    append!(mdf, CSV.File("data/sample_size=100/shock=Missing/Baseline/mdf.csv"))
 
     return df, mdf
 end
@@ -123,39 +135,38 @@ function load_df_mat()
 
     # take model variables from Baseline scenario
     mdf = DataFrame()
-    append!(mdf, CSV.File("data/shock=Missing/Baseline/mdf.csv"))
+    append!(mdf, CSV.File("data/size=100/shock=Missing/Baseline/mdf.csv"))
 
     return df, mdf
 end
 
-function create_sens_maturity_plots()
-    df, mdf = load_df_mat()
-
+function create_sens_maturity_plots(adf, mdf)
     cd(mkpath("img/pdf/sens-analysis")) do
         for param in [:m1, :m2, :m3, :m4, :m5]
             cd(mkpath("$(param)")) do
-                interbank(filter(param => x -> !ismissing(x), df), param)
-                credit(filter(param => x -> !ismissing(x), df), mdf, param)
+                interbank(filter(param => x -> !ismissing(x), adf), param)
+                credit(filter(param => x -> !ismissing(x), adf), mdf, param)
+                tables(adf, param)
             end
         end
     end
     printstyled("Sensitivity plots for maturity parameters generated."; color = :blue)
 end
 
-create_sens_maturity_plots()
-
-function create_sens_general_plots()
-    df, mdf = load_df()
-
+function create_sens_general_plots(adf, mdf)
     params = [:r, :l, :δ, :γ, :gd]
 
     cd(mkpath("img/pdf/sens-analysis")) do
             cd(mkpath("genearal")) do
-                big_general_params(df, mdf, params)
+                big_general_params(adf, mdf, params)
         end
     end
     popfirst!(params)
     printstyled("Sensitivity plots for general parameters generated."; color = :blue)
 end
 
-create_sens_general_plots()
+adf, mdf = load_df()
+create_sens_general_plots(adf, mdf)
+
+adf, mdf = load_df_mat()
+create_sens_maturity_plots(adf, mdf)

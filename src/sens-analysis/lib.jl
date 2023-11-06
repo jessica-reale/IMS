@@ -1,15 +1,26 @@
+fontsize_theme = Theme(fontsize = 24, font = :bold_italic)
+attributes = Attributes(
+    Axis = (
+        xgridvisible = false,
+        ygridvisible = false,
+        ytickalign = 1,
+        xtickalign = 1,
+    ),
+)
+set_theme!(merge(fontsize_theme, attributes))
+
 const IB_STATUS = ("deficit", "surplus")
-const IB_LABELS = (L"\text{Deficit}", L"\text{Surplus}")
+const SHIFT = 100
 
 function credit_loans(df::DataFrame, param::Symbol; f::Bool = true)
     fig = Figure(resolution = (900, 450), fontsize = 16)
-    ax = fig[1,1] = Axis(fig, xlabel = L"\text{Steps}", ylabel = L"\text{Moving Average}")
+    ax = fig[1,1] = Axis(fig, xlabel = "Steps", ylabel = "Moving Average")
     gdf = groupby(df, param)
 
     for i in 1:length(gdf)
         _, trend = hp_filter((gdf[i].loans[100:end]), 129600)
         lines!(movavg(trend, 200).x; 
-            label = "$(param) = $(only(unique(gdf[i][!, param])))", 
+            label = "$(param) = $(only(unique(gdf[i][!, param])))", linewidth = 2,
             linestyle = 
                 if i > length(Makie.wong_colors())
                     :dash
@@ -17,7 +28,8 @@ function credit_loans(df::DataFrame, param::Symbol; f::Bool = true)
         )
     end
 
-    ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
+     # Set x-axis ticks
+    ax.xticks = SHIFT:300:1200
     ax.title = if f 
         "Firms Loans"
         else
@@ -41,7 +53,7 @@ function output(df::DataFrame, param::Symbol)
     for i in 1:length(gdf)
         _, trend = hp_filter((gdf[i].output[100:end]), 129600)
         lines!(movavg(trend, 200).x; 
-            label = "$(param) = $(only(unique(gdf[i][!, param])))", 
+            label = "$(param) = $(only(unique(gdf[i][!, param])))", linewidth = 2,
             linestyle = 
                 if i > length(Makie.wong_colors())
                     :dash
@@ -49,8 +61,8 @@ function output(df::DataFrame, param::Symbol)
         )
     end
 
-    ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
-
+    # Set x-axis ticks
+    ax.xticks = SHIFT:300:1200
     fig[end + 1, 1:1] = Legend(fig, ax; 
         tellheight = true, 
         tellwidth = false,
@@ -66,11 +78,11 @@ function flow(df::DataFrame, param::Symbol)
     gdf = groupby(df, param)
 
     for i in eachindex(IB_STATUS)
-        ax = fig[axes[i]...] = Axis(fig, title =  IB_LABELS[i])
+        ax = fig[axes[i]...] = Axis(fig, title =  IB_STATUS[i])
         for j in 1:length(gdf)
             sdf = filter(r -> r.status == IB_STATUS[i], gdf[j])
             _, trend = hp_filter(sdf[!, :flow][100:end], 129600)
-            lines!(movavg(trend, 200).x; 
+            lines!(movavg(trend, 200).x; linewidth = 2,
                 label = "$(param) = $(only(unique(gdf[j][!, param])))", 
                 linestyle = 
                     if j > length(Makie.wong_colors())
@@ -78,7 +90,8 @@ function flow(df::DataFrame, param::Symbol)
                     end
             )
         end
-        ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])   
+        # Set x-axis ticks
+        ax.xticks = SHIFT:300:1200    
     end
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
@@ -100,7 +113,7 @@ function stability(df::DataFrame, param::Symbol)
     gdf = groupby(df, param)
 
     for i in eachindex(IB_STATUS)
-        ax = fig[axes[i]...] = Axis(fig, title =  IB_LABELS[i])
+        ax = fig[axes[i]...] = Axis(fig, title =  IB_STATUS[i])
         for j in 1:length(gdf)
             sdf = filter(r -> r.status == IB_STATUS[i], gdf[j])
             _, trend = 
@@ -110,7 +123,7 @@ function stability(df::DataFrame, param::Symbol)
                     hp_filter(1 .- sdf[!, :margin_stability][100:end], 129600)
                 end
                 
-            lines!(movavg(trend, 200).x; 
+            lines!(movavg(trend, 200).x; linewidth = 2,
                 label = "$(param) = $(only(unique(gdf[j][!, param])))", 
                 linestyle = 
                     if j > length(Makie.wong_colors())
@@ -118,7 +131,8 @@ function stability(df::DataFrame, param::Symbol)
                     end
             )
         end
-        ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])   
+        # Set x-axis ticks
+        ax.xticks = SHIFT:300:1200   
     end
 
     ax1 = fig.content[1]; ax2 = fig.content[2]
@@ -147,14 +161,15 @@ function big_ib_plots_sens(df::DataFrame, param::Symbol)
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
         for j in 1:length(gdf)
             _, trend = hp_filter(gdf[j][!, vars.variables[i]][100:end], 129600)
-            lines!(trend; label = "$(param) = $(only(unique(gdf[j][!, param])))", 
+            lines!(trend; label = "$(param) = $(only(unique(gdf[j][!, param])))", linewidth = 2,
                 linestyle = 
                     if j > length(Makie.wong_colors())
                         :dash
                     end
             )
         end
-        ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
+        # Set x-axis ticks
+        ax.xticks = SHIFT:300:1200    
     end
 
     ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];  ax4 = fig.content[4]; 
@@ -183,14 +198,15 @@ function stability_ib_plots_sens(df::DataFrame, param::Symbol)
         ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
         for j in 1:length(gdf)
             _, trend = hp_filter((gdf[j][!, vars.variables[i]][100:end]), 129600)
-            lines!(movavg(trend, 200).x; label = "$(param) = $(only(unique(gdf[j][!, param])))", 
+            lines!(movavg(trend, 200).x; label = "$(param) = $(only(unique(gdf[j][!, param])))", linewidth = 2,
                 linestyle = 
                     if j > length(Makie.wong_colors())
                         :dash
                     end
             )
         end
-        ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
+        # Set x-axis ticks
+        ax.xticks = SHIFT:300:1200   
     end
 
     ax1 = fig.content[1]; 
@@ -220,14 +236,15 @@ function big_params(df::DataFrame, var::Symbol, params::Vector{Symbol})
             groupby(_, params[2:end][i])
         for j in 1:length(gdf)
             _, trend = hp_filter((gdf[j][!, var][100:end]), 129600)
-            lines!(movavg(trend, 200).x; label = "$(string.(params[2:end][i])) = $(only(unique(gdf[j][!, params[2:end][i]])))", 
+            lines!(movavg(trend, 200).x; label = "$(string.(params[2:end][i])) = $(only(unique(gdf[j][!, params[2:end][i]])))", linewidth = 2,
                 linestyle = 
                     if j > length(Makie.wong_colors())
                         :dash
                     end
             )
         end
-        ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
+        # Set x-axis ticks
+        ax.xticks = SHIFT:300:1200    
     end
 
     ax1 = fig.content[1]; 
@@ -244,4 +261,72 @@ function big_params(df::DataFrame, var::Symbol, params::Vector{Symbol})
     axislegend(ax4; position = (1.0, 0.93))
     axislegend(ax5; position = (1.0, 0.93))
     return fig
+end
+
+function create_tables(df::DataFrame, parameter::Symbol)
+    df = @pipe df |>  dropmissing(_, vars) |>
+        filter(r -> r.status != "neutral", _) |> 
+        groupby(_, parameter) |>
+        combine(_, [:ON_liabs, :Term_liabs] .=> mean, [:ON_liabs, :Term_liabs] .=> std, renamecols = true) |>
+        filter(parameter => x -> !ismissing(x))
+
+    
+    # Add standard deviation values in parentheses below the mean values
+    df[:, :ON_liabs] = string.(round.(df.ON_liabs_mean; digits = 4), " (", df.ON_liabs_std, ")")
+    df[:, :Term_liabs] = string.(round.(df.Term_liabs_mean; digits = 4), " (", df.Term_liabs_std, ")")
+    df[:, :param] = string.(df[!, parameter])
+
+    # Remove standard deviation and mean columns as they are now merged
+    select!(df, Not([:ON_liabs_mean, :Term_liabs_mean, :ON_liabs_std, :Term_liabs_std, parameter]))
+
+    # Define a new DataFrame for LaTeX output
+    latex_df = DataFrame(
+        value = String[],
+        ON_volumes = String[],
+        Term_volumes = String[]
+    )
+
+    # Iterate through the DataFrame to populate the LaTeX DataFrame
+    last_param = ""
+    for i in 1:size(df, 1)
+        param = df[i, :param]
+        # If the shock is the same as the last one, use \multirow and empty string for repeated shock
+        if param == last_param
+            push!(latex_df, ["", df[i, :ON_liabs], df[i, :Term_liabs]])
+        else
+            push!(latex_df, [param,  df[i, :ON_liabs], df[i, :Term_liabs]])
+        end
+        last_param = param
+    end
+
+    latex_code = "\\begin{tabular}{|c||c|c|}\n"
+    latex_code *= "\\hline\n"
+    latex_code *= "Value $(parameter) & ON volumes & Term volumes \\\\\n"
+    latex_code *= "\\hline\n"
+
+    for i in 1:size(df, 1)
+        if i > 1 && df[i, :param] == df[i-1, :param]
+            latex_code *=  extract_number_before_parentheses(df[i, :ON_liabs]) * " & " * extract_number_before_parentheses(df[i, :Term_liabs]) * " \\\\\n"
+            #latex_code *= "&" * extract_number_with_parentheses(df[i, :ON_liabs]) * " & " * extract_number_with_parentheses(df[i, :Term_liabs]) * " \\\\\n"
+        else
+            rowspan = sum(df[:, :param] .== df[i, :param])
+            latex_code *= "\\multirow{" * string(rowspan) * "}{*}{" * df[i, :param] * "} & "
+            latex_code *= extract_number_before_parentheses(df[i, :ON_liabs]) * " & " * extract_number_before_parentheses(df[i, :Term_liabs]) * " \\\\\n"
+            #latex_code *= "&" * extract_number_with_parentheses(df[i, :ON_liabs]) * " & " * extract_number_with_parentheses(df[i, :Term_liabs]) * " \\\\\n"
+        end
+    end
+    
+    latex_code *= "\\hline\n"
+    latex_code *= "\\end{tabular}"
+    return latex_code
+end
+
+function extract_number_before_parentheses(str::String)
+    m = match(r"^([^\s]+) \(", str)
+    return m !== nothing ? m.captures[1] : nothing
+end
+
+function extract_number_with_parentheses(str::String)
+    m = match(r"(\([^\)]+\))", str)
+    return m !== nothing ? m.captures[1] : nothing
 end
