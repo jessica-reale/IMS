@@ -1,5 +1,5 @@
 # base theme settings
-fontsize_theme = Theme(fontsize = 16, font = :bold_italic)
+fontsize_theme = Theme(fontsize = 24, font = :bold_italic)
 attributes = Attributes(
     Axis = (
         xgridvisible = false,
@@ -10,7 +10,16 @@ attributes = Attributes(
 )
 set_theme!(merge(fontsize_theme, attributes))
 
-# helper functions
+function extract_number_before_parentheses(str::String)
+    m = match(r"^([^\s]+) \(", str)
+    return m !== nothing ? m.captures[1] : nothing
+end
+
+function extract_number_with_parentheses(str::String)
+    m = match(r"(\([^\)]+\))", str)
+    return m !== nothing ? m.captures[1] : nothing
+end
+
 function add_lines!(gdf)
     # Add dotted lines to the plot for the specified variables in gdf
     lines!(gdf.icbt_mean[SHIFT:end]; color = :grey, linewidth = 0.5)
@@ -18,13 +27,22 @@ function add_lines!(gdf)
     lines!(gdf.icbl_mean[SHIFT:end]; color = :grey, linewidth = 0.5)
 end
 
-function standard_deviation_bands!(gdf, trend)
-    # Define the lower and upper bounds for the shaded region using std
+function standard_deviation_bands!(cycle, trend, colors)
+    residuals = cycle - trend
+    # Compute the standard deviation of the residuals
+    sigma = std(residuals)
+    # Calculate upper and lower bands
+    upper_bound = trend .+ sigma
+    lower_bound = trend .- sigma
+    
+    #= # Define the lower and upper bounds for the shaded region using std
     lower_bound = trend .- std(trend)
-    upper_bound = trend .+ std(trend)
+    upper_bound = trend .+ std(trend) =#
 
     # Plot the standard deviations as shaded area
-    band!(gdf.step[SHIFT:end] .- SHIFT, upper_bound, lower_bound; color = (:grey, 0.1))
+    #band!(gdf.step[SHIFT:end] .- SHIFT, upper_bound, lower_bound; color = (colors, 0.1))
+    lines!(lower_bound; color = (colors, 0.3), linestyle = :dash)
+    lines!(upper_bound; color = (colors, 0.3), linestyle = :dash)
 end
 
 function invisible_yaxis!(fig, index)
@@ -35,6 +53,7 @@ function invisible_yaxis!(fig, index)
     end
 end
 
+# Set features of axes; currently not used but useful to have plots having (i, j) rows for i in 1:length(vars) and j in 1:length(gdf)
 function set_axes!(fig, gdf, vars, ylabels; status::Bool = false)
     index = 0 
 
