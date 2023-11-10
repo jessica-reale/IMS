@@ -28,19 +28,15 @@ function add_lines!(gdf)
 end
 
 function standard_deviation_bands!(cycle, trend, colors)
+    # Compute residuals from cyclicality of the time series
     residuals = cycle - trend
     # Compute the standard deviation of the residuals
     sigma = std(residuals)
     # Calculate upper and lower bands
     upper_bound = trend .+ sigma
     lower_bound = trend .- sigma
-    
-    #= # Define the lower and upper bounds for the shaded region using std
-    lower_bound = trend .- std(trend)
-    upper_bound = trend .+ std(trend) =#
 
-    # Plot the standard deviations as shaded area
-    #band!(gdf.step[SHIFT:end] .- SHIFT, upper_bound, lower_bound; color = (colors, 0.1))
+    # Plot the standard deviations as dashed lines
     lines!(lower_bound; color = (colors, 0.3), linestyle = :dash)
     lines!(upper_bound; color = (colors, 0.3), linestyle = :dash)
 end
@@ -74,7 +70,7 @@ function set_axes!(fig, gdf, vars, ylabels; status::Bool = false)
         fig.content[start_idx].ylabel = ylabels[index]
        
         # Set up the alignment of ylabels
-        # fig.content[i].ylabelpadding = 30
+        fig.content[start_idx].alignmode = Mixed(left = 0)
 
         # Apply invisible_yaxis! only on specific plots
         for j in start_idx:end_idx
