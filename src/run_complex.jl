@@ -28,7 +28,7 @@ using IMS
 end
 
 # runs the model, transforms and saves data
-function run_model(seeds::Vector{UInt32}, scenario::String, shock::String)
+function run_model(scenario::String, shock::String, sample_size::Int)
     # collect agent variables
     adata = [:type, :status, :ib_flag, :margin_stability, :am, :bm, :flow,
         :lending_facility, :deposit_facility, :on_demand, :term_demand,
@@ -42,7 +42,10 @@ function run_model(seeds::Vector{UInt32}, scenario::String, shock::String)
     properties = (scenario = scenario,
         shock = shock)
 
-    println("Creating 100 seeded $(properties.shock)-shock and $(properties.scenario)-scenario models and running...")
+    println("Creating $(sample_size) seeded $(properties.shock)-shock and $(properties.scenario)-scenario models and running...")
+
+    # generate seeds vector
+    seeds = rand(UInt32, sample_size)
 
     # generate models
     models = [IMS.init_model(; seed, properties...) for seed in seeds]
@@ -51,9 +54,9 @@ function run_model(seeds::Vector{UInt32}, scenario::String, shock::String)
     adf, mdf, _ =  ensemblerun!(models, dummystep, IMS.model_step!, 1200;
         adata, mdata, parallel = true, showprogress = true)
         
-    println("Collecting data for $(properties.shock)-shock and $(properties.scenario)-scenario...")
+    println("Collecting data for $(properties.shock)-shock and $(properties.scenario)-scenario and sample size $(sample_size)...")
 
-   #=  # Aggregate model data over replicates
+    # Aggregate model data over replicates
     mdf = @pipe mdf |>
         groupby(_, :step) |>
         combine(_, mdata[1:2] .=> unique, mdata[3:end] .=> mean, mdata[3:end] .=> std; renamecols = true)
@@ -67,11 +70,11 @@ function run_model(seeds::Vector{UInt32}, scenario::String, shock::String)
         combine(_, adata[1:3] .=> unique, adata[4:end] .=> mean, adata[4:end] .=> std; renamecols = true)
     adf[!, :shock] = fill(properties.shock, nrow(adf))
     adf[!, :scenario] = fill(properties.scenario, nrow(adf))
-    adf[!, :sample_size] = fill(sample_size, nrow(adf)) =#
+    adf[!, :sample_size] = fill(sample_size, nrow(adf))
 
     # Write data to disk
-    println("Saving to disk for $(properties.shock)-shock and $(properties.scenario)-scenario...")
-    datapath = mkpath("data/shock=$(properties.shock)/$(properties.scenario)")
+    println("Saving to disk for $(properties.shock)-shock and $(properties.scenario)-scenario and sample size $(sample_size)...")
+    datapath = mkpath("data/size=$(sample_size)/shock=$(properties.shock)/$(properties.scenario)")
     filepath = "$datapath/adf.csv"
     isfile(filepath) && rm(filepath)
     CSV.write(filepath, adf)
@@ -85,13 +88,15 @@ end
 
 const SCENARIOS = ["Baseline", "Maturity"]
 const SHOCKS = ["Missing", "Corridor", "Width", "Uncertainty"]
+const SAMPLE_SIZES = collect(25:25:100)
 
 begin 
     Random.seed!(96100)
-    seeds = rand(UInt32, 100)
-    for scenario in SCENARIOS
-        for shock in SHOCKS
-            run_model(seeds, scenario, shock)
+    for sample_size in SAMPLE_SIZES
+        for scenario in SCENARIOS
+            for shock in SHOCKS
+                run_model(scenario, shock, sample_size)
+            end
         end
     end
     printstyled("Simulations finished and data saved!"; color = :blue)
