@@ -92,8 +92,6 @@ const SAMPLE_SIZES = collect(25:25:100)
 
 begin 
     Random.seed!(96100)
-    # possible scenarios: "Baseline" or "Maturity"
-    # possible shocks: "Missing" or "Corridor" or "Width" or "Uncertainty"
     for sample_size in SAMPLE_SIZES
         for scenario in SCENARIOS
             for shock in SHOCKS
