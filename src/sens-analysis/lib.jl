@@ -270,7 +270,6 @@ function create_tables(df::DataFrame, parameter::Symbol)
         combine(_, [:ON_liabs, :Term_liabs] .=> mean, [:ON_liabs, :Term_liabs] .=> std, renamecols = true) |>
         filter(parameter => x -> !ismissing(x))
 
-    
     # Add standard deviation values in parentheses below the mean values
     df[:, :ON_liabs] = string.(round.(df.ON_liabs_mean; digits = 4), " (", df.ON_liabs_std, ")")
     df[:, :Term_liabs] = string.(round.(df.Term_liabs_mean; digits = 4), " (", df.Term_liabs_std, ")")
