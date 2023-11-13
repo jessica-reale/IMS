@@ -50,7 +50,7 @@ end
 function overviews_model(df::DataFrame)
     p = generate_plots(df, [:ion_mean, :iterm_mean]; 
         labels = ["ON rate", "Term rate"])
-    save("ib_rates.svg", p)
+    save("ib_rates.eps", p)
 end
 
 function overviews_ib_big(df::DataFrame; scenario::String = "", rows::Bool = false)
@@ -68,15 +68,15 @@ function overviews_ib_big(df::DataFrame; scenario::String = "", rows::Bool = fal
             ylabels = ["Overnight segment", "Term segment", "Lending facility", "Deposit facility"],
             by_vars = true, rows = rows)
         end
-    save("big_ib_plots_levels.svg", p)
+    save("big_ib_plots_levels.eps", p)
 
     p = generate_plots(df, [:am_mean, :bm_mean];
         ylabels = ["ASF", "RSF"], by_vars = true, rows = rows)
-    save("stability_ib_plots_levels.svg", p)
+    save("stability_ib_plots_levels.eps", p)
 
     p = generate_plots(df, [:margin_stability_mean];
         ylabels = ["Margin of Stability"], by_vars = true, rows = rows)
-    save("margin_stability_levels.svg", p)
+    save("margin_stability_levels.eps", p)
 end
 
 function overviews_deficit(df::DataFrame; rows::Bool = false)
@@ -87,11 +87,11 @@ function overviews_deficit(df::DataFrame; rows::Bool = false)
 
     p = generate_plots(df, [:ON_liabs_mean, :Term_liabs_mean]; vars_den =  [:on_demand_mean, :term_demand_mean], 
         ylabels = ["Overnight rationing", "Term rationing"], rationing = true, rows = rows)
-    save("big_rationing_plot.svg", p)
+    save("big_rationing_plot.eps", p)
 
     p = generate_plots(df, [:on_demand_mean, :term_demand_mean];
         ylabels = ["Overnigth demand", "Term demand"], by_vars = true, rows = rows)
-    save("ib_demand_levels.svg", p)
+    save("ib_demand_levels.eps", p)
 end
 
 function overviews_clearing(df::DataFrame; rows::Bool = false)
@@ -101,7 +101,7 @@ function overviews_clearing(df::DataFrame; rows::Bool = false)
         combine(_, [:clearing_supply, :clearing_demand] .=> mean, renamecols = false)
 
     p = generate_plots(df, [:clearing_supply, :clearing_demand]; ylabels = ["Supply", "Demand"], by_vars = true, rows = rows)
-    save("clearing_ib_market.svg", p)
+    save("clearing_ib_market.eps", p)
 end
 
 function overviews_by_status(df; rows::Bool = false)
@@ -111,13 +111,13 @@ function overviews_by_status(df; rows::Bool = false)
 
     p = generate_plots(df, [:margin_stability_mean]; 
         ylabels = ["Deficit", "Surplus"], status = true, rows = rows)
-    save("stability_by_status.svg", p)
+    save("stability_by_status.eps", p)
 
     p = generate_plots(df, [:loans_mean];  ylabels = ["Deficit", "Surplus"], status = true, loans = true, rows = rows)
-    save("loans_by_status.svg", p)
+    save("loans_by_status.eps", p)
 
     p = generate_plots(df, [:flow_mean]; labels = ["Deficit", "Surplus"], area = true)
-    save("flows_area.svg", p)
+    save("flows_area.eps", p)
 end
 
 function load_data()
