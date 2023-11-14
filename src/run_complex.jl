@@ -28,7 +28,7 @@ using IMS
 end
 
 # runs the model, transforms and saves data
-function run_model(scenario::String, shock::String, sample_size::Int)
+function run_model(seeds::Vector{UInt32}, scenario::String, shock::String)
     # collect agent variables
     adata = [:type, :status, :ib_flag, :margin_stability, :am, :bm, :flow,
         :lending_facility, :deposit_facility, :on_demand, :term_demand,
@@ -42,10 +42,7 @@ function run_model(scenario::String, shock::String, sample_size::Int)
     properties = (scenario = scenario,
         shock = shock)
 
-    println("Creating $(sample_size) seeded $(properties.shock)-shock and $(properties.scenario)-scenario models and running...")
-
-    # generate seeds vector
-    seeds = rand(UInt32, sample_size)
+    println("Creating $(length(seeds)) seeded $(properties.shock)-shock and $(properties.scenario)-scenario models and running...")
 
     # generate models
     models = [IMS.init_model(; seed, properties...) for seed in seeds]
@@ -54,7 +51,7 @@ function run_model(scenario::String, shock::String, sample_size::Int)
     adf, mdf, _ =  ensemblerun!(models, dummystep, IMS.model_step!, 1200;
         adata, mdata, parallel = true, showprogress = true)
         
-    println("Collecting data for $(properties.shock)-shock and $(properties.scenario)-scenario and sample size $(sample_size)...")
+    println("Collecting data for $(properties.shock)-shock and $(properties.scenario)-scenario and sample size $(length(seeds))...")
 
     # Aggregate model data over replicates
     mdf = @pipe mdf |>
@@ -62,7 +59,7 @@ function run_model(scenario::String, shock::String, sample_size::Int)
         combine(_, mdata[1:2] .=> unique, mdata[3:end] .=> mean, mdata[3:end] .=> std; renamecols = true)
     mdf[!, :shock] = fill(properties.shock, nrow(mdf)) 
     mdf[!, :scenario] = fill(properties.scenario, nrow(mdf))
-    mdf[!, :sample_size] = fill(sample_size, nrow(mdf))
+    mdf[!, :sample_size] = fill(length(seeds), nrow(mdf))
 
     # Aggregate agent data over replicates
     adf = @pipe adf |>
@@ -70,11 +67,11 @@ function run_model(scenario::String, shock::String, sample_size::Int)
         combine(_, adata[1:3] .=> unique, adata[4:end] .=> mean, adata[4:end] .=> std; renamecols = true)
     adf[!, :shock] = fill(properties.shock, nrow(adf))
     adf[!, :scenario] = fill(properties.scenario, nrow(adf))
-    adf[!, :sample_size] = fill(sample_size, nrow(adf))
+    adf[!, :sample_size] = fill(length(seeds), nrow(adf))
 
     # Write data to disk
-    println("Saving to disk for $(properties.shock)-shock and $(properties.scenario)-scenario and sample size $(sample_size)...")
-    datapath = mkpath("data/size=$(sample_size)/shock=$(properties.shock)/$(properties.scenario)")
+    println("Saving to disk for $(properties.shock)-shock and $(properties.scenario)-scenario and sample size $(length(seeds))...")
+    datapath = mkpath("data/size=$(length(seeds))/shock=$(properties.shock)/$(properties.scenario)")
     filepath = "$datapath/adf.csv"
     isfile(filepath) && rm(filepath)
     CSV.write(filepath, adf)
@@ -93,9 +90,11 @@ const SAMPLE_SIZES = collect(25:25:100)
 begin 
     Random.seed!(96100)
     for sample_size in SAMPLE_SIZES
+        # generate seeds vector
+        seeds = rand(UInt32, sample_size)
         for scenario in SCENARIOS
             for shock in SHOCKS
-                run_model(scenario, shock, sample_size)
+                run_model(seeds, scenario, shock)
             end
         end
     end
