@@ -2,26 +2,41 @@ using Pkg
 Pkg.activate(".")
 Pkg.instantiate()
 
+# Start workers
+using Distributed
+addprocs()
+
+# Set up package environment on workers
+@everywhere begin
+    using Pkg
+    Pkg.activate(".")
+end
+
 # Load packages on master process
 using Pipe
 using CSV
-using DataFrames
-using Agents
 using Random
-using StatsBase
-using Distributions
+using DataFrames
 using IMS
 
+# Load packages on workers
+@everywhere begin
+    using Agents
+    using StatsBase
+    using Distributions
+    using IMS
+end
+
 # runs the sensitivity analysis for the parameters of interests, transforms and collects datas
-function run_sens(seeds::Vector{UInt32}, param::Symbol, param_range::Vector{Float64}; scenario::String = "Baseline")
+function run_sens(seeds::Vector{UInt32}, param::Symbol, param_range::Float64; scenario::String = "Baseline")
     # collect agent variables
-    adata = [:type, :status, :ib_flag, :margin_stability, :output, :ON_liabs, :Term_liabs]
+    adata = [:margin_stability, :output, :ON_liabs, :Term_liabs]
 
     for x in param_range
         # Setup model properties
-        properties = Dict(
+        properties = (
             param => x,
-            :scenario => scenario,
+            scenario = scenario,
         )
 
         println("Running parameter scans for $(param) at $(x)...")
@@ -36,8 +51,9 @@ function run_sens(seeds::Vector{UInt32}, param::Symbol, param_range::Vector{Floa
 
         # Aggregate agent data
         adf = @pipe adf |>
-            groupby(_, [param, :step, :id, :status]) |>
-            combine(_, adata[1:3] .=> unique, adata[4:end] .=> mean; renamecols = false)
+            groupby(_, [:step, :id]) |>
+            combine(_, adata .=> mean; renamecols = false)
+        adf[!, param] .= x
 
         # Write data to disk
         println("Saving to disk for $(param) at $(x)...")
@@ -62,6 +78,7 @@ function run(seeds::Vector{UInt32})
     run_sens(seeds, :m2, collect(0.0:0.1:1.0); scenario = "Maturity")
     run_sens(seeds, :m3, collect(0.0:0.1:1.0); scenario = "Maturity")
     run_sens(seeds, :m4, collect(0.0:0.1:1.0); scenario = "Maturity")
+    run_sens(seeds, :m4, 1.0; scenario = "Maturity")
     run_sens(seeds, :m5, collect(0.0:0.1:1.0); scenario = "Maturity")
    
     printstyled("Paramascan and data collection finished."; color = :blue)
