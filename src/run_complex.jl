@@ -90,7 +90,7 @@ const SAMPLE_SIZES = collect(25:25:100)
 begin 
     Random.seed!(96100)
     # generate maximum seeds vector
-    tot_seeds = rand(UInt32, sample_size[end])
+    tot_seeds = rand(UInt32, SAMPLE_SIZES[end])
     for sample_size in SAMPLE_SIZES
         # constrain seeds vector to # runs
         seeds = tot_seeds[1:sample_size]
