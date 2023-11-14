@@ -30,13 +30,13 @@ end
 # runs the model, transforms and saves data
 function run_model(seeds::Vector{UInt32}, scenario::String, shock::String)
     # collect agent variables
-    adata = [:type, :status, :ib_flag, :margin_stability, :am, :bm, :flow,
+    adata = [:type, :status, :ib_flag, :margin_stability, :flow,
         :lending_facility, :deposit_facility, :on_demand, :term_demand,
-        :loans, :output, :pmb, :pml, :il_rate, :id_rate, :ON_liabs, :Term_liabs,
-        :consumption, :on_supply, :term_supply, :ON_assets, :Term_assets]
+        :loans, :output, :ON_liabs, :Term_liabs,
+        :on_supply, :term_supply, :ON_assets, :Term_assets]
 
     # collect model variables
-    mdata = [:n_hh, :n_f, :ion, :iterm, :icbl, :icbd, :icbt, :θ, :LbW, :g]
+    mdata = [:n_hh, :n_f, :ion, :iterm, :icbl, :icbd, :icbt]
    
     # set properties based on scenario and shock
     properties = (scenario = scenario,
@@ -89,9 +89,12 @@ const SAMPLE_SIZES = collect(25:25:100)
 
 begin 
     Random.seed!(96100)
+    # generate maximum seeds vector
+    tot_seeds = rand(UInt32, sample_size[end])
     for sample_size in SAMPLE_SIZES
-        # generate seeds vector
-        seeds = rand(UInt32, sample_size)
+        # constrain seeds vector to # runs
+        seeds = tot_seeds[1:sample_size]
+        # run the model for scenarios and shocks
         for scenario in SCENARIOS
             for shock in SHOCKS
                 run_model(seeds, scenario, shock)
