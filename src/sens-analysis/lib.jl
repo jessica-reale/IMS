@@ -90,47 +90,72 @@ function big_params(df::DataFrame, var::Symbol, params::Vector{Symbol})
 end
 
 # Create tables for NSFR parameters
-function create_tables(df::DataFrame, parameter::Symbol)
-    gdf = @pipe df |> dropmissing(_, vars_ib) |> 
-        filter(parameter => x -> !ismissing(x)) |> 
-        groupby(_, parameter)
+function create_tables(df::DataFrame, parameters::Vector{Symbol})
+    # Initialize the results DataFrame
+    results = DataFrame(Parameter = String[], Range = String[], ON_volumes = String[], Term_volumes = String[])
 
-    # Calculate mean, standard deviation, and standard error for each group
-    results = DataFrame(Parameter = String[], ON_volumes = String[], Term_volumes = String[])
-    for sdf in gdf
-        mean_ON, std_ON = compute_std(sdf, :ON_liabs)
-        mean_Term, std_Term = compute_std(sdf, :Term_liabs)
+    # Iterate over each parameter and compute statistics
+    for parameter in parameters
+        gdf = @pipe df |> dropmissing(_, vars_ib) |> dropmissing(_, parameter) |> filter(r -> r.ib_flag == true && r.status != "neutral", _) |> 
+            groupby(_, [:status, :step, parameter]) |>
+            combine(_, vars_ib .=> mean, renamecols = false) |>
+            groupby(_, parameter)
 
-        push!(results, (Parameter = string(only(unique(sdf[!, parameter]))), ON_volumes = string(round.(mean_ON; digits = 4), " (", std_ON, ")"), 
-            Term_volumes = string(round.(mean_Term; digits = 4), " (", std_Term, ")")))
-    end
+        for i in 1:length(gdf)
+            mean_ON, std_ON = compute_std(gdf[i], :ON_liabs)
+            mean_Term, std_Term = compute_std(gdf[i], :Term_liabs)
+            range_value = string(only(unique(gdf[i][!, parameter])))
 
-    # Define a new DataFrame for LaTeX output
-    latex_df = DataFrame(
-        value = String[],
-        ON_volumes = String[],
-        Term_volumes = String[]
-    )
-
-    latex_code = "\\begin{tabular}{|c||c|c|}\n"
-    latex_code *= "\\hline\n"
-    latex_code *= "Value $(parameter) & ON volumes & Term volumes \\\\\n"
-    latex_code *= "\\hline\n"
-
-    for i in 1:size(results, 1)
-        if i > 1 && results[i, :Parameter] == results[i-1, :Parameter]
-            latex_code *=  extract_number_before_parentheses(results[i, :ON_volumes]) * " & " * extract_number_before_parentheses(results[i, :Term_volumes]) * " \\\\\n"
-            latex_code *= "&" * extract_number_with_parentheses(results[i, :ON_volumes]) * " & " * extract_number_with_parentheses(results[i, :Term_volumes]) * " \\\\\n"
-        else
-            rowspan = sum(results[i, :Parameter] .== results[i, :Parameter])
-            latex_code *= "\\multirow{" * string(rowspan) * "}{*}{" * results[i, :Parameter] * "} & "
-            latex_code *= extract_number_before_parentheses(results[i, :ON_volumes]) * " & " * extract_number_before_parentheses(results[i, :Term_volumes]) * " \\\\\n"
-            latex_code *= "&" * extract_number_with_parentheses(results[i, :ON_volumes]) * " & " * extract_number_with_parentheses(results[i, :Term_volumes]) * " \\\\\n"
+            push!(results, (Parameter = string(parameter), Range = range_value, 
+                                ON_volumes = string(round(mean_ON, digits = 4), " (", round(std_ON, digits = 4), ")"), 
+                                Term_volumes = string(round(mean_Term, digits = 4), " (", round(std_Term, digits = 4), ")")))
         end
     end
-    
-    latex_code *= "\\hline\n"
+
+    # Begin constructing LaTeX table with the dynamic header based on the number of parameters
+    latex_code = "\\begin{tabular}{|c"
+    for _ in 1:length(parameters)
+        latex_code *= "||c|c"  # Two columns for each parameter
+    end
+    latex_code *= "|}\n\\hline\n"
+
+    # Header row with parameter names
+    latex_code *= " & "
+    for (i, parameter) in enumerate(parameters)
+        separator = i < length(parameters) ? " & " : " \\\\ \\cline{2-$(2*length(parameters)+1)}\n"
+        latex_code *= "\\multicolumn{2}{c||}{$(string(parameter))}" * separator
+    end
+
+    # Sub-header row with 'ON volumes' and 'Term volumes'
+    latex_code *= "Range "
+    for _ in 1:length(parameters)
+        latex_code *= "& ON volumes & Term volumes "
+    end
+    latex_code = latex_code[1:end-1] * "\\\\ \\hline\n"
+
+    # Loop over each unique range value in the results DataFrame
+    unique_ranges = unique(results.Range)
+    for range_value in unique_ranges
+        latex_code *= range_value
+        
+        # For each parameter within this range, add the ON volumes and Term volumes
+        for parameter in parameters
+            # Find the row for the current parameter and range value
+            row = filter(r -> r.Parameter == string(parameter) && r.Range == range_value, results)
+
+            if !isempty(row)
+                row = first(row)
+                latex_code *= "& " * row.ON_volumes * " & " * row.Term_volumes # * "\\\\ \n"
+                #latex_code *= "&" * extract_number_with_parentheses(row[:ON_volumes]) * "&" * extract_number_with_parentheses(row[:Term_volumes])
+            else
+                # Fill with placeholders if no data is present
+                latex_code *= "& - & -"
+            end
+        end
+
+        latex_code *= "\\\\ \\hline\n"
+    end
+
     latex_code *= "\\end{tabular}"
     return latex_code
 end
-
