@@ -40,9 +40,9 @@ function big_general_params(df::DataFrame, m::DataFrame, params::Vector{Symbol})
     save("big_output_params.eps", p)
 end
 
-function tables(df, param)
-    latex_table = create_tables(df, param)
-    save_to_tex("table_$(param).tex", latex_table)
+function tables(df, params)
+    latex_table = create_tables(df, params)
+    save_to_tex("table_$(params).tex", latex_table)
 end
 
 function load_df()
@@ -104,11 +104,10 @@ end
 
 function create_sens_maturity_tables(adf)
     cd(mkpath("img/pdf/sens-analysis")) do
-        for param in [:m1, :m2, :m3, :m4, :m5]
             cd(mkpath("Maturity")) do
-                tables(adf, param)
+                tables(adf, [:m1, :m4])
+                tables(adf, [:m2, :m3, :m5])
             end
-        end
     end
     printstyled("Sensitivity tables for maturity parameters generated."; color = :blue)
 end
