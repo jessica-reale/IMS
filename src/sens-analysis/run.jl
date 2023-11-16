@@ -28,9 +28,9 @@ using IMS
 end
 
 # runs the sensitivity analysis for the parameters of interests, transforms and collects datas
-function run_sens(seeds::Vector{UInt32}, param::Symbol, param_range::Float64; scenario::String = "Baseline")
+function run_sens(seeds::Vector{UInt32}, param::Symbol, param_range::Vector{Float64}; scenario::String = "Baseline")
     # collect agent variables
-    adata = [:margin_stability, :output, :ON_liabs, :Term_liabs]
+    adata = [:status, :margin_stability, :output, :ON_liabs, :Term_liabs]
 
     for x in param_range
         # Setup model properties
@@ -51,8 +51,8 @@ function run_sens(seeds::Vector{UInt32}, param::Symbol, param_range::Float64; sc
 
         # Aggregate agent data
         adf = @pipe adf |>
-            groupby(_, [:step, :id]) |>
-            combine(_, adata .=> mean; renamecols = false)
+            groupby(_, [:step, :id, :status]) |>
+            combine(_, adata[1] .=> unique, adata[2:end] .=> mean; renamecols = false)
         adf[!, param] .= x
 
         # Write data to disk
@@ -78,7 +78,6 @@ function run(seeds::Vector{UInt32})
     run_sens(seeds, :m2, collect(0.0:0.1:1.0); scenario = "Maturity")
     run_sens(seeds, :m3, collect(0.0:0.1:1.0); scenario = "Maturity")
     run_sens(seeds, :m4, collect(0.0:0.1:1.0); scenario = "Maturity")
-    run_sens(seeds, :m4, 1.0; scenario = "Maturity")
     run_sens(seeds, :m5, collect(0.0:0.1:1.0); scenario = "Maturity")
    
     printstyled("Paramascan and data collection finished."; color = :blue)
