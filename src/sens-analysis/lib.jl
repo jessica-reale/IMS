@@ -96,12 +96,16 @@ function create_tables(df::DataFrame, parameters::Vector{Symbol})
 
     # Iterate over each parameter and compute statistics
     for parameter in parameters
-        gdf = @pipe df |> dropmissing(_, vars_ib) |> dropmissing(_, parameter) |> filter(r -> r.ib_flag == true && r.status != "neutral", _) |> 
-            groupby(_, [:status, :step, parameter]) |>
-            combine(_, vars_ib .=> mean, renamecols = false) |>
+        gdf = @pipe df |>
+            dropmissing(_, vars_ib) |>
+            dropmissing(_, parameter) |>
+            groupby(_, [:status, :ib_flag, :step, parameter]) |>
+            combine(_, vars_ib .=> mean, renamecols = false) |> 
+            filter(r -> r.status != "neutral" && r.ib_flag == true, _) |>
             groupby(_, parameter)
 
         for i in 1:length(gdf)
+            
             mean_ON, std_ON = compute_std(gdf[i], :ON_liabs)
             mean_Term, std_Term = compute_std(gdf[i], :Term_liabs)
             range_value = string(only(unique(gdf[i][!, parameter])))
@@ -145,8 +149,7 @@ function create_tables(df::DataFrame, parameters::Vector{Symbol})
 
             if !isempty(row)
                 row = first(row)
-                latex_code *= "& " * row.ON_volumes * " & " * row.Term_volumes # * "\\\\ \n"
-                #latex_code *= "&" * extract_number_with_parentheses(row[:ON_volumes]) * "&" * extract_number_with_parentheses(row[:Term_volumes])
+                latex_code *= "& " * row.ON_volumes * " & " * row.Term_volumes
             else
                 # Fill with placeholders if no data is present
                 latex_code *= "& - & -"
