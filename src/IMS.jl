@@ -108,8 +108,8 @@ function model_step!(model)
         IMS.update_status!(model[id])
         if model.scenario == "Maturity"
             IMS.NSFR!(model[id], model)
-            IMS.borrowing_targets!(model[id], model.rng)
-            IMS.lending_targets!(model[id], model.rng)
+            IMS.borrowing_targets!(model[id], model.rng, model.arbitrary_threshold)
+            IMS.lending_targets!(model[id], model.rng, model.arbitrary_threshold)
         end
         IMS.reset_after_status!(model[id])
         IMS.tot_demand!(model[id])

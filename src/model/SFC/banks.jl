@@ -177,18 +177,18 @@ function portfolio!(agent::Bank)
 end
 
 """
-    lending_targets!(agent::Bank, rng) → agent.pml
+    lending_targets!(agent::Bank, rng, arbitrary_threshold) → agent.pml
 
 Update lenders' preferences for overnight interbank assets: banks' are assumed to be indifferent to maturity considerations in 
 the `Baseline` scenario. When the `Maturity` scenario is active, preferences depend on NSFR weights.
 """
-function lending_targets!(agent::Bank, rng)
+function lending_targets!(agent::Bank, rng, arbitrary_threshold)
     # end function prematurely if agent is not surplus
     agent.status != :surplus && return
 
     agent.actual_lend_ratio = 1 - agent.bm
     agent.target_lend_ratio = 
-        if agent.margin_stability >= 1.0
+        if agent.margin_stability >= (1.0 + arbitrary_threshold)
             agent.actual_lend_ratio
         else 
             rand(rng, Uniform(0.0, agent.actual_lend_ratio))
@@ -199,18 +199,18 @@ function lending_targets!(agent::Bank, rng)
 end
 
 """
-    borrowing_targets!(agent::Bank, rng) → agent.pmb
+    borrowing_targets!(agent::Bank, rng, arbitrary_threshold) → agent.pmb
 
 Update borrowers' preferences for overnight interbank assets: banks' are assumed to be indifferent to maturity considerations in 
 the `Baseline` scenario. When the `Maturity` scenario is active, preferences depend on NSFR weights.
 """
-function borrowing_targets!(agent::Bank, rng)
+function borrowing_targets!(agent::Bank, rng, arbitrary_threshold)
     # end function prematurely if agent is not deficit
     agent.status != :deficit && return 
 
     agent.actual_borr_ratio = 1 - agent.am
     agent.target_borr_ratio = 
-        if agent.margin_stability < 1.0
+        if agent.margin_stability < (1.0 + arbitrary_threshold)
             agent.actual_borr_ratio
         else 
             rand(rng, Uniform(0.0, agent.actual_borr_ratio))

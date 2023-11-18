@@ -95,11 +95,23 @@ function load_df_mat()
         end
     end
 
-    # take model variables from Baseline scenario
-    mdf = DataFrame()
-    append!(mdf, CSV.File("data/size=100/shock=Missing/Baseline/mdf.csv"))
+    return df
+end
 
-    return df, mdf
+function load_df_threshold()
+     # parameter ranges
+     params_range = (
+        (collect(0.01:0.04:0.1))
+    )
+
+    param = "arbitrary_threshold"
+
+    df = DataFrame()
+    for val in string.(params_range)
+        append!(df, CSV.File("data/sensitivity_analysis/$(param)/$(val)/df.csv"); cols = :union)
+    end
+
+    return df
 end
 
 function create_sens_maturity_tables(adf)
@@ -110,6 +122,15 @@ function create_sens_maturity_tables(adf)
             end
     end
     printstyled("Sensitivity tables for maturity parameters generated."; color = :blue)
+end
+
+function create_threshold_tables(adf)
+    cd(mkpath("img/pdf/sens-analysis")) do
+        cd(mkpath("Threshold")) do
+            tables(adf, [:arbitrary_threshold])
+        end
+    end
+    printstyled("Sensitivity tables for threshold parameter generated."; color = :blue)
 end
 
 function create_sens_general_plots(adf, mdf)
@@ -127,5 +148,8 @@ end
 adf, mdf = load_df()
 create_sens_general_plots(adf, mdf)
 
-adf, mdf = load_df_mat()
+adf = load_df_mat()
 create_sens_maturity_tables(adf)
+
+adf = load_df_threshold()
+create_threshold_tables(adf)

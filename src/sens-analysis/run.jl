@@ -79,6 +79,8 @@ function run(seeds::Vector{UInt32})
     run_sens(seeds, :m3, collect(0.0:0.1:1.0); scenario = "Maturity")
     run_sens(seeds, :m4, collect(0.0:0.1:1.0); scenario = "Maturity")
     run_sens(seeds, :m5, collect(0.0:0.1:1.0); scenario = "Maturity")
+    # Threshold
+    run_sens(seeds, :arbitrary_threshold, collect(0.01:0.04:0.1); scenario = "Maturity")
    
     printstyled("Paramascan and data collection finished."; color = :blue)
     return nothing

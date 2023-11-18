@@ -41,6 +41,7 @@ Base.@kwdef mutable struct Parameters
     χ1::Float64 = 0.0085
     λ::Float64 = 2.00687
     gd::Float64 = 0.1
+    arbitrary_threshold::Float64 = 0.0
     # margin of stability - NSFR
     m1::Float64 = 0.1
     m2::Float64 = 0.5
