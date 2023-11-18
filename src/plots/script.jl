@@ -41,7 +41,8 @@ end
 
 # Define functions to generate plots
 function overviews_ib(df::DataFrame; scenario::String = "", rows::Bool = false)
-    overviews_ib_big(df; scenario = scenario, rows = rows)
+    overviews_ib_big(df; rows = rows)
+    overviews_stability(df; rows = rows)
     overviews_deficit(df; rows = rows)
     overviews_by_status(df; rows = rows)
     overviews_clearing(df; rows = rows)
@@ -53,31 +54,33 @@ function overviews_model(df::DataFrame)
     save("ib_rates.eps", p)
 end
 
-function overviews_ib_big(df::DataFrame; scenario::String = "", rows::Bool = false)
-    df = @pipe df |> dropmissing(_, vars_ib) |> filter(r -> r.status_unique != "neutral", _) |>
+function overviews_ib_big(df::DataFrame; rows::Bool = false)
+    df = @pipe df |> dropmissing(_, vars_ib) |> filter(r -> r.status_unique == "deficit" && r.ib_flag == true, _) |>
         groupby(_, [:sample_size, :step, :shock, :scenario]) |>
         combine(_, vars_ib .=> mean, renamecols = false)
     
-    p = 
-        if scenario == "Baseline"
-            generate_plots(df, [:ON_liabs_mean, :Term_liabs_mean]; 
-            ylabels = ["Overnight segment", "Term segment"],
-            by_vars = true, rows = rows)
-        else
-            generate_plots(df, [:ON_liabs_mean, :Term_liabs_mean, :lending_facility_mean, :deposit_facility_mean]; 
-            ylabels = ["Overnight segment", "Term segment", "Lending facility", "Deposit facility"],
-            by_vars = true, rows = rows)
-        end
+    p = generate_plots(df, [:ON_liabs_mean, :Term_liabs_mean]; 
+        ylabels = ["Overnight segment", "Term segment"],
+        by_vars = true, rows = rows)
     save("big_ib_plots_levels.eps", p)
+end
 
-    p = generate_plots(df, [:am_mean, :bm_mean];
-        ylabels = ["ASF", "RSF"], by_vars = true, rows = rows)
-    save("stability_ib_plots_levels.eps", p)
+function overviews_stability(df::DataFrame; rows::Bool = false)
+    df = @pipe df |> dropmissing(_, vars_ib) |> filter(r -> r.status_unique != "neutral", _) |>
+        groupby(_, [:sample_size, :step, :shock, :scenario]) |>
+        combine(_, vars_ib .=> mean, renamecols = false)
 
     p = generate_plots(df, [:margin_stability_mean];
         ylabels = ["Margin of Stability"], by_vars = true, rows = rows)
     save("margin_stability_levels.eps", p)
+
+    p = generate_plots(df, [:lending_facility_mean, :deposit_facility_mean]; 
+        ylabels = ["Lending facility", "Deposit facility"],
+        by_vars = true, rows = rows)
+    save("big_facilities_levels.eps", p)
+
 end
+
 
 function overviews_deficit(df::DataFrame; rows::Bool = false)
     df = @pipe df |> dropmissing(_, vars_ib) |> 
@@ -105,7 +108,7 @@ function overviews_clearing(df::DataFrame; rows::Bool = false)
 end
 
 function overviews_by_status(df; rows::Bool = false)
-    df = @pipe df |> dropmissing(_, vars_ib) |>
+    df = @pipe df |> dropmissing(_, vars_ib) |> filter(r -> r.ib_flag == true) |>
         groupby(_, [:sample_size, :step, :shock, :status_unique, :scenario]) |>
         combine(_, vars_ib .=> mean, renamecols = false)
 
@@ -142,10 +145,6 @@ end
 
 # Generate Tables 
 function tables(df::DataFrame, scenario::String)
-    df = @pipe df |> dropmissing(_, vars_ib) |>  filter(r -> r.ib_flag == true, _) |>
-        groupby(_, [:sample_size, :status_unique, :step, :shock, :scenario]) |>
-        combine(_, vars_ib .=> mean, renamecols = false)
-
     latex_table = create_table(df, :ON_liabs_mean, scenario, "Overnight volumes")
     save_to_tex("table_ON_liabs.tex", latex_table)
 

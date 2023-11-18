@@ -260,8 +260,10 @@ end
 # Generate tables
 # Create LaTeX table for the Appendix - standard deviations
 function create_table(df::DataFrame, var::Symbol, scenario::String, var_name::String)
-    gdf = @pipe df |> 
-        filter([:shock, :scenario, :status_unique] => (x, y, z) -> x == "Missing" && y == scenario && z != "neutral", _) |> 
+    gdf = @pipe df |> dropmissing(_, vars_ib) |> 
+        groupby(_, [:shock, :scenario, :status, :ib_flag, :step, :sample_size]) |>
+        combine(_, vars_ib .=> mean, renamecols = false) |>
+        filter(r -> r.shock == "Missing" && r.scenario == scenario && r.status == "deficit" && r.ib_flag == true, _) |> 
         groupby(_, :sample_size)
 
     # Calculate mean, standard deviation, and standard error for each group

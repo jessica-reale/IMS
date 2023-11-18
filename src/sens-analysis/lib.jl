@@ -101,7 +101,7 @@ function create_tables(df::DataFrame, parameters::Vector{Symbol})
             dropmissing(_, parameter) |>
             groupby(_, [:status, :ib_flag, :step, parameter]) |>
             combine(_, vars_ib .=> mean, renamecols = false) |> 
-            filter(r -> r.status != "neutral" && r.ib_flag == true, _) |>
+            filter(r -> r.status == "deficit" && r.ib_flag == true, _) |>
             groupby(_, parameter)
 
         for i in 1:length(gdf)
