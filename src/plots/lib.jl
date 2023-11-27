@@ -161,7 +161,7 @@ function plots_vars_shocks(fig, gdf, vars, ylabels;
             
             # Set ticks x-axys
             ax.xticks = SHIFT:300:1200
-            fig.content[1].ylabel =  "Mean"
+            fig.content[1].ylabel = !double.rationing ? "Mean" : "Rate (%)"
             fig.content[i].xlabel = "Steps"
         end
     end
