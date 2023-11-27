@@ -36,7 +36,7 @@ end
 """
     SFC_checks_net_worth!(model, GDP; tol::Float64 = 1e-06) → nothing
 
-Checks that the net worth of all sectors corresponds to the nominal value of tangible assets, i.e. capital.
+Checks that the net worth of all sectors corresponds to the nominal value of tangible assets, i.e. capital and inventories.
 """
 function SFC_checks_net_worth!(model, GDP; tol::Float64 = 1e-06)
     networth = sum(a.networth for a in allagents(model) if a isa Government) - 
@@ -72,6 +72,7 @@ function SFC_checks_balance!(model, GDP; tol::Float64 = 1e-06)
     end
     return nothing
 end
+
 """
     SFC_explosive!(model, GDP; tol::Float64 = 1e-05) → nothing
 

@@ -1,215 +1,52 @@
+fontsize_theme = Theme(fontsize = 24, font = :bold_italic)
+attributes = Attributes(
+    Axis = (
+        xgridvisible = false,
+        ygridvisible = false,
+        ytickalign = 1,
+        xtickalign = 1,
+    ),
+)
+set_theme!(merge(fontsize_theme, attributes))
+
 const IB_STATUS = ("deficit", "surplus")
-const IB_LABELS = (L"\text{Deficit}", L"\text{Surplus}")
+const SHIFT = 100
+const COLORS = Gray.([0.75, 0.5, 0.25])
 
-function credit_loans(df::DataFrame, param::Symbol; f::Bool = true)
-    fig = Figure(resolution = (900, 450), fontsize = 16)
-    ax = fig[1,1] = Axis(fig, xlabel = L"\text{Steps}", ylabel = L"\text{Moving Average}")
-    gdf = groupby(df, param)
+function standard_deviation_bands!(cycle, trend, colors)
+    # Compute residuals from cyclicality of the time series
+    residuals = cycle - trend
+    # Compute the standard deviation of the residuals
+    sigma = std(residuals)
+    # Calculate upper and lower bands
+    upper_bound = trend .+ sigma
+    lower_bound = trend .- sigma
 
-    for i in 1:length(gdf)
-        _, trend = hp_filter((gdf[i].loans[100:end]), 129600)
-        lines!(movavg(trend, 200).x; 
-            label = "$(param) = $(only(unique(gdf[i][!, param])))", 
-            linestyle = 
-                if i > length(Makie.wong_colors())
-                    :dash
-                end             
-        )
-    end
-
-    ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
-    ax.title = if f 
-        "Firms Loans"
-        else
-            "Households Loans"
-        end
-
-    fig[end + 1, 1:1] = Legend(fig, ax; 
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :vertical,
-        nbanks = 4)
-
-    return fig
+    # Plot the standard deviations as dashed lines
+    lines!(lower_bound; color = (colors, 0.3), linestyle = :dash)
+    lines!(upper_bound; color = (colors, 0.3), linestyle = :dash)
 end
 
-function output(df::DataFrame, param::Symbol)
-    fig = Figure(resolution = (900, 450), fontsize = 16)
-    ax = fig[1,1] = Axis(fig, title = L"\text{GDP}", xlabel = L"\text{Steps}", ylabel = L"\text{Moving Average}")
-    gdf = groupby(df, param)
+function compute_std(df, var::Symbol)
+    cycle, trend = hp_filter(df[!, var], 129600)
+    residuals =  cycle - trend
+    mean_val = mean(trend)
+    std_val = std(residuals)
 
-    for i in 1:length(gdf)
-        _, trend = hp_filter((gdf[i].output[100:end]), 129600)
-        lines!(movavg(trend, 200).x; 
-            label = "$(param) = $(only(unique(gdf[i][!, param])))", 
-            linestyle = 
-                if i > length(Makie.wong_colors())
-                    :dash
-                end
-        )
-    end
-
-    ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
-
-    fig[end + 1, 1:1] = Legend(fig, ax; 
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :vertical,
-        nbanks = 4)
-
-    return fig
+    return mean_val, std_val
 end
 
-function flow(df::DataFrame, param::Symbol)
-    fig = Figure(resolution = (900, 450), fontsize = 16)
-    axes = ((1,1), (1,2))
-    gdf = groupby(df, param)
-
-    for i in eachindex(IB_STATUS)
-        ax = fig[axes[i]...] = Axis(fig, title =  IB_LABELS[i])
-        for j in 1:length(gdf)
-            sdf = filter(r -> r.status == IB_STATUS[i], gdf[j])
-            _, trend = hp_filter(sdf[!, :flow][100:end], 129600)
-            lines!(movavg(trend, 200).x; 
-                label = "$(param) = $(only(unique(gdf[j][!, param])))", 
-                linestyle = 
-                    if j > length(Makie.wong_colors())
-                        :dash
-                    end
-            )
-        end
-        ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])   
-    end
-
-    ax1 = fig.content[1]; ax2 = fig.content[2]
-    ax1.ylabel = L"\text{Moving Average}"
-    ax1.xlabel = ax2.xlabel  = L"\text{Steps}"
-
-    fig[end + 1, 1:2] = Legend(fig, ax1; 
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :vertical,
-        nbanks = 4)
-
-    return fig
+function extract_number_before_parentheses(str::String)
+    m = match(r"^([^\s]+) \(", str)
+    return m !== nothing ? m.captures[1] : nothing
 end
 
-function stability(df::DataFrame, param::Symbol)
-    fig = Figure(resolution = (900, 450), fontsize = 16)
-    axes = ((1,1), (1,2))
-    gdf = groupby(df, param)
-
-    for i in eachindex(IB_STATUS)
-        ax = fig[axes[i]...] = Axis(fig, title =  IB_LABELS[i])
-        for j in 1:length(gdf)
-            sdf = filter(r -> r.status == IB_STATUS[i], gdf[j])
-            _, trend = 
-                if sdf.status == IB_STATUS[1]
-                    hp_filter(sdf[!, :am][100:end], 129600)
-                else
-                    hp_filter(1 .- sdf[!, :margin_stability][100:end], 129600)
-                end
-                
-            lines!(movavg(trend, 200).x; 
-                label = "$(param) = $(only(unique(gdf[j][!, param])))", 
-                linestyle = 
-                    if j > length(Makie.wong_colors())
-                        :dash
-                    end
-            )
-        end
-        ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])   
-    end
-
-    ax1 = fig.content[1]; ax2 = fig.content[2]
-    ax1.ylabel = L"\text{Moving Average}"
-    ax1.xlabel = ax2.xlabel  = L"\text{Steps}"
-
-    fig[end + 1, 1:2] = Legend(fig, ax1; 
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :vertical,
-        nbanks = 4)
-
-    return fig
+function extract_number_with_parentheses(str::String)
+    m = match(r"(\([^\)]+\))", str)
+    return m !== nothing ? m.captures[1] : nothing
 end
 
-function big_ib_plots_sens(df::DataFrame, param::Symbol)
-    fig = Figure(resolution = (1200, 400), fontsize = 16)
-    axes = ((1,1), (1,2), (1,3), (1,4))
-    gdf = @pipe df |> 
-        groupby(_, param)
-    
-    vars = (variables = [:Term_liabs, :ON_liabs, :lending_facility, :deposit_facility], 
-        labels = [L"\text{Term segment}", L"\text{Overnight segment}", L"\text{Lending Facility}", L"\text{Deposit facility}"])     
-            
-    for i in 1:length(vars.variables)   
-        ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
-        for j in 1:length(gdf)
-            _, trend = hp_filter(gdf[j][!, vars.variables[i]][100:end], 129600)
-            lines!(trend; label = "$(param) = $(only(unique(gdf[j][!, param])))", 
-                linestyle = 
-                    if j > length(Makie.wong_colors())
-                        :dash
-                    end
-            )
-        end
-        ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
-    end
-
-    ax1 = fig.content[1]; ax2 = fig.content[2]; ax3 = fig.content[3];  ax4 = fig.content[4]; 
-    ax1.ylabel = L"\text{Moving Average}"
-    ax1.xlabel = ax2.xlabel = ax3.xlabel = ax4.xlabel = L"\text{Steps}"
-
-    fig[end+1,1:4] = Legend(fig, ax1; 
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :vertical,
-        nbanks = 4)
-    return fig 
-end
-
-function stability_ib_plots_sens(df::DataFrame, param::Symbol)
-    fig = Figure(resolution = (1200, 600), fontsize = 16)
-    axes = ((1:2,1), (1,2), (1,3), (2,2), (2,3))
-    gdf = @pipe df |> 
-        groupby(_, param)
-    
-    vars = (variables = [:margin_stability, :am, :bm, :pmb, :pml], 
-        labels = [L"\text{Margin of stability}", L"\text{ASF} a_{m}", L"\text{RSF} b_{m}",
-            L"\Pi^{b}", L"\Pi^{l}"])
-            
-    for i in 1:length(vars.variables)   
-        ax = fig[axes[i]...] = Axis(fig, title = vars.labels[i])
-        for j in 1:length(gdf)
-            _, trend = hp_filter((gdf[j][!, vars.variables[i]][100:end]), 129600)
-            lines!(movavg(trend, 200).x; label = "$(param) = $(only(unique(gdf[j][!, param])))", 
-                linestyle = 
-                    if j > length(Makie.wong_colors())
-                        :dash
-                    end
-            )
-        end
-        ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
-    end
-
-    ax1 = fig.content[1]; 
-    ax2 = fig.content[2]; ax3 = fig.content[3];
-    ax4 = fig.content[4]; ax5 = fig.content[5];
-    ax1.ylabel = ax2.ylabel = ax4.ylabel = L"\text{Moving Average}"
-    ax1.xlabel = ax4.xlabel = ax5.xlabel = L"\text{Steps}"
-    ax2.xticklabelsvisible = ax3.xticklabelsvisible = false
-    ax2.xticksvisible = ax3.xticksvisible = false
-    ax1.ytickformat = ax2.ytickformat = "{:.3f}"
-
-    fig[end+1,1:3] = Legend(fig, ax1; 
-        tellheight = true, 
-        tellwidth = false,
-        orientation = :vertical,
-        nbanks = 4)
-    return fig
-end
-
+# Create plots for generic parameters 
 function big_params(df::DataFrame, var::Symbol, params::Vector{Symbol})
     fig = Figure(resolution = (1200, 600), fontsize = 16)
     axes = ((1:2,1), (1,2), (1,3), (2,2), (2,3))
@@ -219,29 +56,109 @@ function big_params(df::DataFrame, var::Symbol, params::Vector{Symbol})
         gdf = @pipe df |> filter(params[2:end][i] => x -> !ismissing(x), _) |>
             groupby(_, params[2:end][i])
         for j in 1:length(gdf)
-            _, trend = hp_filter((gdf[j][!, var][100:end]), 129600)
-            lines!(movavg(trend, 200).x; label = "$(string.(params[2:end][i])) = $(only(unique(gdf[j][!, params[2:end][i]])))", 
+            cycle, trend = hp_filter((gdf[j][!, var][100:end]), 129600)
+            lines!(trend; label = "$(string.(params[2:end][i])) = $(only(unique(gdf[j][!, params[2:end][i]])))", linewidth = 2,
                 linestyle = 
                     if j > length(Makie.wong_colors())
                         :dash
-                    end
+                    end,
+                color = COLORS[j]
             )
+            
+            # Add standard deviation lines
+            standard_deviation_bands!(cycle, trend, COLORS[j])
+        
         end
-        ax.xticks = (collect(100:200:1200), ["200", "400", "600", "800", "1000", "1200"])
+        # Set x-axis ticks
+        ax.xticks = SHIFT:300:1200    
     end
 
     ax1 = fig.content[1]; 
     ax2 = fig.content[2]; ax3 = fig.content[3];
     ax4 = fig.content[4]; ax5 = fig.content[5];
-    ax1.ylabel = ax2.ylabel = ax4.ylabel = L"\text{Moving Average}"
+    ax1.ylabel = ax2.ylabel = ax4.ylabel = L"\text{Mean}"
     ax1.xlabel = ax4.xlabel = ax5.xlabel = L"\text{Steps}"
     ax2.xticklabelsvisible = ax3.xticklabelsvisible = false
     ax2.xticksvisible = ax3.xticksvisible = false
     
     axislegend(ax1; position = (1.0, 0.93))
     axislegend(ax2; position = (1.0, 0.93))
-    axislegend(ax3; position = (1.0, 0.93))
+    axislegend(ax3; position = (1.0, 0.1))
     axislegend(ax4; position = (1.0, 0.93))
-    axislegend(ax5; position = (1.0, 0.93))
+    axislegend(ax5; position = (1.0, 0.1))
     return fig
+end
+
+# Create tables for NSFR parameters
+function create_tables(df::DataFrame, parameters::Vector{Symbol})
+    # Initialize the results DataFrame
+    results = DataFrame(Parameter = String[], Range = String[], ON_volumes = String[], Term_volumes = String[])
+
+    # Iterate over each parameter and compute statistics
+    for parameter in parameters
+        gdf = @pipe df |>
+            dropmissing(_, vars_ib) |>
+            dropmissing(_, parameter) |>
+            groupby(_, [:status, :ib_flag, :step, parameter]) |>
+            combine(_, vars_ib .=> mean, renamecols = false) |> 
+            filter(r -> r.status == "deficit" && r.ib_flag == true, _) |>
+            groupby(_, parameter)
+
+        for i in 1:length(gdf)
+            
+            mean_ON, std_ON = compute_std(gdf[i], :ON_liabs)
+            mean_Term, std_Term = compute_std(gdf[i], :Term_liabs)
+            range_value = string(only(unique(gdf[i][!, parameter])))
+
+            push!(results, (Parameter = string(parameter), Range = range_value, 
+                                ON_volumes = string(round(mean_ON, digits = 4), " (", round(std_ON, digits = 4), ")"), 
+                                Term_volumes = string(round(mean_Term, digits = 4), " (", round(std_Term, digits = 4), ")")))
+        end
+    end
+
+    # Begin constructing LaTeX table with the dynamic header based on the number of parameters
+    latex_code = "\\begin{tabular}{|c"
+    for _ in 1:length(parameters)
+        latex_code *= "||c|c"  # Two columns for each parameter
+    end
+    latex_code *= "|}\n\\hline\n"
+
+    # Header row with parameter names
+    latex_code *= " & "
+    for (i, parameter) in enumerate(parameters)
+        separator = i < length(parameters) ? " & " : " \\\\ \\cline{2-$(2*length(parameters)+1)}\n"
+        latex_code *= "\\multicolumn{2}{c||}{$(string(parameter))}" * separator
+    end
+
+    # Sub-header row with 'ON volumes' and 'Term volumes'
+    latex_code *= "Range "
+    for _ in 1:length(parameters)
+        latex_code *= "& ON volumes & Term volumes "
+    end
+    latex_code = latex_code[1:end-1] * "\\\\ \\hline\n"
+
+    # Loop over each unique range value in the results DataFrame
+    unique_ranges = unique(results.Range)
+    for range_value in unique_ranges
+        latex_code *= range_value
+        
+        # For each parameter within this range, add the ON volumes and Term volumes
+        for parameter in parameters
+            # Find the row for the current parameter and range value
+            row = filter(r -> r.Parameter == string(parameter) && r.Range == range_value, results)
+
+            if !isempty(row)
+                row = first(row)
+                latex_code *= "& " * row.ON_volumes * " & " * row.Term_volumes
+            else
+                # Fill with placeholders if no data is present
+                latex_code *= "& - & -"
+            end
+        end
+
+        latex_code *= "\\\\ \\hline\n"
+    end
+
+    latex_code *= "\\end{tabular}"
+    return latex_code
 end

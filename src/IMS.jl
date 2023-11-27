@@ -108,8 +108,8 @@ function model_step!(model)
         IMS.update_status!(model[id])
         if model.scenario == "Maturity"
             IMS.NSFR!(model[id], model)
-            IMS.borrowing_targets!(model[id], model.rng)
-            IMS.lending_targets!(model[id], model.rng)
+            IMS.borrowing_targets!(model[id], model.rng, model.arbitrary_threshold)
+            IMS.lending_targets!(model[id], model.rng, model.arbitrary_threshold)
         end
         IMS.reset_after_status!(model[id])
         IMS.tot_demand!(model[id])
@@ -125,12 +125,21 @@ function model_step!(model)
         end
         IMS.ib_on!(model[id], model)
         IMS.ib_term!(model[id], model)
+    end
+    # do other stuff
+    for id in ids_by_type(Bank, model)
+        model.scenario == "Baseline" && IMS.restore_total_supply!(model[id], model)
         IMS.lending_facility!(model[id])
         IMS.deposit_facility!(model[id])
         IMS.funding_costs!(model[id], model.icbt, model.ion, model.iterm, model.icbl)
         IMS.bonds!(model[id])
     end
+    for id in ids_by_type(Bank, model)
+        IMS.check_ib_stocks!(model[id], model)
+        IMS.restore_supply!(model[id])
+    end
     IMS.ib_rates!(model)
+    model.scenario == "Maturity" && IMS.check_clearing!(model)
     # end: Interbank Market
 
     for id in ids_by_type(Government, model)
@@ -157,7 +166,7 @@ Updates money market conditions based on interest rates.
 """
 function update_willingenss_ON!(model)
     model.θ = max(0.0, min(model.a0 + (model.icbl - model.ion_prev) + (model.iterm_prev - model.ion_prev) - model.PDU, 1.0))
-    model.LbW = max(0.0, min(model.a0 + (model.ion_prev - model.icbd) -  (model.iterm_prev - model.ion_prev) + model.PDU, 1.0))
+    model.LbW = max(0.0, min(model.a0 + (model.ion_prev - model.icbd) - (model.iterm_prev - model.ion_prev) + model.PDU, 1.0))
     return model.θ, model.LbW
 end
 
@@ -272,6 +281,10 @@ function ib_matching!(model)
                 push!(model[new_partner].ib_customers, id)
                 model[id].ib_flag = true
                 model[new_partner].ib_flag = true
+                model.ib_flag = true
+                if model.scenario == "Baseline"  # because matching is based on total supply
+                    model[new_partner].tot_supply -= model[id].tot_demand
+                end
             end
         end
     end
@@ -284,29 +297,69 @@ end
 Update interbank rates on overnight and term segments based on disequilibrium dynamics between demand and supply.
 The function also checks that interest rates fall within the central bank's corridor, otherwise a warning is issued.
 """
-function ib_rates!(model; tol::Float64 = 1e-03)
-    if length([a.id for a in allagents(model) if a isa Bank && a.status == :deficit && !ismissing(a.belongToBank)]) > 0 && 
-        length([a.id for a in allagents(model) if a isa Bank && a.status == :surplus && !isempty(a.ib_customers)]) > 0
-
-        ON = sum(a.on_demand for a in allagents(model) if a isa Bank && a.status == :deficit && !ismissing(a.belongToBank)) - 
-            sum(a.on_supply for a in allagents(model) if a isa Bank && a.status == :surplus && !isempty(a.ib_customers))
-        Term = sum(a.term_demand for a in allagents(model) if a isa Bank && a.status == :deficit && !ismissing(a.belongToBank)) - 
-            sum(a.term_supply for a in allagents(model) if a isa Bank && a.status == :surplus && !isempty(a.ib_customers))
-
-        model.ion = model.icbd + ((model.icbl - model.icbd)/(1 + exp(-model.σib * ON)))
-        model.iterm = model.icbd + ((model.icbl - model.icbd)/(1 + exp(-model.σib * Term)))
-    else
+function ib_rates!(model)
+    # Check if there are interbank exchanges between deficit and surplus banks
+    if model.ib_flag
+        # take the set of matching deficit banks
+        deficit_banks = [id for id in ids_by_type(Bank, model) if model[id].status == :deficit && model[id].ib_flag == true]
+        # take the set of matching surplus banks
+        surplus_banks = [id for id in ids_by_type(Bank, model) if model[id].status == :surplus && model[id].ib_flag == true]
+        # define disequilibrium overnight (ON) interbank market
+        diseq_ON = sum(model[id].on_demand for id in deficit_banks) - sum(model[id].on_supply for id in surplus_banks)
+        # compute interbank rate on the overnight market
+        model.ion = model.icbd + ((model.icbl - model.icbd)/(1 + exp(-model.σib * diseq_ON)))
+        # # define disequilibrium term interbank market
+        diseq_Term = sum(model[id].term_demand for id in deficit_banks) - sum(model[id].term_supply for id in surplus_banks)
+        # compute interbank rate on the term market
+        model.iterm = model.icbd + ((model.icbl - model.icbd)/(1 + exp(-model.σib * diseq_Term)))
+    else # or else interbank rates equal the policy target of the central bank
         model.ion = model.icbt
         model.iterm = model.icbt
     end
 
-    # check corridor
+    check_corridor!(model)
+
+    return model.ion, model.iterm
+end
+
+"""
+    check_corridor!(model) → model
+
+Check that interbank rates fall within the corridor, otherwise throw a warning.
+"""
+function check_corridor!(model; tol::Float64 = 1e-03)
     if model.ion - model.icbl > tol || model.icbd - model.ion > tol
         @warn "Interbank ON rate outside the central bank's corridor at step $(model.step)!"
     elseif model.iterm - model.icbl > tol || model.icbd - model.iterm > tol
         @warn "Interbank Term rate outside the central bank's corridor at step $(model.step)!"
     end
-    return model.ion, model.iterm
+    return model
+end
+
+"""
+    check_clearing!(model; tol::Float64 = 1e-06) → model
+
+Check whether supply and demand clear. If not, a warning is issued. Otherwise, `model.cleared_supply` and `model.cleared_demand` are set to true.
+"""
+function check_clearing!(model; tol::Float64 = 1e-06)
+    for id in ids_by_type(Bank, model)
+        # if banks are actually matched in the interbank market
+        if model[id].ib_flag
+            # supply side
+            if model[id].status == :surplus
+                if model[id].deposit_facility + model[id].ON_assets + model[id].Term_assets - model[id].tot_supply > tol
+                    @warn "Supply does not clear at step $(model.step)!"
+                end
+            end
+            # demand side
+            if model[id].status == :deficit
+                if model[id].lending_facility + model[id].ON_liabs + model[id].Term_liabs - model[id].tot_demand > tol
+                    @warn "Demand does not clear at step $(model.step)!"
+                end
+            end
+        end
+    end
+    return model
 end
 
 """
@@ -315,6 +368,7 @@ end
 Updates model paramaters: overnight interbank rate `model.ion` and term interbank one `model.iterm`.
 """
 function update_vars!(model)
+    model.ib_flag = false
     model.ion_prev = model.ion
     model.iterm_prev = model.iterm
     return model

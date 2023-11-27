@@ -7,68 +7,42 @@ using CSV
 using Pipe
 using Statistics
 using CairoMakie
+using CairoMakie.Colors
 using QuantEcon
 using EasyFit
 
 include("lib.jl")
 
-const vars = [:flow, :ON_liabs, :Term_liabs, :deposit_facility, :lending_facility, :margin_stability, :am, :bm, :pmb, :pml]
+const vars_ib = [:ON_liabs, :Term_liabs, :margin_stability]
 
-function interbank(df::DataFrame, param::Symbol)
-    df1 = @pipe df |> dropmissing(_, vars) |> groupby(_, [:step, param]) |>
-        combine(_, vars .=> mean, renamecols = false)
-
-    p = big_ib_plots_sens(df1, param)
-    save("big_ib_plots_sens.eps", p)
-
-    p = stability_ib_plots_sens(df1, param)
-    save("stability_ib_plots_sens.eps", p)
-
-    df2 = @pipe df |> dropmissing(_, vars) |> groupby(_, [:step, :status, param]) |>
-        combine(_, vars .=> mean, renamecols = false)
-
-    p = flow(df2, param)
-    save("flow.eps", p)
-
-    p = stability(df2, param)
-    save("stability.eps", p)
-end
-
-function credit(df::DataFrame, m::DataFrame, param::Symbol)
-    df_hh = @pipe df |> filter(:id => x -> x >= 1 && x <= mean(m[!, :n_hh]), _) |>
-        groupby(_, [:step, param]) |> 
-        combine(_, [:loans] .=> mean, renamecols = false)
-   
-    df_firms = @pipe df |>  filter(:id => x -> x > mean(m[!, :n_hh]) && x <= mean(m[!, :n_hh]) + mean(m[!, :n_f]), _) |>
-        groupby(_, [:step, param]) |> 
-        combine(_, [:loans, :output] .=> mean, renamecols = false)
-
-    p = credit_loans(df_firms, param)
-    save("loans_firms_sens.eps", p)
-
-    p = output(df_firms, param)
-    save("output_sens.eps", p)
-
-    p = credit_loans(df_hh, param; f = false)
-    save("loans_hh_sens.eps", p)
+# Helper function to save LaTeX tables
+function save_to_tex(filename, latex_string)
+    open(filename, "w") do f
+        write(f, latex_string)
+    end
 end
 
 function big_general_params(df::DataFrame, m::DataFrame, params::Vector{Symbol})
     pushfirst!(params, :step)
 
-    df1 = @pipe df |> dropmissing(_, vars) |> 
+    df1 = @pipe df |> dropmissing(_, vars_ib) |> 
         groupby(_, params) |>
-        combine(_, vars .=> mean, renamecols = false)
+        combine(_, vars_ib .=> mean, renamecols = false)
 
     p = big_params(df1, :ON_liabs, params)
     save("big_ON_params.eps", p)
 
-    df_firms = @pipe df |>  filter(:id => x -> x > mean(m[!, :n_hh]) && x <= mean(m[!, :n_hh]) + mean(m[!, :n_f]), _) |>
+    df_firms = @pipe df |>  filter(:id => x -> x > mean(m[!, :n_hh_unique]) && x <= mean(m[!, :n_hh_unique]) + mean(m[!, :n_f_unique]), _) |>
         groupby(_, params) |> 
         combine(_, :output .=> mean, renamecols = false)
 
     p = big_params(df_firms, :output, params)
     save("big_output_params.eps", p)
+end
+
+function tables(df, params)
+    latex_table = create_tables(df, params)
+    save_to_tex("table_$(params).tex", latex_table)
 end
 
 function load_df()
@@ -103,7 +77,7 @@ function load_df()
 
     # take model variables from Baseline scenario
     mdf = DataFrame()
-    append!(mdf, CSV.File("data/shock=Missing/Baseline/mdf.csv"))
+    append!(mdf, CSV.File("data/size=100/shock=Missing/Baseline/mdf.csv"))
 
     return df, mdf
 end
@@ -121,41 +95,61 @@ function load_df_mat()
         end
     end
 
-    # take model variables from Baseline scenario
-    mdf = DataFrame()
-    append!(mdf, CSV.File("data/shock=Missing/Baseline/mdf.csv"))
-
-    return df, mdf
+    return df
 end
 
-function create_sens_maturity_plots()
-    df, mdf = load_df_mat()
+function load_df_threshold()
+     # parameter ranges
+     params_range = (
+        (collect(0.01:0.04:0.1))
+    )
 
+    param = "arbitrary_threshold"
+
+    df = DataFrame()
+    for val in string.(params_range)
+        append!(df, CSV.File("data/sensitivity_analysis/$(param)/$(val)/df.csv"); cols = :union)
+    end
+
+    return df
+end
+
+function create_sens_maturity_tables(adf)
     cd(mkpath("img/pdf/sens-analysis")) do
-        for param in [:m1, :m2, :m3, :m4, :m5]
-            cd(mkpath("$(param)")) do
-                interbank(filter(param => x -> !ismissing(x), df), param)
-                credit(filter(param => x -> !ismissing(x), df), mdf, param)
+            cd(mkpath("Maturity")) do
+                tables(adf, [:m1, :m4])
+                tables(adf, [:m2, :m3, :m5])
             end
+    end
+    printstyled("Sensitivity tables for maturity parameters generated."; color = :blue)
+end
+
+function create_threshold_tables(adf)
+    cd(mkpath("img/pdf/sens-analysis")) do
+        cd(mkpath("Threshold")) do
+            tables(adf, [:arbitrary_threshold])
         end
     end
-    printstyled("Sensitivity plots for maturity parameters generated."; color = :blue)
+    printstyled("Sensitivity tables for threshold parameter generated."; color = :blue)
 end
 
-create_sens_maturity_plots()
-
-function create_sens_general_plots()
-    df, mdf = load_df()
-
+function create_sens_general_plots(adf, mdf)
     params = [:r, :l, :δ, :γ, :gd]
 
     cd(mkpath("img/pdf/sens-analysis")) do
-            cd(mkpath("genearal")) do
-                big_general_params(df, mdf, params)
+            cd(mkpath("General")) do
+                big_general_params(adf, mdf, params)
         end
     end
     popfirst!(params)
     printstyled("Sensitivity plots for general parameters generated."; color = :blue)
 end
 
-create_sens_general_plots()
+adf, mdf = load_df()
+create_sens_general_plots(adf, mdf)
+
+adf = load_df_mat()
+create_sens_maturity_tables(adf)
+
+adf = load_df_threshold()
+create_threshold_tables(adf)
