@@ -34,7 +34,7 @@ function generate_plots(df::DataFrame, vars::Vector{Symbol};
     # Generate Plots
     if rationing
         if !rows
-        plots_vars_shocks(fig, gdf, vars, ylabels; double = (rationing = rationing, vars_den = vars_den))
+            plots_vars_shocks(fig, gdf, vars, ylabels; double = (rationing = rationing, vars_den = vars_den))
         elseif rows
             plots_vars_shocks_rows(fig, gdf, vars, ylabels; double = (rationing = rationing, vars_den = vars_den))
         end
