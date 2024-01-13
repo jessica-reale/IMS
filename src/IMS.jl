@@ -339,7 +339,7 @@ end
 """
     check_clearing!(model; tol::Float64 = 1e-06) → model
 
-Check whether supply and demand clear. If not, a warning is issued. Otherwise, `model.cleared_supply` and `model.cleared_demand` are set to true.
+Check whether supply and demand clear. If not, a warning is issued.
 """
 function check_clearing!(model; tol::Float64 = 1e-06)
     for id in ids_by_type(Bank, model)
