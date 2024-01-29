@@ -1,8 +1,11 @@
 # Interbank Decisions and Margins of Stability: an Agent-Based Stock-Flow Consistent Approach
 
-This repository contains the files to replicate the simulations of the paper "Interbank Decisions and Margins of Stability: an Agent-Based Stock-Flow Consistent Approach" by Jessica Reale, published in the [`Journal of Economic Dynamics and Control`](https://doi.org/10.1016/j.jedc.2024.104822).
+This repository contains the files to replicate the simulations of the paper "Interbank Decisions and Margins of Stability: an Agent-Based Stock-Flow Consistent Approach" published in the [`Journal of Economic Dynamics and Control`](https://doi.org/10.1016/j.jedc.2024.104822).
 
 To contact me: [Jessica Reale](mailto:jessica.reale@ruhr-uni-bochum.de)
+
+Please cite this article as: Reale J. (2024), Interbank Decisions and Margins of Stability: an Agent-Based Stock-Flow Consistent Approach, *Journal of Economic Dynamics and Control*, 104822, doi: https://doi.org/10.1016/j.jedc.2024.104822.
+
 ## What you can find in this repository
 
 The [`src`](src) folder contains the following elements:
