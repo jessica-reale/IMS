@@ -4,7 +4,7 @@ This repository contains the files to replicate the simulations of the paper "In
 
 To contact me: [Jessica Reale](mailto:jessica.reale@ruhr-uni-bochum.de)
 
-Please cite this article as: Reale J. (2024), Interbank Decisions and Margins of Stability: an Agent-Based Stock-Flow Consistent Approach, *Journal of Economic Dynamics and Control*, 104822.
+Please cite this article as: Reale J. (2024), Interbank Decisions and Margins of Stability: an Agent-Based Stock-Flow Consistent Approach, *Journal of Economic Dynamics and Control*, 160, 104822.
 
 ## What you can find in this repository
 
